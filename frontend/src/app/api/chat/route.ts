@@ -13,18 +13,28 @@ export async function POST(req: Request) {
 
     console.log(`[OpenRouter API Call] Attempting model: ${openRouterModel}`);
 
+    const systemMessage = {
+      role: "system",
+      content: "Tu es l'intelligence artificielle officielle de Gama Studio Pro, une plateforme d'IA avancée de référence et ultra-performante. Quand on te demande qui tu es, tu dois TOUJOURS te présenter fièrement comme l'IA de Gama Studio Pro. Ne dis jamais que tu es ChatGPT, OpenAI, Claude ou Llama. Réponds toujours de manière claire, utile, professionnelle et en français."
+    };
+
+    const formattedMessages = [
+      systemMessage,
+      ...messages.map((m: any) => ({ role: m.role, content: m.content }))
+    ];
+
     const callOpenRouter = async (modelSlug: string) => {
       return await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json",
-          "HTTP-Referer": "http://localhost:3002",
+          "HTTP-Referer": "https://gamastudio.ai",
           "X-Title": "Gama Studio Pro AI"
         },
         body: JSON.stringify({
           model: modelSlug,
-          messages: messages.map((m: any) => ({ role: m.role, content: m.content }))
+          messages: formattedMessages
         })
       });
     };
