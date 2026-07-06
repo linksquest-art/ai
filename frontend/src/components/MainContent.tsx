@@ -53,7 +53,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
   const searchMenuRef = useRef<HTMLDivElement>(null);
   
   const [query, setQuery] = useState("");
-  const [model, setModel] = useState("GPT-4o Mini (Rapide & Économique)");
+  const [model, setModel] = useState("GPT-4o Mini");
   const [searchMode, setSearchMode] = useState("Recherche Globale");
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; type: string }[]>([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -115,10 +115,10 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
     setShowSearchMenu(false);
   };
 
-  // OpenAI Official Models (Bridés & Économiques pour préserver le budget)
+  // OpenAI Official Models
   const availableModels = [
-    { name: "GPT-4o Mini (Rapide & Économique)", id: "gpt-4o-mini", desc: "Modèle officiel ultra-rapide & optimisé", icon: Zap, color: "text-emerald-500" },
-    { name: "GPT-4o / GPT-5 (Avancé & Raisonnement)", id: "gpt-4o", desc: "Intelligence maximale OpenAI (Bridé)", icon: Sparkles, color: "text-purple-500" },
+    { name: "GPT-4o Mini", id: "gpt-4o-mini", desc: "Rapide & économique", icon: Zap, color: "text-emerald-500" },
+    { name: "GPT-5", id: "gpt-4o", desc: "Intelligence maximale", icon: Sparkles, color: "text-purple-500" },
   ];
 
   const availableSearchModes = [
