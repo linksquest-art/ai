@@ -264,43 +264,6 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
 
       {/* Main Center Area */}
       <div className="flex-1 flex flex-col min-h-0 relative">
-        {/* Top Header Bar inside Chat Area */}
-        <div className="flex items-center justify-between px-6 py-3 border-b-2 border-black/10 bg-[#FFFFFF]/90 backdrop-blur-md shrink-0 sticky top-0 z-10">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-black uppercase tracking-wider text-black/40">Espace Pro</span>
-            <span className="text-black/20">•</span>
-            <span className="text-xs font-bold text-black/70">Gama Studio AI</span>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {user ? (
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-black text-emerald-800 bg-emerald-50 border-2 border-black px-3 py-1 rounded-xl shadow-[2px_2px_0px_0px_#000000]">
-                  🟢 {user.email}
-                </span>
-                <button
-                  onClick={async () => {
-                    await supabase.auth.signOut();
-                    setUser(null);
-                  }}
-                  className="p-1.5 rounded-xl border-2 border-black bg-white hover:bg-black hover:text-white transition-colors shadow-[2px_2px_0px_0px_#000000]"
-                  title="Déconnexion"
-                >
-                  <LogOut size={14} />
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="bg-[#FF4500] hover:bg-[#E03E00] text-white font-black px-4 py-1.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_#000000] transition-all cursor-pointer animate-pulse"
-              >
-                <LogIn size={14} strokeWidth={2.5} />
-                <span>Connexion / S'inscrire</span>
-              </button>
-            )}
-          </div>
-        </div>
-
         {!activeSession ? (
           /* Welcome View (Home Screen) */
           <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center max-w-3xl w-full mx-auto px-6 pb-20 pt-4">
