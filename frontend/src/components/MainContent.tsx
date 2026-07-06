@@ -48,6 +48,9 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
   const baseQueryRef = useRef("");
+  const plusMenuRef = useRef<HTMLDivElement>(null);
+  const modelMenuRef = useRef<HTMLDivElement>(null);
+  const searchMenuRef = useRef<HTMLDivElement>(null);
   
   const [query, setQuery] = useState("");
   const [model, setModel] = useState("GPT-4o Mini (Rapide & Économique)");
