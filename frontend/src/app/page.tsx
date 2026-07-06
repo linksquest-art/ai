@@ -1,0 +1,184 @@
+"use client";
+
+import { useState, useEffect, Suspense } from "react";
+import { Sidebar } from "@/components/Sidebar";
+import { MainContent } from "@/components/MainContent";
+import { useSearchParams, useRouter } from "next/navigation";
+
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+}
+
+interface ChatSession {
+  id: string;
+  title: string;
+  messages: Message[];
+  createdAt: number;
+  modelId?: string;
+  modelName?: string;
+}
+
+function HomeContent() {
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Load sessions and active session from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("gama_sessions");
+    const savedActive = localStorage.getItem("gama_active_session");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setSessions(parsed);
+        if (savedActive && parsed.some((s: ChatSession) => s.id === savedActive)) {
+          setActiveSessionId(savedActive);
+        }
+      } catch (e) {
+        console.error("Failed to parse saved sessions:", e);
+      }
+    }
+  }, []);
+
+  // Check if there is an initial query from /discover (e.g. ?q=...)
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q && q.trim()) {
+      handleSendMessage(q);
+      // clean the URL
+      router.replace("/");
+    }
+  }, [searchParams]);
+
+  // Save sessions to localStorage whenever they change
+  const saveSessions = (updated: ChatSession[]) => {
+    setSessions(updated);
+    localStorage.setItem("gama_sessions", JSON.stringify(updated));
+  };
+
+  const handleNewChat = () => {
+    setActiveSessionId(null);
+    localStorage.removeItem("gama_active_session");
+  };
+
+  const handleSelectSession = (id: string) => {
+    setActiveSessionId(id);
+    localStorage.setItem("gama_active_session", id);
+  };
+
+  const handleDeleteSession = (id: string) => {
+    const updated = sessions.filter(s => s.id !== id);
+    saveSessions(updated);
+    if (activeSessionId === id) {
+      const nextId = updated[0]?.id || null;
+      setActiveSessionId(nextId);
+      if (nextId) localStorage.setItem("gama_active_session", nextId);
+      else localStorage.removeItem("gama_active_session");
+    }
+  };
+
+  const handleSendMessage = async (text: string, modelId?: string, modelName?: string) => {
+    let currentSessions = [...sessions];
+    let activeSession = currentSessions.find(s => s.id === activeSessionId);
+    let targetSessionId = activeSessionId;
+
+    const userMessage: Message = { role: "user", content: text };
+    const targetModelId = modelId || activeSession?.modelId || "anthropic/claude-3.5-sonnet";
+    const targetModelName = modelName || activeSession?.modelName || "Claude 3.5 Sonnet";
+
+    if (!activeSession) {
+      const newId = Math.random().toString(36).substring(2, 15);
+      const newSession: ChatSession = {
+        id: newId,
+        title: text.length > 25 ? text.substring(0, 25) + "..." : text,
+        messages: [userMessage],
+        createdAt: Date.now(),
+        modelId: targetModelId,
+        modelName: targetModelName
+      };
+      currentSessions.unshift(newSession);
+      targetSessionId = newId;
+      activeSession = newSession;
+      setActiveSessionId(newId);
+      saveSessions(currentSessions);
+    } else {
+      activeSession.messages.push(userMessage);
+      if (modelId) activeSession.modelId = modelId;
+      if (modelName) activeSession.modelName = modelName;
+      saveSessions(currentSessions);
+    }
+
+    setIsGenerating(true);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          messages: activeSession.messages,
+          model: targetModelId
+        })
+      });
+
+      if (!res.ok) throw new Error("API call failed");
+
+      const data = await res.json();
+      
+      const updatedSessions = currentSessions.map(s => {
+        if (s.id === targetSessionId) {
+          return {
+            ...s,
+            messages: [...s.messages, { role: data.role, content: data.content }]
+          };
+        }
+        return s;
+      });
+
+      saveSessions(updatedSessions);
+    } catch (err) {
+      console.error("Error communicating with AI:", err);
+      const updatedSessions = currentSessions.map(s => {
+        if (s.id === targetSessionId) {
+          return {
+            ...s,
+            messages: [...s.messages, { role: "assistant" as const, content: "⚠️ Désolé, une erreur technique est survenue lors de la communication avec OpenRouter. Veuillez vérifier votre connexion ou choisir un autre modèle." }]
+          };
+        }
+        return s;
+      });
+      saveSessions(updatedSessions);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const activeSession = sessions.find(s => s.id === activeSessionId) || null;
+
+  return (
+    <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black">
+      <Sidebar 
+        sessions={sessions} 
+        activeSessionId={activeSessionId} 
+        onSelectSession={handleSelectSession} 
+        onNewChat={handleNewChat}
+        onDeleteSession={handleDeleteSession}
+      />
+      <MainContent 
+        activeSession={activeSession} 
+        onSendMessage={handleSendMessage} 
+        isGenerating={isGenerating} 
+      />
+    </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="flex h-screen w-screen items-center justify-center bg-[#FFFFFF] font-black text-xl text-black">Chargement de Gama Studio...</div>}>
+      <HomeContent />
+    </Suspense>
+  );
+}
