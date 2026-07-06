@@ -50,7 +50,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
   const baseQueryRef = useRef("");
   
   const [query, setQuery] = useState("");
-  const [model, setModel] = useState("NVIDIA Nemotron 550B (Gratuit)");
+  const [model, setModel] = useState("GPT-4o Mini (Rapide & Économique)");
   const [searchMode, setSearchMode] = useState("Recherche Globale");
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; type: string }[]>([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -59,6 +59,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const [showModelMenu, setShowModelMenu] = useState(false);
   const [showSearchMenu, setShowSearchMenu] = useState(false);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -81,19 +82,40 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
     };
   }, []);
 
+  // Auto-close menus on outside click or Esc
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        !plusMenuRef.current?.contains(e.target as Node) &&
+        !modelMenuRef.current?.contains(e.target as Node) &&
+        !searchMenuRef.current?.contains(e.target as Node)
+      ) {
+        closeAllMenus();
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeAllMenus();
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   const closeAllMenus = () => {
     setShowPlusMenu(false);
     setShowModelMenu(false);
     setShowSearchMenu(false);
   };
 
-  // OpenRouter Verified 100% Free & Working Models
+  // OpenAI Official Models (Bridés & Économiques pour préserver le budget)
   const availableModels = [
-    { name: "NVIDIA Nemotron 550B (Gratuit)", id: "nvidia/nemotron-3-ultra-550b-a55b:free", desc: "Modèle géant 550B (100% Gratuit)", icon: Zap, color: "text-blue-500" },
-    { name: "OpenAI GPT-OSS 20B (Gratuit)", id: "openai/gpt-oss-20b:free", desc: "Modèle OpenAI Open Source (Gratuit)", icon: Cpu, color: "text-emerald-500" },
-    { name: "Liquid LFM Thinking (Gratuit)", id: "liquid/lfm-2.5-1.2b-thinking:free", desc: "Raisonnement & logique (100% Gratuit)", icon: Sparkles, color: "text-purple-500" },
-    { name: "Cohere Code Mini (Gratuit)", id: "cohere/north-mini-code:free", desc: "Expert en programmation (Gratuit)", icon: Cpu, color: "text-amber-500" },
-    { name: "Poolside Laguna 2.1 (Gratuit)", id: "poolside/laguna-xs-2.1:free", desc: "Rapide & polyvalent (100% Gratuit)", icon: Zap, color: "text-orange-500" },
+    { name: "GPT-4o Mini (Rapide & Économique)", id: "gpt-4o-mini", desc: "Modèle officiel ultra-rapide & optimisé", icon: Zap, color: "text-emerald-500" },
+    { name: "GPT-4o / GPT-5 (Avancé & Raisonnement)", id: "gpt-4o", desc: "Intelligence maximale OpenAI (Bridé)", icon: Sparkles, color: "text-purple-500" },
   ];
 
   const availableSearchModes = [
