@@ -141,6 +141,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
   const [selectedSkill, setSelectedSkill] = useState<SkillItem>(DEFAULT_SKILLS[0]);
   const [showSkillModal, setShowSkillModal] = useState(false);
   const [showFlashcardModal, setShowFlashcardModal] = useState(false);
+  const [flashcardInitialText, setFlashcardInitialText] = useState<string | undefined>(undefined);
   const [newSkillName, setNewSkillName] = useState("");
   const [newSkillDesc, setNewSkillDesc] = useState("");
   const [newSkillPrompt, setNewSkillPrompt] = useState("");
@@ -626,8 +627,12 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
     <div className="flex-1 flex flex-col h-screen overflow-hidden relative bg-[#FFFFFF]">
       <FlashcardModal
         isOpen={showFlashcardModal}
-        onClose={() => setShowFlashcardModal(false)}
+        onClose={() => {
+          setShowFlashcardModal(false);
+          setFlashcardInitialText(undefined);
+        }}
         topic={activeSession ? activeSession.title : "Espace de Travail"}
+        initialText={flashcardInitialText}
       />
       {/* Invisible backdrop to close menus when clicking outside */}
       {(showPlusMenu || showModelMenu || showSearchMenu) && (
@@ -1042,7 +1047,11 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                           <button className="text-xs font-bold text-black/50 hover:text-black flex items-center gap-1 transition-colors bg-black/5 px-2.5 py-1 rounded-lg">
                             🔄 Régénérer
                           </button>
-                          <button onClick={() => setShowFlashcardModal(true)} className="text-xs font-black text-[#FF5500] hover:text-white hover:bg-[#FF5500] flex items-center gap-1.5 transition-all bg-[#FF5500]/10 border border-[#FF5500]/30 px-3 py-1 rounded-lg cursor-pointer">
+                          <button onClick={() => {
+                            const msgText = typeof msg.content === "string" ? msg.content : (Array.isArray(msg.content) ? msg.content.map((p: any) => p.text || "").join("") : String(msg.content));
+                            setFlashcardInitialText(msgText);
+                            setShowFlashcardModal(true);
+                          }} className="text-xs font-black text-[#FF5500] hover:text-white hover:bg-[#FF5500] flex items-center gap-1.5 transition-all bg-[#FF5500]/10 border border-[#FF5500]/30 px-3 py-1 rounded-lg cursor-pointer">
                             <span>🃏</span>
                             <span>Convertir en Flashcards 3D</span>
                           </button>

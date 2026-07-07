@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, RotateCw, Check, Sparkles, Plus, ArrowRight, ArrowLeft, HelpCircle, Lightbulb, Trophy, Brain, Award, RefreshCw } from "lucide-react";
+import { X, RotateCw, Check, Sparkles, Plus, ArrowRight, ArrowLeft, HelpCircle, Lightbulb, Trophy, Brain, Award, RefreshCw, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export interface Flashcard {
   id: string;
@@ -51,22 +52,33 @@ interface FlashcardModalProps {
   onClose: () => void;
   topic?: string;
   initialCards?: Flashcard[];
+  initialText?: string;
 }
 
-export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", initialCards }: FlashcardModalProps) {
+export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", initialCards, initialText }: FlashcardModalProps) {
   const [cards, setCards] = useState<Flashcard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [isAddingCard, setIsAddingCard] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [newQuestion, setNewQuestion] = useState("");
   const [newAnswer, setNewAnswer] = useState("");
   const [newCategory, setNewCategory] = useState("");
 
   useEffect(() => {
     if (isOpen) {
-      if (initialCards && initialCards.length > 0) {
+      if (initialText && initialText.trim()) {
+        setCards([]);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setIsFinished(false);
+        handleGenerateAI(initialText);
+      } else if (initialCards && initialCards.length > 0) {
         setCards(initialCards.map(c => ({ ...c, known: undefined })));
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setIsFinished(false);
       } else {
         // Find matching topic or load default cards
         const matchedTopic = Object.keys(DEFAULT_FLASHCARDS_BY_TOPIC).find(k => 
@@ -81,12 +93,12 @@ export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", i
           known: undefined
         }));
         setCards(customized);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setIsFinished(false);
       }
-      setCurrentIndex(0);
-      setIsFlipped(false);
-      setIsFinished(false);
     }
-  }, [isOpen, topic, initialCards]);
+  }, [isOpen, topic, initialCards, initialText]);
 
   // Keyboard navigation support (UI/UX Pro Max Accessibility & Interaction)
   useEffect(() => {
@@ -180,25 +192,78 @@ export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", i
     }
   };
 
-  const handleGenerateAI = () => {
-    const generated: Flashcard[] = [
-      {
-        id: "ai_" + Math.random().toString(36).substr(2, 5),
-        question: `Quels sont les enjeux clés de l'espace "${topic}" ?`,
-        answer: `La maîtrise des concepts fondamentaux, l'automatisation intelligente des flux de travail et la vérification continue des résultats produits par l'IA.`,
-        category: topic
-      },
-      {
-        id: "ai_" + Math.random().toString(36).substr(2, 5),
-        question: `Quelle est la bonne pratique essentielle en travaillant sur "${topic}" ?`,
-        answer: `Toujours décomposer les problèmes complexes en étapes simples et valider chaque étape avant d'assembler la solution globale.`,
-        category: topic
+  const handleGenerateAI = async (customText?: any) => {
+    const textToUse = typeof customText === "string" ? customText : undefined;
+    setIsGeneratingAI(true);
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      const promptContent = textToUse 
+        ? `Génère exactement 5 flashcards de révision (Questions/Réponses) très pertinentes et pédagogiques à partir de ce texte/cours :\n\n${textToUse.substring(0, 1800)}` 
+        : `Génère exactement 5 flashcards de niveau universitaire et expertes pour tester et maîtriser le sujet : "${topic}".`;
+
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": authSession?.access_token ? `Bearer ${authSession.access_token}` : ""
+        },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: promptContent }],
+          model: "deepseek/deepseek-chat",
+          systemPrompt: "Tu es un professeur et concepteur pédagogique d'élite. Tu DOIS répondre UNIQUEMENT et STRICTEMENT par un tableau JSON valide contenant exactement 5 objets flashcards. Aucun texte autour, aucune introduction, aucune conclusion, pas de balises markdown ```json. Le format strict de chaque objet est : {\"question\": \"La question précise\", \"answer\": \"La réponse détaillée et claire\", \"category\": \"Le sous-thème\"}"
+        })
+      });
+
+      if (!res.ok) throw new Error("Erreur de génération IA");
+      const data = await res.json();
+      
+      let jsonStr = (data.content || "").trim();
+      if (jsonStr.startsWith("```")) {
+        jsonStr = jsonStr.replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/, "").trim();
       }
-    ];
-    setCards(prev => [...prev, ...generated]);
-    if (isFinished) {
-      setCurrentIndex(cards.length);
-      setIsFinished(false);
+      
+      const parsed = JSON.parse(jsonStr);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const newCards: Flashcard[] = parsed.map((item: any, idx: number) => ({
+          id: "ai_" + Date.now() + "_" + idx,
+          question: item.question || "Question IA",
+          answer: item.answer || "Réponse détaillée",
+          category: item.category || topic || "IA Générative",
+          known: undefined
+        }));
+        
+        setCards(prev => {
+          // If previous cards were only defaults or empty, replace them with real AI cards
+          if (prev.length === 0 || textToUse) return newCards;
+          return [...prev, ...newCards];
+        });
+        if (isFinished) {
+          setCurrentIndex(cards.length);
+          setIsFinished(false);
+        }
+      } else {
+        throw new Error("Format JSON invalide");
+      }
+    } catch (e) {
+      console.error("Erreur flashcards IA:", e);
+      // Fallback
+      const fallback: Flashcard[] = [
+        {
+          id: "ai_" + Math.random().toString(36).substr(2, 5),
+          question: `Quels sont les concepts fondamentaux à retenir sur "${topic}" ?`,
+          answer: `L'assimilation des principes de base, l'application concrète par des exercices pratiques et l'auto-évaluation régulière.`,
+          category: topic
+        },
+        {
+          id: "ai_" + Math.random().toString(36).substr(2, 5),
+          question: `Comment vérifier sa maîtrise de "${topic}" ?`,
+          answer: `En expliquant le concept avec ses propres mots à quelqu'un d'autre sans consulter ses notes (méthode Feynman).`,
+          category: topic
+        }
+      ];
+      setCards(prev => (prev.length === 0 ? fallback : [...prev, ...fallback]));
+    } finally {
+      setIsGeneratingAI(false);
     }
   };
 
@@ -227,14 +292,26 @@ export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", i
 
           <div className="flex items-center gap-2 shrink-0">
             <button
+              type="button"
+              onClick={() => handleGenerateAI()}
+              disabled={isGeneratingAI}
+              className="bg-[#FFFBF5] hover:bg-[#FF5500] text-black hover:text-white font-black px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 border-2 border-black shadow-[2px_2px_0px_0px_#000000] transition-all cursor-pointer disabled:opacity-50"
+              title="Générer 5 cartes en direct avec l'IA"
+            >
+              <Sparkles size={14} className={isGeneratingAI ? "animate-spin text-[#FF5500]" : "text-[#FF5500] group-hover:text-white"} />
+              <span className="hidden sm:inline">{isGeneratingAI ? "Génération..." : "✨ IA Générateur"}</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setIsAddingCard(!isAddingCard)}
               className="bg-black text-white hover:bg-[#FF5500] font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 border-2 border-black shadow-[2px_2px_0px_0px_#000000] transition-all cursor-pointer"
-              title="Ajouter une carte"
+              title="Ajouter une carte manuellement"
             >
               <Plus size={14} strokeWidth={3} />
               <span className="hidden sm:inline">Ajouter</span>
             </button>
             <button
+              type="button"
               onClick={onClose}
               className="p-2 rounded-xl border-2 border-black/10 hover:border-black hover:bg-red-500 hover:text-white transition-all cursor-pointer"
               title="Fermer (Échap)"
@@ -309,7 +386,21 @@ export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", i
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 flex flex-col justify-between gap-6 bg-[#FFFFFF]">
           
-          {isFinished ? (
+          {isGeneratingAI ? (
+            <div className="my-auto py-12 flex flex-col items-center justify-center text-center gap-4 animate-pulse">
+              <div className="w-16 h-16 rounded-3xl bg-[#FF5500]/15 border-[3px] border-black flex items-center justify-center text-[#FF5500] shadow-[4px_4px_0px_0px_#000000] animate-spin">
+                <Loader2 size={32} strokeWidth={3} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-black uppercase tracking-tight">
+                  Le Professeur IA génère vos Flashcards...
+                </h3>
+                <p className="text-xs font-bold text-black/50 mt-1">
+                  Analyse du sujet et création de 5 Q&A interactives en cours via OpenRouter
+                </p>
+              </div>
+            </div>
+          ) : isFinished ? (
             /* FINISHED / CELEBRATION SCREEN */
             <div className="my-auto py-6 flex flex-col items-center justify-center text-center gap-6 animate-in zoom-in-95 duration-300">
               <div className="w-20 h-20 rounded-3xl bg-[#FF5500]/15 border-[3px] border-black flex items-center justify-center text-4xl shadow-[5px_5px_0px_0px_#FF5500] animate-bounce">
@@ -358,11 +449,13 @@ export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", i
               </div>
 
               <button
-                onClick={handleGenerateAI}
-                className="mt-2 text-xs font-extrabold text-[#FF5500] hover:underline flex items-center gap-1.5"
+                type="button"
+                onClick={() => handleGenerateAI()}
+                disabled={isGeneratingAI}
+                className="mt-2 text-xs font-extrabold text-[#FF5500] hover:underline flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 <Sparkles size={14} />
-                <span>+ Générer 2 nouvelles cartes IA pour cet Espace</span>
+                <span>+ Générer 5 nouvelles cartes IA pour cet Espace</span>
               </button>
             </div>
           ) : (

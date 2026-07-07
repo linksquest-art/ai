@@ -105,6 +105,18 @@ function HomeContent() {
     const spaceTitle = searchParams.get("spaceTitle");
     const spacePrompt = searchParams.get("spacePrompt");
 
+    if (!q && !spaceTitle) return;
+
+    if (q && q.trim()) {
+      const targetSystemPrompt = spacePrompt || undefined;
+      handleNewChat();
+      setTimeout(() => {
+        handleSendMessage(q, undefined, undefined, targetSystemPrompt);
+      }, 50);
+      router.replace("/");
+      return;
+    }
+
     if (spaceTitle) {
       const newId = Math.random().toString(36).substring(2, 15);
       const newSession: ChatSession = {
@@ -124,11 +136,6 @@ function HomeContent() {
       setActiveSessionId(newId);
       router.replace("/");
       return;
-    }
-
-    if (q && q.trim()) {
-      handleSendMessage(q);
-      router.replace("/");
     }
   }, [searchParams]);
 
