@@ -15,7 +15,9 @@ import {
   Zap,
   Crown,
   TrendingUp,
-  Settings
+  Settings,
+  Calendar,
+  GraduationCap
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AuthModal } from "./AuthModal";
@@ -109,7 +111,9 @@ export function Sidebar({
 
   const navItems = [
     { name: "Découvrir", href: "/discover", icon: Compass },
-    { name: "Espaces", href: "/spaces", icon: Folder },
+    { name: "Espaces & Skills", href: "/spaces", icon: Folder },
+    { name: "Devoirs IA", href: "/homework", icon: GraduationCap },
+    { name: "Calendrier", href: "/calendar", icon: Calendar },
     { name: "Tarifs", href: "/pricing", icon: Sparkles },
   ];
 

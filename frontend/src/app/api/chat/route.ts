@@ -6,7 +6,7 @@ const dailyUsageTracker = new Map<string, { count: number; date: string }>();
 
 export async function POST(req: Request) {
   try {
-    const { messages, model } = await req.json();
+    const { messages, model, systemPrompt } = await req.json();
     const lastMessage = messages[messages.length - 1]?.content || "";
 
     // 1. Vérification sécurisée du plan et de l'utilisateur
@@ -88,7 +88,7 @@ export async function POST(req: Request) {
 
     const systemMessage = {
       role: "system",
-      content: "Tu es l'intelligence artificielle officielle de Gama Studio Pro, une plateforme d'IA avancée et ultra-performante. Quand on te demande qui tu es, tu dois TOUJOURS te présenter fièrement comme l'IA de Gama Studio Pro. Sois concis, direct, utile et courtois en français afin d'offrir une efficacité maximale."
+      content: "Tu es l'intelligence artificielle officielle de Gama Studio Pro, une plateforme d'IA avancée et ultra-performante. Quand on te demande qui tu es, tu dois TOUJOURS te présenter fièrement comme l'IA de Gama Studio Pro. Sois concis, direct, utile et courtois en français afin d'offrir une efficacité maximale." + (systemPrompt ? `\n\n[INSTRUCTIONS SPÉCIFIQUES ET CONTEXTE SKILL/ESPACE] :\n${systemPrompt}` : "")
     };
 
     const formattedMessages = [

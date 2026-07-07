@@ -19,6 +19,8 @@ interface ChatSession {
   createdAt: number;
   modelId?: string;
   modelName?: string;
+  systemPrompt?: string;
+  isIncognito?: boolean;
 }
 
 function HomeContent() {
@@ -27,6 +29,8 @@ function HomeContent() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [isIncognito, setIsIncognito] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -95,9 +99,33 @@ function HomeContent() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Check if there is an initial query from /discover (e.g. ?q=...)
+  // Check if there is an initial query or space context from url parameters
   useEffect(() => {
     const q = searchParams.get("q");
+    const spaceTitle = searchParams.get("spaceTitle");
+    const spacePrompt = searchParams.get("spacePrompt");
+
+    if (spaceTitle) {
+      const newId = Math.random().toString(36).substring(2, 15);
+      const newSession: ChatSession = {
+        id: newId,
+        title: `📁 ${spaceTitle.substring(0, 20)}`,
+        messages: [{ role: "assistant" as const, content: `👋 Bienvenue dans l'espace **${spaceTitle}** !\n\nLe contexte système spécialisé a été injecté dans l'IA pour cette discussion. Comment puis-je vous aider ?` }],
+        createdAt: Date.now(),
+        modelId: "deepseek/deepseek-chat",
+        modelName: "Best ★",
+        systemPrompt: spacePrompt || undefined
+      };
+      setSessions(prev => {
+        const updated = [newSession, ...prev];
+        saveSessions(updated);
+        return updated;
+      });
+      setActiveSessionId(newId);
+      router.replace("/");
+      return;
+    }
+
     if (q && q.trim()) {
       handleSendMessage(q);
       router.replace("/");
@@ -116,16 +144,19 @@ function HomeContent() {
   }, [searchParams]);
 
   // 2. Save sessions to localStorage & sync to Supabase user profile when logged in
-  const saveSessions = async (updated: ChatSession[], customUser?: any) => {
+  const saveSessions = async (updated: ChatSession[], customUser?: any, incognito?: boolean) => {
     const targetUser = customUser !== undefined ? customUser : user;
-
     setSessions(updated);
-    localStorage.setItem("gama_sessions", JSON.stringify(updated));
+
+    if (incognito || isIncognito) return; // Mode Incognito : Ne rien enregistrer dans le navigateur ni le cloud
+
+    const persistSessions = updated.filter(s => !s.isIncognito);
+    localStorage.setItem("gama_sessions", JSON.stringify(persistSessions));
 
     if (targetUser) {
       try {
         await supabase.auth.updateUser({
-          data: { chat_sessions: updated }
+          data: { chat_sessions: persistSessions }
         });
       } catch (e) {
         console.warn("Erreur de synchronisation cloud Supabase:", e);
@@ -154,7 +185,7 @@ function HomeContent() {
     }
   };
 
-  const handleSendMessage = async (text: any, modelId?: string, modelName?: string) => {
+  const handleSendMessage = async (text: any, modelId?: string, modelName?: string, skillPrompt?: string) => {
     let currentSessions = [...sessions];
     let activeSession = currentSessions.find(s => s.id === activeSessionId);
     let targetSessionId = activeSessionId;
@@ -162,34 +193,38 @@ function HomeContent() {
     const userMessage: Message = { role: "user", content: text };
     const targetModelId = modelId || activeSession?.modelId || "deepseek/deepseek-chat";
     const targetModelName = modelName || activeSession?.modelName || "Best ★";
+    const targetSystemPrompt = skillPrompt !== undefined ? skillPrompt : activeSession?.systemPrompt;
 
     const titleText = typeof text === "string" ? text : (Array.isArray(text) ? (text.find((p: any) => p.type === "text")?.text || "📷 Image analysée") : "Nouvelle discussion");
 
     if (!activeSession) {
       const isProPlan = user?.user_metadata?.plan === "pro";
-      if (!isProPlan && sessions.length >= 5) {
+      if (!isProPlan && !isIncognito && sessions.length >= 5) {
         setShowUpgradeModal(true);
         return;
       }
       const newId = Math.random().toString(36).substring(2, 15);
       const newSession: ChatSession = {
         id: newId,
-        title: titleText.length > 25 ? titleText.substring(0, 25) + "..." : titleText,
+        title: isIncognito ? `🕶️ [Incognito] ${titleText.substring(0, 18)}` : (titleText.length > 25 ? titleText.substring(0, 25) + "..." : titleText),
         messages: [userMessage],
         createdAt: Date.now(),
         modelId: targetModelId,
-        modelName: targetModelName
+        modelName: targetModelName,
+        systemPrompt: targetSystemPrompt,
+        isIncognito: isIncognito
       };
       currentSessions.unshift(newSession);
       targetSessionId = newId;
       activeSession = newSession;
       setActiveSessionId(newId);
-      saveSessions(currentSessions);
+      saveSessions(currentSessions, undefined, isIncognito);
     } else {
       activeSession.messages.push(userMessage);
       if (modelId) activeSession.modelId = modelId;
       if (modelName) activeSession.modelName = modelName;
-      saveSessions(currentSessions);
+      if (skillPrompt !== undefined) activeSession.systemPrompt = skillPrompt;
+      saveSessions(currentSessions, undefined, activeSession.isIncognito || isIncognito);
     }
 
     setIsGenerating(true);
@@ -207,7 +242,8 @@ function HomeContent() {
         },
         body: JSON.stringify({ 
           messages: activeSession.messages,
-          model: targetModelId
+          model: targetModelId,
+          systemPrompt: activeSession.systemPrompt
         })
       });
 
@@ -228,7 +264,7 @@ function HomeContent() {
         return s;
       });
 
-      saveSessions(updatedSessions);
+      saveSessions(updatedSessions, undefined, activeSession.isIncognito || isIncognito);
     } catch (err) {
       console.error("Error communicating with AI:", err);
       const updatedSessions = currentSessions.map(s => {
@@ -240,7 +276,7 @@ function HomeContent() {
         }
         return s;
       });
-      saveSessions(updatedSessions);
+      saveSessions(updatedSessions, undefined, activeSession.isIncognito || isIncognito);
     } finally {
       setIsGenerating(false);
     }
@@ -306,7 +342,9 @@ function HomeContent() {
         <MainContent 
           activeSession={activeSession} 
           onSendMessage={handleSendMessage} 
-          isGenerating={isGenerating} 
+          isGenerating={isGenerating}
+          isIncognito={isIncognito}
+          onToggleIncognito={() => setIsIncognito(!isIncognito)}
         />
       </div>
       <UpgradeModal

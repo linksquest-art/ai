@@ -22,10 +22,78 @@ import {
   Zap,
   Check,
   LogIn,
-  LogOut
+  LogOut,
+  Shield,
+  EyeOff,
+  Award,
+  Wand2,
+  Trash2,
+  Download,
+  BookOpen
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AuthModal } from "./AuthModal";
+
+export interface SkillItem {
+  id: string;
+  name: string;
+  icon: string;
+  badge: string;
+  desc: string;
+  prompt: string;
+  isCustom?: boolean;
+}
+
+export const DEFAULT_SKILLS: SkillItem[] = [
+  {
+    id: "none",
+    name: "Standard (Sans Skill)",
+    icon: "⚡",
+    badge: "Libre",
+    desc: "Discussion générale libre sans instructions spécialisées",
+    prompt: ""
+  },
+  {
+    id: "saas_arch",
+    name: "Architecte SaaS Pro",
+    icon: "🚀",
+    badge: "Code & Tech",
+    desc: "Expert Next.js 16, Tailwind, Supabase, architectures évolutives & Clean Code",
+    prompt: "Tu es un architecte logiciel senior et tech lead spécialisé dans le développement d'applications web et SaaS modernes (Next.js 16, TypeScript, TailwindCSS, Supabase). Ton objectif est de produire du code propre, modulaire, sécurisé et performant en appliquant strictement les meilleures pratiques du design UI/UX Pro Max. Fournis toujours des explications techniques concises et du code directement utilisable en production."
+  },
+  {
+    id: "seo_copy",
+    name: "Copywriter & Rédacteur SEO",
+    icon: "✍️",
+    badge: "Marketing",
+    desc: "Textes persuasifs, conversion maximale & optimisation moteurs de recherche",
+    prompt: "Tu es un copywriter d'élite et expert en stratégie marketing et référencement naturel (SEO). Tu rédiges des contenus à fort taux de conversion, engageants, parfaitement structurés avec des balises H1/H2 percutantes, des appels à l'action (CTA) magnétiques et un storytelling captivant adapté à l'audience cible."
+  },
+  {
+    id: "business_data",
+    name: "Business & Data Analyst",
+    icon: "📊",
+    badge: "Finance",
+    desc: "Analyse de métriques KPI, tableaux financiers & stratégie d'entreprise",
+    prompt: "Tu es un analyste financier et stratégique senior. Tu as une excellente maîtrise des chiffres, des modèles économiques, de la rentabilité (LTV, CAC, MRR, Churn) et de la prise de décision orientée données. Synthétise toujours tes analyses sous forme de tableaux clairs, identifie les risques et propose des plans d'action concrets pour maximiser la croissance."
+  },
+  {
+    id: "ui_ux_pro",
+    name: "UI/UX Designer Pro Max",
+    icon: "🎨",
+    badge: "Design",
+    desc: "Design d'interfaces futuristes, glassmorphism, palettes harmonieuses & accessibilité",
+    prompt: "Tu es un directeur artistique et designer UI/UX visionnaire. Tu conçois des expériences web et mobiles à couper le souffle, en appliquant les principes modernes de glassmorphism, d'animations douces, de typographie élégante et de hiérarchie visuelle irréprochable. Tes suggestions visuelles doivent toujours viser l'excellence et le 'wouah effect' immédiat."
+  },
+  {
+    id: "pedagogue",
+    name: "Professeur & Pédagogue",
+    icon: "🎓",
+    badge: "Éducation",
+    desc: "Explications limpides par étapes, analogies concrètes & exercices interactifs",
+    prompt: "Tu es un enseignant exceptionnel, patient et inspirant. Tu as le don de simplifier les concepts les plus techniques ou abstraits en utilisant des métaphores concrètes de la vie quotidienne, des schémas mentaux progressifs et des résumés par points clés. Vérifie régulièrement la compréhension de l'apprenant en lui posant des questions stimulantes."
+  }
+];
 
 interface Message {
   role: "user" | "assistant";
@@ -39,15 +107,19 @@ interface ChatSession {
   createdAt: number;
   modelId?: string;
   modelName?: string;
+  systemPrompt?: string;
+  isIncognito?: boolean;
 }
 
 interface MainContentProps {
   activeSession: ChatSession | null;
-  onSendMessage: (text: string, modelId?: string, modelName?: string) => void;
+  onSendMessage: (text: any, modelId?: string, modelName?: string, skillPrompt?: string) => void;
   isGenerating: boolean;
+  isIncognito?: boolean;
+  onToggleIncognito?: () => void;
 }
 
-export function MainContent({ activeSession, onSendMessage, isGenerating }: MainContentProps) {
+export function MainContent({ activeSession, onSendMessage, isGenerating, isIncognito, onToggleIncognito }: MainContentProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -61,6 +133,16 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
   const [searchMode, setSearchMode] = useState("Recherche Globale");
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; type: string; base64?: string }[]>([]);
   const [isRecording, setIsRecording] = useState(false);
+  
+  // Skills states
+  const [skillsList, setSkillsList] = useState<SkillItem[]>(DEFAULT_SKILLS);
+  const [selectedSkill, setSelectedSkill] = useState<SkillItem>(DEFAULT_SKILLS[0]);
+  const [showSkillModal, setShowSkillModal] = useState(false);
+  const [newSkillName, setNewSkillName] = useState("");
+  const [newSkillDesc, setNewSkillDesc] = useState("");
+  const [newSkillPrompt, setNewSkillPrompt] = useState("");
+  const [newSkillBadge, setNewSkillBadge] = useState("Custom");
+  const [newSkillIcon, setNewSkillIcon] = useState("⚡");
   
   // Dropdown states
   const [showPlusMenu, setShowPlusMenu] = useState(false);
@@ -81,6 +163,41 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const savedSkills = localStorage.getItem("gama_custom_skills");
+    if (savedSkills) {
+      try {
+        const parsed = JSON.parse(savedSkills);
+        setSkillsList([...DEFAULT_SKILLS, ...parsed]);
+      } catch (e) {}
+    }
+  }, []);
+
+  const handleCreateCustomSkill = () => {
+    if (!newSkillName.trim()) return;
+    const customSkill: SkillItem = {
+      id: "custom_" + Math.random().toString(36).substring(2, 9),
+      name: newSkillName.trim(),
+      icon: newSkillIcon || "⚡",
+      badge: newSkillBadge.trim() || "Custom",
+      desc: newSkillDesc.trim() || "Skill personnalisé créé par l'utilisateur",
+      prompt: newSkillPrompt.trim() || "",
+      isCustom: true
+    };
+
+    const updatedSkills = [...skillsList, customSkill];
+    setSkillsList(updatedSkills);
+    setSelectedSkill(customSkill);
+
+    const onlyCustom = updatedSkills.filter(s => s.isCustom);
+    localStorage.setItem("gama_custom_skills", JSON.stringify(onlyCustom));
+
+    setNewSkillName("");
+    setNewSkillDesc("");
+    setNewSkillPrompt("");
+    setShowSkillModal(false);
+  };
 
   const isPro = user?.user_metadata?.plan === "pro";
 
@@ -186,8 +303,9 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
     }
 
     const selectedModelObj = availableModels.find(m => m.name === model) || availableModels[0];
+    const promptToSend = selectedSkill.id !== "none" ? selectedSkill.prompt : undefined;
 
-    onSendMessage(finalContent, selectedModelObj.id, model);
+    onSendMessage(finalContent, selectedModelObj.id, model, promptToSend);
     setQuery("");
     setAttachedFiles([]);
     closeAllMenus();
@@ -282,6 +400,156 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
     }
   };
 
+  const renderSkillsBar = () => (
+    <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-black/10 no-scrollbar select-none w-full">
+      <span className="text-[11px] font-black uppercase text-black/50 shrink-0 flex items-center gap-1">
+        <Wand2 size={13} className="text-primary" />
+        <span>Skill :</span>
+      </span>
+      {skillsList.map((skill) => {
+        const isSelected = selectedSkill.id === skill.id;
+        return (
+          <button
+            key={skill.id}
+            type="button"
+            onClick={() => setSelectedSkill(skill)}
+            className={`px-3 py-1 rounded-xl text-xs font-black flex items-center gap-1.5 shrink-0 border-2 transition-all cursor-pointer ${
+              isSelected
+                ? "bg-black text-white border-black shadow-[2px_2px_0px_0px_#FF5500]"
+                : "bg-white text-black border-black/20 hover:border-black hover:shadow-[2px_2px_0px_0px_#000000]"
+            }`}
+            title={skill.desc}
+          >
+            <span>{skill.icon}</span>
+            <span>{skill.name}</span>
+            {skill.badge && (
+              <span className={`text-[9px] px-1.5 py-0.2 rounded-md uppercase tracking-wider ${
+                isSelected ? "bg-white/20 text-white" : "bg-black/5 text-black/60"
+              }`}>
+                {skill.badge}
+              </span>
+            )}
+          </button>
+        );
+      })}
+      <button
+        type="button"
+        onClick={() => setShowSkillModal(true)}
+        className="px-3 py-1 rounded-xl text-xs font-extrabold flex items-center gap-1 shrink-0 bg-primary/10 text-primary border-2 border-primary/30 hover:bg-primary hover:text-white transition-all cursor-pointer"
+        title="Télécharger / Créer un nouveau Skill personnalisé"
+      >
+        <Plus size={14} strokeWidth={3} />
+        <span>Ajouter un Skill</span>
+      </button>
+    </div>
+  );
+
+  const renderSkillModal = () => (
+    showSkillModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+        <div className="bg-white ink-border ink-shadow rounded-3xl p-6 md:p-8 max-w-lg w-full flex flex-col gap-5 relative shadow-[8px_8px_0px_0px_#000000] max-h-[90vh] overflow-y-auto">
+          <button
+            onClick={() => setShowSkillModal(false)}
+            className="absolute top-5 right-5 p-2 rounded-xl border-2 border-black/10 hover:border-black hover:bg-red-500 hover:text-white transition-all cursor-pointer"
+          >
+            <X size={18} strokeWidth={3} />
+          </button>
+
+          <div className="flex items-center gap-3 border-b-2 border-black/10 pb-4">
+            <div className="w-12 h-12 rounded-2xl bg-primary/15 border-2 border-primary flex items-center justify-center text-2xl shadow-[3px_3px_0px_0px_#000000]">
+              🎯
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-black uppercase tracking-tight">Ajouter un Skill Spécialisé</h3>
+              <p className="text-xs font-bold text-black/60">Enrichissez les compétences et le prompt système de l'IA</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div className="flex gap-3">
+              <div className="w-1/4">
+                <label className="text-xs font-black uppercase text-black/70 mb-1 block">Icône</label>
+                <input
+                  type="text"
+                  value={newSkillIcon}
+                  onChange={(e) => setNewSkillIcon(e.target.value)}
+                  placeholder="⚡"
+                  className="w-full bg-[#FAFAFA] ink-border-sm rounded-xl px-3 py-2 text-center text-lg font-bold outline-none focus:bg-white focus:border-primary"
+                  maxLength={4}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-xs font-black uppercase text-black/70 mb-1 block">Nom du Skill *</label>
+                <input
+                  type="text"
+                  value={newSkillName}
+                  onChange={(e) => setNewSkillName(e.target.value)}
+                  placeholder="ex: Expert Python & Django"
+                  className="w-full bg-[#FAFAFA] ink-border-sm rounded-xl px-3 py-2 text-sm font-bold outline-none focus:bg-white focus:border-primary"
+                />
+              </div>
+              <div className="w-1/3">
+                <label className="text-xs font-black uppercase text-black/70 mb-1 block">Badge</label>
+                <input
+                  type="text"
+                  value={newSkillBadge}
+                  onChange={(e) => setNewSkillBadge(e.target.value)}
+                  placeholder="Tech / Bio / Droit"
+                  className="w-full bg-[#FAFAFA] ink-border-sm rounded-xl px-3 py-2 text-xs font-bold outline-none focus:bg-white focus:border-primary"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-black uppercase text-black/70 mb-1 block">Description rapide</label>
+              <input
+                type="text"
+                value={newSkillDesc}
+                onChange={(e) => setNewSkillDesc(e.target.value)}
+                placeholder="En quoi cette IA se distingue-t-elle ?"
+                className="w-full bg-[#FAFAFA] ink-border-sm rounded-xl px-3 py-2 text-xs font-bold outline-none focus:bg-white focus:border-primary"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-black uppercase text-black/70 mb-1 block">Prompt Système (Instructions pour l'IA) *</label>
+              <textarea
+                value={newSkillPrompt}
+                onChange={(e) => setNewSkillPrompt(e.target.value)}
+                placeholder="Tu es un expert mondial en... Tes réponses doivent suivre la méthode... Ne donne jamais de code non testé..."
+                rows={5}
+                className="w-full bg-[#FAFAFA] ink-border-sm rounded-xl p-3 text-xs font-medium outline-none focus:bg-white focus:border-primary resize-none leading-relaxed"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-3 border-t-2 border-black/10">
+            <button
+              type="button"
+              onClick={() => setShowSkillModal(false)}
+              className="px-5 py-2.5 rounded-xl font-bold text-xs bg-black/5 text-black hover:bg-black/10 transition-colors cursor-pointer"
+            >
+              Annuler
+            </button>
+            <button
+              type="button"
+              onClick={handleCreateCustomSkill}
+              disabled={!newSkillName.trim()}
+              className={`px-6 py-2.5 rounded-xl ink-border-sm font-black text-xs shadow-[3px_3px_0px_0px_#000000] flex items-center gap-2 transition-all cursor-pointer ${
+                newSkillName.trim()
+                  ? "bg-primary text-white hover:bg-black"
+                  : "bg-black/10 text-black/40 border-black/20 shadow-none cursor-not-allowed"
+              }`}
+            >
+              <Wand2 size={15} />
+              <span>Installer ce Skill</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  );
+
   return (
     <div className="flex-1 flex flex-col h-screen overflow-hidden relative bg-[#FFFFFF]">
       {/* Invisible backdrop to close menus when clicking outside */}
@@ -349,6 +617,19 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                 <span className="text-xs font-bold text-black/60 bg-black/5 px-3 py-1 rounded-xl border border-black/10">
                   ⚡ {isPro ? "Quotas Débridés & VIP" : "Multi-Modèle & Veille Web"}
                 </span>
+                <button
+                  type="button"
+                  onClick={onToggleIncognito}
+                  className={`px-3.5 py-1 rounded-xl font-black text-xs border-2 flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0px_0px_#000000] ${
+                    isIncognito
+                      ? "bg-black text-white border-black animate-pulse"
+                      : "bg-white text-black border-black/20 hover:border-black hover:bg-black/5"
+                  }`}
+                  title="Mode Incognito : Les discussions ne sont jamais enregistrées ni dans le navigateur ni dans le cloud"
+                >
+                  {isIncognito ? <Shield size={14} className="text-[#FF5500]" /> : <EyeOff size={14} className="text-black/60" />}
+                  <span>{isIncognito ? "🕶️ Incognito Actif" : "🕶️ Incognito"}</span>
+                </button>
               </div>
             </div>
 
@@ -359,6 +640,9 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                 : "ink-shadow hover:shadow-[7px_7px_0px_0px_#FF5500]"
             }`}>
               
+              {/* Skills Bar */}
+              {renderSkillsBar()}
+
               {/* Attached Files & Images Previews */}
               {attachedFiles.length > 0 && (
                 <div className="flex items-center gap-2 flex-wrap pb-2 border-b border-black/10">
@@ -711,6 +995,9 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                 isRecording ? "shadow-[5px_5px_0px_0px_#EF4444] border-red-600 bg-red-50/20" : "ink-shadow"
               }`}>
                 
+                {/* Skills Bar inside chat */}
+                {renderSkillsBar()}
+
                 {/* Attached Files inside chat bottom box */}
                 {attachedFiles.length > 0 && (
                   <div className="flex flex-wrap gap-2 pt-1">
@@ -940,6 +1227,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
         )}
       </div>
 
+      {renderSkillModal()}
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </div>
   );
