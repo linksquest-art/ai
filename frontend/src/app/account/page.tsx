@@ -59,6 +59,22 @@ export default function AccountPage() {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("success") === "true") {
+        supabase.auth.updateUser({ data: { plan: "pro" } }).then(({ data }) => {
+          if (data.user) setUser(data.user);
+          alert("🎉 PAIEMENT STRIPE VALIDÉ ! Bienvenue dans Gama Pro ★ ! Vous avez maintenant un accès illimité à GPT-5 et aux tokens !");
+          window.history.replaceState({}, document.title, window.location.pathname);
+        });
+      } else if (params.get("canceled") === "true") {
+        alert("ℹ️ Paiement Stripe annulé. Vous êtes toujours sur le Plan Hobby gratuit.");
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, []);
+
   // Suivi de la consommation quotidienne
   useEffect(() => {
     const checkQuota = () => {
@@ -96,20 +112,35 @@ export default function AccountPage() {
 
   const handleUpgradePro = async () => {
     if (!user) {
-      alert("⚠️ Veuillez vous connecter pour activer Gama Pro !");
+      alert("⚠️ Veuillez vous connecter pour souscrire à Gama Pro !");
+      return;
+    }
+    if (isPro) {
+      alert("✨ Vous êtes déjà abonné à Gama Pro !");
       return;
     }
     setIsUpgrading(true);
     try {
-      const { data, error } = await supabase.auth.updateUser({
-        data: { plan: "pro" }
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          userEmail: user.email,
+          returnUrl: window.location.origin + "/account"
+        })
       });
-      if (error) throw error;
-      setUser(data.user);
-      alert("🎉 FÉLICITATIONS ! Votre compte a été mis à niveau vers Gama Pro ★ dans Supabase ! Vous avez maintenant un accès illimité aux tokens et à GPT-5 !");
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Impossible d'initialiser Stripe.");
+      }
+
+      if (result.url) {
+        window.location.href = result.url;
+      }
     } catch (err: any) {
-      alert("Erreur lors de l'activation : " + (err.message || "Erreur inconnue"));
-    } finally {
+      alert("Erreur Stripe : " + (err.message || "Erreur inconnue"));
       setIsUpgrading(false);
     }
   };
