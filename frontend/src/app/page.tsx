@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { MainContent } from "@/components/MainContent";
 import { useSearchParams, useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 interface Message {
   role: "user" | "assistant";
@@ -23,10 +24,11 @@ function HomeContent() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Load sessions and active session from localStorage on mount
+  // 1. Load sessions from localStorage on mount & listen to Supabase Auth state for cloud sync
   useEffect(() => {
     const saved = localStorage.getItem("gama_sessions");
     const savedActive = localStorage.getItem("gama_active_session");
@@ -41,6 +43,34 @@ function HomeContent() {
         console.error("Failed to parse saved sessions:", e);
       }
     }
+
+    const syncUserSessions = async (currentUser: any) => {
+      setUser(currentUser);
+      if (currentUser) {
+        // Au moment de la connexion, récupérer l'historique de chat cloud depuis les métadonnées Supabase
+        const cloudSessions = currentUser.user_metadata?.chat_sessions;
+        if (cloudSessions && Array.isArray(cloudSessions) && cloudSessions.length > 0) {
+          setSessions(cloudSessions);
+          localStorage.setItem("gama_sessions", JSON.stringify(cloudSessions));
+          if (savedActive && cloudSessions.some((s: ChatSession) => s.id === savedActive)) {
+            setActiveSessionId(savedActive);
+          } else if (cloudSessions[0]) {
+            setActiveSessionId(cloudSessions[0].id);
+            localStorage.setItem("gama_active_session", cloudSessions[0].id);
+          }
+        }
+      }
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      syncUserSessions(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      syncUserSessions(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   // Check if there is an initial query from /discover (e.g. ?q=...)
@@ -48,15 +78,25 @@ function HomeContent() {
     const q = searchParams.get("q");
     if (q && q.trim()) {
       handleSendMessage(q);
-      // clean the URL
       router.replace("/");
     }
   }, [searchParams]);
 
-  // Save sessions to localStorage whenever they change
-  const saveSessions = (updated: ChatSession[]) => {
+  // 2. Save sessions to localStorage & sync to Supabase user profile when logged in
+  const saveSessions = async (updated: ChatSession[]) => {
     setSessions(updated);
     localStorage.setItem("gama_sessions", JSON.stringify(updated));
+
+    // Si l'utilisateur est connecté, synchroniser immédiatement dans son profil Supabase (Cloud sécurisé sans besoin de table SQL !)
+    if (user) {
+      try {
+        await supabase.auth.updateUser({
+          data: { chat_sessions: updated }
+        });
+      } catch (e) {
+        console.warn("Erreur de synchronisation cloud Supabase:", e);
+      }
+    }
   };
 
   const handleNewChat = () => {
@@ -111,12 +151,32 @@ function HomeContent() {
       saveSessions(currentSessions);
     }
 
+    // Suivi quotidien des quotas de messages dans le navigateur pour la barre visuelle UI/UX Pro Max
+    const todayStr = new Date().toISOString().split("T")[0];
+    const savedQuota = localStorage.getItem("gama_daily_quota");
+    let quotaObj = { date: todayStr, count: 0 };
+    if (savedQuota) {
+      try {
+        const parsed = JSON.parse(savedQuota);
+        if (parsed.date === todayStr) quotaObj.count = parsed.count || 0;
+      } catch (e) {}
+    }
+    quotaObj.count += 1;
+    localStorage.setItem("gama_daily_quota", JSON.stringify(quotaObj));
+
     setIsGenerating(true);
 
     try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      const currentPlan = authSession?.user?.user_metadata?.plan || user?.user_metadata?.plan || "free";
+
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": authSession?.access_token ? `Bearer ${authSession.access_token}` : "",
+          "X-User-Plan": currentPlan
+        },
         body: JSON.stringify({ 
           messages: activeSession.messages,
           model: targetModelId

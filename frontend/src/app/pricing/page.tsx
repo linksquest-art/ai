@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
-import { Check, Star, Zap, Shield, Heart, ArrowRight, Sparkles } from "lucide-react";
+import { Check, Star, Zap, Shield, Heart, ArrowRight, Sparkles, Crown } from "lucide-react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
 interface Message {
   role: "user" | "assistant";
@@ -19,6 +20,8 @@ interface ChatSession {
 
 export default function PricingPage() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const [isUpgrading, setIsUpgrading] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("gama_sessions");
@@ -27,7 +30,60 @@ export default function PricingPage() {
         setSessions(JSON.parse(saved));
       } catch (e) {}
     }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const currentPlan = user?.user_metadata?.plan === "pro" ? "pro" : "free";
+
+  const handleUpgradePro = async () => {
+    if (!user) {
+      alert("⚠️ Veuillez d'abord vous connecter dans le menu de gauche pour activer Gama Pro !");
+      return;
+    }
+
+    if (currentPlan === "pro") {
+      alert("✨ Vous êtes déjà abonné à Gama Pro ! Votre compte bénéficie d'une puissance maximale sans limite.");
+      return;
+    }
+
+    setIsUpgrading(true);
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        data: { plan: "pro" }
+      });
+
+      if (error) throw error;
+
+      setUser(data.user);
+      alert("🎉 FÉLICITATIONS ! Votre compte a été mis à niveau vers Gama Pro ★ dans Supabase !\n\nVous avez maintenant un accès illimité à GPT-5, Claude 3.5 Sonnet, et des quotas de tokens débridés !");
+    } catch (err: any) {
+      alert("Erreur lors de l'activation : " + (err.message || "Erreur inconnue"));
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
+
+  const handleDowngradeFree = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        data: { plan: "free" }
+      });
+      if (!error) {
+        setUser(data.user);
+        alert("🔄 Mode simulation : Vous êtes rebasculé sur le Plan Hobby (Gratuit) bridé.");
+      }
+    } catch (e) {}
+  };
 
   return (
     <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black">
@@ -39,15 +95,37 @@ export default function PricingPage() {
           <div className="flex items-center gap-3">
             <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
             <div>
-              <h1 className="text-2xl font-black text-black">Tarifs & Abonnements</h1>
+              <h1 className="text-2xl font-black text-black flex items-center gap-2">
+                <span>Tarifs & Abonnements</span>
+                {user && (
+                  <span className={`text-xs px-2.5 py-1 rounded-full border-2 font-black ${
+                    currentPlan === "pro" 
+                      ? "bg-amber-100 text-amber-800 border-amber-500 shadow-[2px_2px_0px_0px_#f59e0b]" 
+                      : "bg-gray-100 text-gray-700 border-gray-400"
+                  }`}>
+                    {currentPlan === "pro" ? "★ Votre Plan Actuel : Gama Pro" : "Votre Plan Actuel : Hobby Studio (Gratuit)"}
+                  </span>
+                )}
+              </h1>
               <p className="text-xs font-bold text-black/50">Choisissez la puissance d'animation qui convient à votre studio</p>
             </div>
           </div>
           
-          <Link href="/" className="ink-btn bg-black text-white font-extrabold px-4 py-2 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#FF5500]">
-            <span>Retour au Chat</span>
-            <ArrowRight size={14} />
-          </Link>
+          <div className="flex items-center gap-3">
+            {user && currentPlan === "pro" && (
+              <button 
+                onClick={handleDowngradeFree}
+                className="text-xs font-bold text-black/40 hover:text-black underline px-2 py-1"
+                title="Simuler un retour au plan gratuit pour tester"
+              >
+                Simuler retour gratuit
+              </button>
+            )}
+            <Link href="/" className="ink-btn bg-black text-white font-extrabold px-4 py-2 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#FF5500]">
+              <span>Retour au Chat</span>
+              <ArrowRight size={14} />
+            </Link>
+          </div>
         </header>
 
         {/* Content Area */}
@@ -77,16 +155,16 @@ export default function PricingPage() {
                 <div className="text-5xl font-black mb-8">0€ <span className="text-base text-black/50 font-bold">/mois</span></div>
                 
                 <ul className="flex flex-col gap-3 mb-8 border-t-2 border-black/10 pt-6 text-sm font-extrabold">
-                  <li className="flex items-center gap-3"><Check className="text-black" strokeWidth={3} size={18} /> 50 messages quotidiens</li>
-                  <li className="flex items-center gap-3"><Check className="text-black" strokeWidth={3} size={18} /> Accès à Gemini 2.5 Flash & Claude Haiku</li>
-                  <li className="flex items-center gap-3"><Check className="text-black" strokeWidth={3} size={18} /> Sauvegarde de l'historique en local</li>
-                  <li className="flex items-center gap-3 text-black/40"><Check className="text-black/20" strokeWidth={3} size={18} /> Pas d'accès aux modèles Pro (GPT-4o / Claude Sonnet)</li>
+                  <li className="flex items-center gap-3"><Check className="text-black" strokeWidth={3} size={18} /> 50 messages quotidiens (Bridé à 700 tokens)</li>
+                  <li className="flex items-center gap-3"><Check className="text-black" strokeWidth={3} size={18} /> Accès à GPT-4o Mini & modèles gratuits</li>
+                  <li className="flex items-center gap-3"><Check className="text-black" strokeWidth={3} size={18} /> Sauvegarde cloud sécurisée sur Supabase</li>
+                  <li className="flex items-center gap-3 text-black/40"><Check className="text-black/20" strokeWidth={3} size={18} /> Pas d'accès aux modèles Pro (GPT-5 / Claude 3.5 Sonnet)</li>
                 </ul>
               </div>
               
-              <Link href="/" className="w-full text-center bg-white hover:bg-black hover:text-white text-black font-black py-3 rounded-xl border-2 border-black transition-all shadow-[3px_3px_0px_0px_#000000] text-sm">
-                Démarrer Gratuitement
-              </Link>
+              <div className="w-full text-center bg-black/5 text-black/60 font-black py-3 rounded-xl border-2 border-black/20 text-sm">
+                {currentPlan === "free" ? "✓ Plan Actif (Par défaut)" : "Plan Gratuit Standard"}
+              </div>
             </div>
 
             {/* Plan Pro */}
@@ -105,18 +183,23 @@ export default function PricingPage() {
                 
                 <ul className="flex flex-col gap-3 mb-8 border-t-2 border-black/10 pt-6 text-sm font-extrabold">
                   <li className="flex items-center gap-3"><Check className="text-primary" strokeWidth={3} size={18} /> Messages ILLIMITÉS 24h/24</li>
-                  <li className="flex items-center gap-3"><Check className="text-primary" strokeWidth={3} size={18} /> Accès aux modèles d'élite (Claude 3.5 Sonnet, GPT-4o)</li>
+                  <li className="flex items-center gap-3"><Check className="text-primary" strokeWidth={3} size={18} /> Quota débridé (2500+ tokens par analyse)</li>
+                  <li className="flex items-center gap-3"><Check className="text-primary" strokeWidth={3} size={18} /> Accès VIP : GPT-5, Claude 3.5 Sonnet, Gemini Pro</li>
                   <li className="flex items-center gap-3"><Check className="text-primary" strokeWidth={3} size={18} /> Routage prioritaire anti-panne</li>
-                  <li className="flex items-center gap-3"><Check className="text-primary" strokeWidth={3} size={18} /> Sync cloud en temps réel sur Supabase</li>
-                  <li className="flex items-center gap-3"><Shield className="text-primary" strokeWidth={3} size={18} /> Sécurité et confidentialité renforcées</li>
+                  <li className="flex items-center gap-3"><Shield className="text-primary" strokeWidth={3} size={18} /> Sync cloud en temps réel & chiffrement Supabase</li>
                 </ul>
               </div>
               
               <button 
-                onClick={() => alert("Redirection vers la passerelle de paiement Stripe sécurisée...")}
-                className="w-full text-center bg-primary hover:bg-black text-white font-black py-3 rounded-xl border-2 border-black transition-all shadow-[4px_4px_0px_0px_#000000] text-sm cursor-pointer"
+                onClick={handleUpgradePro}
+                disabled={isUpgrading || currentPlan === "pro"}
+                className={`w-full text-center font-black py-3 rounded-xl border-2 border-black transition-all text-sm cursor-pointer ${
+                  currentPlan === "pro"
+                    ? "bg-emerald-500 text-white shadow-[4px_4px_0px_0px_#000000] cursor-default"
+                    : "bg-primary hover:bg-black text-white shadow-[4px_4px_0px_0px_#000000]"
+                }`}
               >
-                Souscrire via Stripe
+                {isUpgrading ? "Activation en cours..." : currentPlan === "pro" ? "★ Plan Gama Pro Actif ★" : "Activer Gama Pro (Simulation Stripe)"}
               </button>
             </div>
 
@@ -125,7 +208,7 @@ export default function PricingPage() {
           {/* Guarantee badge */}
           <div className="mt-12 text-center bg-black/5 border-2 border-black/10 rounded-xl p-4 max-w-xl">
             <p className="text-xs font-bold text-black/60">
-              🔒 Vos paiements sont sécurisés par Stripe. Vous pouvez annuler votre abonnement à tout moment depuis vos paramètres en un seul clic sans aucune pénalité.
+              🔒 Vos paiements sont sécurisés par Stripe. Le statut de votre abonnement est géré nativement dans Supabase et synchronisé en temps réel sur l'application.
             </p>
           </div>
         </div>
