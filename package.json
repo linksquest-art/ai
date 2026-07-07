@@ -1,4 +1,12 @@
 {
+  "name": "gama-studio-root",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix frontend run start",
+    "lint": "npm --prefix frontend run lint"
+  },
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "@supabase/ssr": "^0.12.0",

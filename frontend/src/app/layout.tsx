@@ -1,12 +1,5 @@
 import type { Metadata } from "next";
-import { Balsamiq_Sans } from "next/font/google";
 import "./globals.css";
-
-const balsamiq = Balsamiq_Sans({
-  variable: "--font-balsamiq",
-  weight: ["400", "700"],
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Gama Studio Pro • Plateforme Multi-Modèles d'IA & Veille Web",
@@ -47,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${balsamiq.variable} h-full antialiased`}>
+    <html lang="fr" className="h-full antialiased">
       <body className="min-h-full flex flex-col font-sans">
         {children}
       </body>

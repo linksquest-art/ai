@@ -79,7 +79,7 @@ export default function PricingPage() {
         body: JSON.stringify({
           userId: user.id,
           userEmail: user.email,
-          returnUrl: window.location.origin + "/pricing"
+          returnUrl: window.location.origin
         })
       });
 
@@ -95,19 +95,6 @@ export default function PricingPage() {
       alert("Erreur Stripe : " + (err.message || "Erreur inconnue"));
       setIsUpgrading(false);
     }
-  };
-
-  const handleDowngradeFree = async () => {
-    if (!user) return;
-    try {
-      const { data, error } = await supabase.auth.updateUser({
-        data: { plan: "free" }
-      });
-      if (!error) {
-        setUser(data.user);
-        alert("🔄 Mode simulation : Vous êtes rebasculé sur le Plan Hobby (Gratuit) bridé.");
-      }
-    } catch (e) {}
   };
 
   return (
@@ -137,15 +124,6 @@ export default function PricingPage() {
           </div>
           
           <div className="flex items-center gap-3">
-            {user && currentPlan === "pro" && (
-              <button 
-                onClick={handleDowngradeFree}
-                className="text-xs font-bold text-black/40 hover:text-black underline px-2 py-1"
-                title="Simuler un retour au plan gratuit pour tester"
-              >
-                Simuler retour gratuit
-              </button>
-            )}
             <Link href="/" className="ink-btn bg-black text-white font-extrabold px-4 py-2 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#FF5500]">
               <span>Retour au Chat</span>
               <ArrowRight size={14} />

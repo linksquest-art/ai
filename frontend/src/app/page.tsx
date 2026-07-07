@@ -104,6 +104,17 @@ function HomeContent() {
     }
   }, [searchParams]);
 
+  // Check if returning from Stripe payment with success=true
+  useEffect(() => {
+    if (searchParams.get("success") === "true") {
+      supabase.auth.updateUser({ data: { plan: "pro" } }).then(({ data }) => {
+        if (data.user) setUser(data.user);
+        alert("🎉 PAIEMENT STRIPE VALIDÉ ! Bienvenue dans Gama Pro ★ ! Vous avez maintenant un accès illimité à GPT-5 et aux tokens !");
+        router.replace("/");
+      });
+    }
+  }, [searchParams]);
+
   // 2. Save sessions to localStorage & sync to Supabase user profile when logged in
   const saveSessions = async (updated: ChatSession[], customUser?: any) => {
     const targetUser = customUser !== undefined ? customUser : user;

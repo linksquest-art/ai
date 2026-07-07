@@ -15,8 +15,14 @@ export async function POST(req: Request) {
 
     const priceId = process.env.STRIPE_PRO_PRICE_ID || "price_1TqYrO4NZ1nHc4tZxeROVY6D";
 
-    // Déterminer l'URL d'origine de l'application
-    const origin = returnUrl || (req.headers.get("origin") || "https://ai.gamastudio.fr");
+    // Déterminer l'URL de base propre de l'application (en mode normal / production)
+    const rawOrigin = returnUrl || req.headers.get("origin") || "https://ai.gamastudio.fr";
+    try {
+      const urlObj = new URL(rawOrigin);
+      var baseOrigin = urlObj.origin;
+    } catch {
+      var baseOrigin = rawOrigin.replace(/\/.*$/, "");
+    }
 
     // Créer la session de paiement Stripe Checkout (Abonnement Récurrent 19€/mois)
     const session = await stripe.checkout.sessions.create({
@@ -34,8 +40,8 @@ export async function POST(req: Request) {
           quantity: 1,
         },
       ],
-      success_url: `${origin}/account?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/pricing?canceled=true`,
+      success_url: `${baseOrigin}/account?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseOrigin}/pricing?canceled=true`,
     });
 
     return NextResponse.json({ url: session.url });
