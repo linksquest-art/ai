@@ -135,10 +135,14 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
     setShowSearchMenu(false);
   };
 
-  // OpenAI Official Models
+  // OpenAI & OpenRouter Paid Models
   const availableModels = [
     { name: "GPT-4o Mini", id: "gpt-4o-mini", desc: "Rapide & économique", icon: Zap, color: "text-emerald-500" },
     { name: "GPT-5", id: "gpt-4o", desc: "Intelligence maximale", icon: Sparkles, color: "text-purple-500" },
+    { name: "Best Écrit", id: "deepseek/deepseek-chat", desc: "Excellence rédactionnelle & création", icon: Sparkles, color: "text-amber-500" },
+    { name: "Raisonnement / Modèle Référence", id: "google/gemini-2.5-pro", desc: "Analyse logique & précision Google", icon: Globe, color: "text-blue-500" },
+    { name: "Claude VIP (Routeur)", id: "openrouter/auto", desc: "Routeur auto débridé au max", icon: Cpu, color: "text-indigo-500" },
+    { name: "Grok 3 Reasoning (xAI)", id: "x-ai/grok-2-1212", desc: "Expert Maths & Actualité en direct", icon: Zap, color: "text-[#FF5500]" },
   ];
 
   const availableSearchModes = [
@@ -488,7 +492,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                   {showModelMenu && (
                     <div className="absolute bottom-12 right-0 z-50 w-72 bg-white ink-border ink-shadow rounded-2xl p-2 flex flex-col gap-1 shadow-[5px_5px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150">
                       <div className="text-[10px] font-black uppercase text-black/40 px-3 py-1 border-b border-black/10 mb-1">
-                        Sélectionner le Modèle IA (Gratuit)
+                        Sélectionner le Modèle IA (Multi-Moteurs)
                       </div>
                       {availableModels.map((item) => {
                         const Icon = item.icon;
@@ -798,7 +802,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                     {showModelMenu && (
                       <div className="absolute bottom-11 left-0 z-50 w-72 bg-white ink-border ink-shadow rounded-2xl p-2 flex flex-col gap-1 shadow-[5px_5px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150">
                         <div className="text-[10px] font-black uppercase text-black/40 px-3 py-1 border-b border-black/10 mb-1">
-                          Sélectionner le Modèle IA (Gratuit)
+                          Sélectionner le Modèle IA (Multi-Moteurs)
                         </div>
                         {availableModels.map((item) => {
                           const Icon = item.icon;
