@@ -324,7 +324,7 @@ function HomeContent() {
       {/* Sidebar - responsive: slide over on mobile, static on desktop */}
       <div className={`fixed md:relative inset-y-0 left-0 z-50 transform ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 transition-transform duration-300 ease-in-out md:flex shrink-0 h-full`}>
         <Sidebar 
-          sessions={sessions} 
+          sessions={sessions.filter(s => !s.isIncognito)} 
           activeSessionId={activeSessionId} 
           onSelectSession={(id) => {
             handleSelectSession(id);
@@ -344,7 +344,14 @@ function HomeContent() {
           onSendMessage={handleSendMessage} 
           isGenerating={isGenerating}
           isIncognito={isIncognito}
-          onToggleIncognito={() => setIsIncognito(!isIncognito)}
+          onToggleIncognito={() => {
+            const next = !isIncognito;
+            setIsIncognito(next);
+            if (!next) {
+              setSessions(prev => prev.filter(s => !s.isIncognito));
+            }
+            setActiveSessionId(null);
+          }}
         />
       </div>
       <UpgradeModal

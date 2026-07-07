@@ -127,6 +127,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
   const plusMenuRef = useRef<HTMLDivElement>(null);
   const modelMenuRef = useRef<HTMLDivElement>(null);
   const searchMenuRef = useRef<HTMLDivElement>(null);
+  const skillMenuRef = useRef<HTMLDivElement>(null);
   
   const [query, setQuery] = useState("");
   const [model, setModel] = useState("GPT-4o Mini (OpenAI)");
@@ -148,6 +149,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const [showModelMenu, setShowModelMenu] = useState(false);
   const [showSearchMenu, setShowSearchMenu] = useState(false);
+  const [showSkillMenu, setShowSkillMenu] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -228,7 +230,8 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
       if (
         !plusMenuRef.current?.contains(e.target as Node) &&
         !modelMenuRef.current?.contains(e.target as Node) &&
-        !searchMenuRef.current?.contains(e.target as Node)
+        !searchMenuRef.current?.contains(e.target as Node) &&
+        !skillMenuRef.current?.contains(e.target as Node)
       ) {
         closeAllMenus();
       }
@@ -250,6 +253,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
     setShowPlusMenu(false);
     setShowModelMenu(false);
     setShowSearchMenu(false);
+    setShowSkillMenu(false);
   };
 
   // OpenAI & OpenRouter Paid Models
@@ -401,46 +405,112 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
   };
 
   const renderSkillsBar = () => (
-    <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-black/10 no-scrollbar select-none w-full">
+    <div className="flex items-center gap-2 pb-2 border-b border-black/10 w-full relative select-none" ref={skillMenuRef}>
       <span className="text-[11px] font-black uppercase text-black/50 shrink-0 flex items-center gap-1">
         <Wand2 size={13} className="text-primary" />
         <span>Skill :</span>
       </span>
-      {skillsList.map((skill) => {
-        const isSelected = selectedSkill.id === skill.id;
-        return (
-          <button
-            key={skill.id}
-            type="button"
-            onClick={() => setSelectedSkill(skill)}
-            className={`px-3 py-1 rounded-xl text-xs font-black flex items-center gap-1.5 shrink-0 border-2 transition-all cursor-pointer ${
-              isSelected
-                ? "bg-black text-white border-black shadow-[2px_2px_0px_0px_#FF5500]"
-                : "bg-white text-black border-black/20 hover:border-black hover:shadow-[2px_2px_0px_0px_#000000]"
-            }`}
-            title={skill.desc}
-          >
-            <span>{skill.icon}</span>
-            <span>{skill.name}</span>
-            {skill.badge && (
-              <span className={`text-[9px] px-1.5 py-0.2 rounded-md uppercase tracking-wider ${
-                isSelected ? "bg-white/20 text-white" : "bg-black/5 text-black/60"
-              }`}>
-                {skill.badge}
-              </span>
-            )}
-          </button>
-        );
-      })}
+      
+      {/* Skill Dropdown Menu */}
+      {showSkillMenu && (
+        <div className="absolute top-9 left-0 z-50 w-80 bg-white ink-border ink-shadow rounded-2xl p-2 flex flex-col gap-1 shadow-[5px_5px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150 max-h-80 overflow-y-auto">
+          <div className="text-[10px] font-black uppercase text-black/40 px-3 py-1 border-b border-black/10 mb-1 flex items-center justify-between">
+            <span>Sélectionner un Skill Pro</span>
+            <span className="text-primary font-bold">{skillsList.length} disponibles</span>
+          </div>
+          
+          {skillsList.map((skill) => {
+            const isSelected = selectedSkill.id === skill.id;
+            return (
+              <button
+                key={skill.id}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setSelectedSkill(skill);
+                  closeAllMenus();
+                }}
+                className={`flex items-start gap-3 w-full px-3 py-2.5 rounded-xl transition-colors text-left ${
+                  isSelected ? "bg-black text-white" : "hover:bg-black/5 text-black"
+                }`}
+              >
+                <span className="text-base shrink-0 mt-0.5">{skill.icon}</span>
+                <div className="flex flex-col flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="font-black text-xs flex items-center gap-1.5 truncate">
+                      <span className="notranslate" translate="no">{skill.name}</span>
+                      {isSelected && <Check size={12} className="text-[#FF5500] shrink-0" />}
+                    </span>
+                    {skill.badge && (
+                      <span className={`text-[9px] px-1.5 py-0.2 rounded-md uppercase tracking-wider shrink-0 font-extrabold ${
+                        isSelected ? "bg-white/20 text-white" : "bg-black/5 text-black/60"
+                      }`}>
+                        {skill.badge}
+                      </span>
+                    )}
+                  </div>
+                  <span className={`text-[10px] font-bold line-clamp-1 ${isSelected ? "text-white/70" : "text-black/50"}`}>
+                    {skill.desc}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+          
+          <div className="border-t border-black/10 mt-1 pt-1">
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                closeAllMenus();
+                setShowSkillModal(true);
+              }}
+              className="w-full px-3 py-2 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 bg-[#FF5500]/10 text-[#FF5500] hover:bg-[#FF5500] hover:text-white transition-all cursor-pointer"
+            >
+              <Plus size={14} strokeWidth={3} />
+              <span>Ajouter / Créer un Skill personnalisé</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Skill Selector Button */}
       <button
         type="button"
-        onClick={() => setShowSkillModal(true)}
-        className="px-3 py-1 rounded-xl text-xs font-extrabold flex items-center gap-1 shrink-0 bg-primary/10 text-primary border-2 border-primary/30 hover:bg-primary hover:text-white transition-all cursor-pointer"
-        title="Télécharger / Créer un nouveau Skill personnalisé"
+        onClick={() => {
+          const wasOpen = showSkillMenu;
+          closeAllMenus();
+          if (!wasOpen) setShowSkillMenu(true);
+        }}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl ink-border-sm font-black text-xs transition-all shadow-[2px_2px_0px_0px_#000000] cursor-pointer ${
+          showSkillMenu || selectedSkill.id !== "none"
+            ? "bg-black text-white"
+            : "bg-white text-black hover:bg-black/5"
+        }`}
       >
-        <Plus size={14} strokeWidth={3} />
-        <span>Ajouter un Skill</span>
+        <span>{selectedSkill.icon}</span>
+        <span className="max-w-[160px] sm:max-w-[220px] truncate">{selectedSkill.name}</span>
+        {selectedSkill.badge && (
+          <span className={`text-[9px] px-1.5 py-0.2 rounded uppercase tracking-wider ${
+            showSkillMenu || selectedSkill.id !== "none" ? "bg-white/20 text-white" : "bg-black/5 text-black/60"
+          }`}>
+            {selectedSkill.badge}
+          </span>
+        )}
+        <ChevronDown size={14} className={showSkillMenu ? "rotate-180 transition-transform" : "transition-transform"} />
       </button>
+
+      {selectedSkill.id !== "none" && (
+        <button
+          type="button"
+          onClick={() => setSelectedSkill(DEFAULT_SKILLS[0])}
+          className="text-black/40 hover:text-red-500 text-xs font-bold px-1.5 transition-colors flex items-center gap-0.5"
+          title="Réinitialiser (Standard sans skill)"
+        >
+          <X size={13} strokeWidth={2.5} />
+          <span className="hidden sm:inline">Réinitialiser</span>
+        </button>
+      )}
     </div>
   );
 
