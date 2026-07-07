@@ -122,7 +122,7 @@ export function Sidebar({
           {/* Top Header Logo */}
           <div className="flex items-center justify-between px-2 pt-1 shrink-0">
             <Link href="/" onClick={handleNewChatClick} className="flex items-center gap-3 group text-left">
-              <img src="/Arrowai.png" alt="Gama Studio Logo" className="w-8 h-8 object-contain group-hover:scale-110 transition-transform" />
+              <img src="/7.png" alt="Gama Studio Logo" className="w-8 h-8 object-contain group-hover:scale-110 transition-transform" />
               <span className="font-black text-xl tracking-tight text-black group-hover:text-primary transition-colors">
                 Gama Studio
               </span>
