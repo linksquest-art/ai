@@ -337,7 +337,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                   
                   {/* 1. Plus Dropdown Menu */}
                   {showPlusMenu && (
-                    <div className="absolute bottom-12 left-0 z-50 w-64 bg-white ink-border ink-shadow rounded-2xl p-2 flex flex-col gap-1 shadow-[5px_5px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute bottom-12 left-0 z-50 w-64 bg-white ink-border ink-shadow rounded-2xl p-2 flex flex-col gap-1 shadow-[5px_5px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150" ref={plusMenuRef}>
                       <div className="text-[10px] font-black uppercase text-black/40 px-3 py-1 border-b border-black/10 mb-1">
                         Ajouter / Actions rapides
                       </div>
@@ -386,7 +386,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
 
                   {/* 2. Search Mode Dropdown Menu */}
                   {showSearchMenu && (
-                    <div className="absolute bottom-12 left-10 z-50 w-72 bg-white ink-border ink-shadow rounded-2xl p-2 flex flex-col gap-1 shadow-[5px_5px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute bottom-12 left-10 z-50 w-72 bg-white ink-border ink-shadow rounded-2xl p-2 flex flex-col gap-1 shadow-[5px_5px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150" ref={searchMenuRef}>
                       <div className="text-[10px] font-black uppercase text-black/40 px-3 py-1 border-b border-black/10 mb-1">
                         Mode de recherche Web
                       </div>
@@ -396,7 +396,9 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                         return (
                           <button
                             key={item.name}
-                            onClick={() => {
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
                               setSearchMode(item.name);
                               closeAllMenus();
                             }}
@@ -448,22 +450,14 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                     <span>{searchMode}</span>
                     <ChevronDown size={14} />
                   </button>
-
-                  <Link 
-                    href="/connectors"
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl ink-border-sm bg-[#FFFFFF] text-[#000000] font-black text-xs hover:bg-[#000000] hover:text-[#FFFFFF] transition-all shadow-[2px_2px_0px_0px_#000000]"
-                  >
-                    <Link2 size={15} />
-                    <span>Connecteurs</span>
-                  </Link>
                 </div>
 
                 {/* Right Side: Model Dropdown, Mic & Send */}
-                <div className="flex items-center gap-2 relative">
+                <div className="flex items-center gap-2 relative" ref={modelMenuRef}>
                   
                   {/* 3. Model Selector Dropdown Menu */}
                   {showModelMenu && (
-                    <div className="absolute bottom-12 right-12 z-50 w-72 bg-white ink-border ink-shadow rounded-2xl p-2 flex flex-col gap-1 shadow-[5px_5px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute bottom-12 right-0 z-50 w-72 bg-white ink-border ink-shadow rounded-2xl p-2 flex flex-col gap-1 shadow-[5px_5px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150">
                       <div className="text-[10px] font-black uppercase text-black/40 px-3 py-1 border-b border-black/10 mb-1">
                         Sélectionner le Modèle IA (Gratuit)
                       </div>
@@ -473,7 +467,9 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                         return (
                           <button
                             key={item.name}
-                            onClick={() => {
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
                               setModel(item.name);
                               closeAllMenus();
                             }}
@@ -653,7 +649,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                     
                     {/* 1. Plus Dropdown Menu (Bottom Chat Bar) */}
                     {showPlusMenu && (
-                      <div className="absolute bottom-11 left-0 z-50 w-64 bg-white ink-border ink-shadow rounded-2xl p-2 flex flex-col gap-1 shadow-[5px_5px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150">
+                      <div className="absolute bottom-11 left-0 z-50 w-64 bg-white ink-border ink-shadow rounded-2xl p-2 flex flex-col gap-1 shadow-[5px_5px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150" ref={plusMenuRef}>
                         <div className="text-[10px] font-black uppercase text-black/40 px-3 py-1 border-b border-black/10 mb-1">
                           Ajouter / Actions rapides
                         </div>
@@ -702,7 +698,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
 
                     {/* 2. Search Mode Dropdown Menu (Bottom Chat Bar) */}
                     {showSearchMenu && (
-                      <div className="absolute bottom-11 left-10 z-50 w-72 bg-white ink-border ink-shadow rounded-2xl p-2 flex flex-col gap-1 shadow-[5px_5px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150">
+                      <div className="absolute bottom-11 left-10 z-50 w-72 bg-white ink-border ink-shadow rounded-2xl p-2 flex flex-col gap-1 shadow-[5px_5px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150" ref={searchMenuRef}>
                         <div className="text-[10px] font-black uppercase text-black/40 px-3 py-1 border-b border-black/10 mb-1">
                           Mode de recherche Web
                         </div>
@@ -712,7 +708,9 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                           return (
                             <button
                               key={item.name}
-                              onClick={() => {
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
                                 setSearchMode(item.name);
                                 closeAllMenus();
                               }}
@@ -765,11 +763,11 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-2 relative">
+                  <div className="flex items-center gap-2 relative" ref={modelMenuRef}>
                     
                     {/* 3. Model Selector Dropdown Menu (Bottom Chat Bar) */}
                     {showModelMenu && (
-                      <div className="absolute bottom-11 right-12 z-50 w-72 bg-white ink-border ink-shadow rounded-2xl p-2 flex flex-col gap-1 shadow-[5px_5px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150">
+                      <div className="absolute bottom-11 left-0 z-50 w-72 bg-white ink-border ink-shadow rounded-2xl p-2 flex flex-col gap-1 shadow-[5px_5px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150">
                         <div className="text-[10px] font-black uppercase text-black/40 px-3 py-1 border-b border-black/10 mb-1">
                           Sélectionner le Modèle IA (Gratuit)
                         </div>
@@ -779,7 +777,9 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                           return (
                             <button
                               key={item.name}
-                              onClick={() => {
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
                                 setModel(item.name);
                                 closeAllMenus();
                               }}

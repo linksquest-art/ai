@@ -68,7 +68,6 @@ export function Sidebar({
   const navItems = [
     { name: "Découvrir", href: "/discover", icon: Compass },
     { name: "Espaces", href: "/spaces", icon: Folder },
-    { name: "Connecteurs", href: "/connectors", icon: Link2 },
     { name: "Tarifs", href: "/pricing", icon: Sparkles },
   ];
 
