@@ -14,7 +14,8 @@ import {
   User as UserIcon,
   Zap,
   Crown,
-  TrendingUp
+  TrendingUp,
+  Settings
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AuthModal } from "./AuthModal";
@@ -63,7 +64,7 @@ export function Sidebar({
     return () => subscription.unsubscribe();
   }, []);
 
-  // Suivi en temps réel de la consommation quotidienne pour la barre de progression UI/UX Pro Max
+  // Suivi en temps réel de la consommation quotidienne
   useEffect(() => {
     const checkQuota = () => {
       const todayStr = new Date().toISOString().split("T")[0];
@@ -88,11 +89,6 @@ export function Sidebar({
     return () => clearInterval(interval);
   }, []);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-  };
-
   const navItems = [
     { name: "Découvrir", href: "/discover", icon: Compass },
     { name: "Espaces", href: "/spaces", icon: Folder },
@@ -100,7 +96,6 @@ export function Sidebar({
   ];
 
   const isPro = user?.user_metadata?.plan === "pro";
-  const percentage = Math.min(100, Math.round((dailyCount / 50) * 100));
 
   return (
     <>
@@ -125,40 +120,6 @@ export function Sidebar({
             <Plus size={18} strokeWidth={3} />
             <span>Nouveau Chat</span>
           </Link>
-
-          {/* User Auth Section (Prominent Login / Profile Button) */}
-          <div className="shrink-0">
-            {user ? (
-              <div className="bg-emerald-50 p-2.5 rounded-xl border-2 border-black flex items-center justify-between shadow-[2px_2px_0px_0px_#000000]">
-                <div className="flex items-center gap-2 overflow-hidden">
-                  <div className={`w-7 h-7 rounded-lg text-white font-black flex items-center justify-center shrink-0 text-xs shadow-sm ${isPro ? "bg-gradient-to-br from-amber-500 to-yellow-600" : "bg-emerald-500"}`}>
-                    {isPro ? "★" : (user.email?.[0].toUpperCase() || "U")}
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-black text-black truncate">{user.email?.split('@')[0]}</span>
-                    <span className={`text-[10px] font-extrabold ${isPro ? "text-amber-700 font-black" : "text-emerald-700"}`}>
-                      {isPro ? "En ligne • Gama Pro ★" : "En ligne • Plan Hobby"}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={handleSignOut}
-                  className="p-1.5 rounded-lg text-black/60 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
-                  title="Se déconnecter"
-                >
-                  <LogOut size={16} />
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="w-full bg-[#FF4500] hover:bg-[#E03E00] text-white font-black py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 text-sm border-2 border-black shadow-[3px_3px_0px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_#000000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer animate-pulse"
-              >
-                <LogIn size={18} strokeWidth={2.5} />
-                <span>Connexion / S'inscrire</span>
-              </button>
-            )}
-          </div>
 
           {/* Primary Navigation */}
           <nav className="flex flex-col gap-1 text-sm font-bold text-black/80 pt-1 shrink-0">
@@ -229,65 +190,55 @@ export function Sidebar({
           </div>
         </div>
 
-        {/* UI/UX PRO MAX - Token & Message Quota Visual Bar */}
+        {/* UI/UX PRO MAX - Minimalist Bottom Account Rectangle */}
         <div className="pt-3 border-t-2 border-black/10 flex flex-col gap-2 shrink-0">
-          {isPro ? (
-            <div className="bg-gradient-to-r from-amber-500/15 via-yellow-500/25 to-amber-500/15 p-2.5 rounded-xl border-2 border-amber-500/60 flex flex-col gap-1.5 shadow-[3px_3px_0px_0px_#f59e0b] animate-in fade-in">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-black uppercase text-amber-900 flex items-center gap-1">
-                  <Crown size={14} className="text-amber-600 fill-amber-500 animate-bounce" />
-                  <span>Quota Gama Pro</span>
-                </span>
-                <span className="text-xs font-black text-amber-800 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30">Illimité ∞</span>
+          {user ? (
+            <Link 
+              href="/account"
+              className="bg-white p-2.5 rounded-xl border-2 border-black flex items-center justify-between shadow-[3px_3px_0px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_#000000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer group"
+              title="Mon Compte, Quotas & Paramètres"
+            >
+              <div className="flex items-center gap-2.5 overflow-hidden">
+                <div className={`w-8 h-8 rounded-lg text-white font-black flex items-center justify-center shrink-0 text-xs shadow-sm ${isPro ? "bg-gradient-to-br from-amber-500 to-yellow-600" : "bg-emerald-500"}`}>
+                  {isPro ? "★" : (user.email?.[0].toUpperCase() || "U")}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-black text-black truncate group-hover:text-primary transition-colors">
+                    {user.email?.split('@')[0]}
+                  </span>
+                  <span className={`text-[10px] font-extrabold flex items-center gap-1 ${isPro ? "text-amber-700" : "text-emerald-700"}`}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                    <span>{isPro ? "Gama Pro ★" : "Hobby (Gratuit)"}</span>
+                  </span>
+                </div>
               </div>
-              <div className="w-full bg-amber-500/20 h-2 rounded-full overflow-hidden border border-amber-500/30">
-                <div className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 h-full w-full animate-pulse"></div>
+              <div className="p-1.5 rounded-lg bg-black/5 group-hover:bg-black group-hover:text-white text-black/70 transition-colors shrink-0 flex items-center justify-center">
+                <Settings size={16} className="group-hover:rotate-45 transition-transform duration-300" />
               </div>
-              <span className="text-[9px] font-black text-amber-900/80 text-left flex items-center justify-between">
-                <span>⚡ GPT-5 & Claude VIP débridés</span>
-                <span className="text-amber-700">Max 2500 tokens</span>
-              </span>
-            </div>
+            </Link>
           ) : (
-            <div className="bg-white p-2.5 rounded-xl border-2 border-black flex flex-col gap-1.5 shadow-[3px_3px_0px_0px_#000000] transition-all hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_#000000]">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-black uppercase text-black/80 flex items-center gap-1">
-                  <Zap size={13} className="text-primary fill-primary" />
-                  <span>Tokens & Quota</span>
-                </span>
-                <span className="text-xs font-black text-black bg-black/5 px-1.5 py-0.5 rounded border border-black/10">
-                  {dailyCount} / 50 <span className="text-[9px] font-bold text-black/50">msgs</span>
-                </span>
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="w-full bg-[#FF4500] hover:bg-[#E03E00] text-white font-black py-2.5 px-3 rounded-xl flex items-center justify-between gap-2 text-sm border-2 border-black shadow-[3px_3px_0px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_#000000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer animate-pulse group"
+              title="Se connecter pour accéder à votre espace et à vos quotas"
+            >
+              <div className="flex items-center gap-2">
+                <LogIn size={18} strokeWidth={2.5} />
+                <span>Connexion / S'inscrire</span>
               </div>
-              
-              <div className="w-full bg-black/10 h-2 rounded-full overflow-hidden border border-black/20 p-[1px]">
-                <div 
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    percentage > 85 ? "bg-red-500" : percentage > 60 ? "bg-amber-500" : "bg-emerald-500"
-                  }`} 
-                  style={{ width: `${Math.max(4, percentage)}%` }}
-                ></div>
+              <div className="p-1 rounded bg-black/20 group-hover:bg-black/40 transition-colors">
+                <Settings size={15} />
               </div>
-
-              <div className="flex items-center justify-between pt-0.5">
-                <span className="text-[9px] font-extrabold text-black/50">Bridé à 700 tokens / rép.</span>
-                <Link href="/pricing" className="text-[10px] font-black text-primary hover:underline flex items-center gap-0.5 group">
-                  <span>Débloquer Pro</span>
-                  <span className="group-hover:translate-x-0.5 transition-transform">➔</span>
-                </Link>
-              </div>
-            </div>
+            </button>
           )}
 
-          {/* Minimalist Footer */}
-          <div className="bg-black/5 p-2 rounded-xl border border-black/10 flex items-center justify-between px-3">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              <span className="text-xs font-bold text-black">Système IA Opérationnel</span>
-            </div>
-            <span className="text-[10px] font-black uppercase text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
-              v2.8
+          {/* Subtle Operational Status */}
+          <div className="flex items-center justify-between px-1 pt-0.5 text-[10px] font-black uppercase text-black/40 select-none">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+              <span>IA Opérationnelle</span>
             </span>
+            <span>v2.9</span>
           </div>
         </div>
       </aside>
