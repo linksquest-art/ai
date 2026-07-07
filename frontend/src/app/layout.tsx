@@ -42,6 +42,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className="h-full antialiased">
       <body className="min-h-full flex flex-col font-sans">
+        {/* Gama Studio Pro Max v2.0 - Production Build */}
         {children}
       </body>
     </html>
