@@ -32,6 +32,7 @@ import {
   BookOpen
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { FlashcardModal } from "@/components/FlashcardModal";
 import { AuthModal } from "./AuthModal";
 
 export interface SkillItem {
@@ -139,6 +140,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
   const [skillsList, setSkillsList] = useState<SkillItem[]>(DEFAULT_SKILLS);
   const [selectedSkill, setSelectedSkill] = useState<SkillItem>(DEFAULT_SKILLS[0]);
   const [showSkillModal, setShowSkillModal] = useState(false);
+  const [showFlashcardModal, setShowFlashcardModal] = useState(false);
   const [newSkillName, setNewSkillName] = useState("");
   const [newSkillDesc, setNewSkillDesc] = useState("");
   const [newSkillPrompt, setNewSkillPrompt] = useState("");
@@ -622,6 +624,11 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
 
   return (
     <div className="flex-1 flex flex-col h-screen overflow-hidden relative bg-[#FFFFFF]">
+      <FlashcardModal
+        isOpen={showFlashcardModal}
+        onClose={() => setShowFlashcardModal(false)}
+        topic={activeSession ? activeSession.title : "Espace de Travail"}
+      />
       {/* Invisible backdrop to close menus when clicking outside */}
       {(showPlusMenu || showModelMenu || showSearchMenu) && (
         <div 
@@ -1028,14 +1035,18 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                           {typeof msg.content === "string" ? msg.content : (Array.isArray(msg.content) ? msg.content.map((p: any) => p.text || "").join("") : String(msg.content))}
                         </div>
 
-                        <div className="flex items-center gap-3 pt-2">
+                        <div className="flex flex-wrap items-center gap-2 pt-2">
                           <button onClick={() => alert("Copié dans le presse-papier !")} className="text-xs font-bold text-black/50 hover:text-black flex items-center gap-1 transition-colors bg-black/5 px-2.5 py-1 rounded-lg">
                             📋 Copier
                           </button>
                           <button className="text-xs font-bold text-black/50 hover:text-black flex items-center gap-1 transition-colors bg-black/5 px-2.5 py-1 rounded-lg">
                             🔄 Régénérer
                           </button>
-                          <span className="text-xs font-bold text-black/40 ml-auto">Généré instantanément via OpenRouter</span>
+                          <button onClick={() => setShowFlashcardModal(true)} className="text-xs font-black text-[#FF5500] hover:text-white hover:bg-[#FF5500] flex items-center gap-1.5 transition-all bg-[#FF5500]/10 border border-[#FF5500]/30 px-3 py-1 rounded-lg cursor-pointer">
+                            <span>🃏</span>
+                            <span>Convertir en Flashcards 3D</span>
+                          </button>
+                          <span className="text-[10px] font-bold text-black/40 ml-auto hidden sm:inline">Généré instantanément via OpenRouter</span>
                         </div>
                       </div>
                     </div>

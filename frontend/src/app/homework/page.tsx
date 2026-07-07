@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { GraduationCap, Sparkles, ArrowRight, BookOpen, Calculator, PenTool, Globe, CheckCircle2, HelpCircle, FileText, Zap, Brain, Lightbulb } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { FlashcardModal } from "@/components/FlashcardModal";
 
 interface Message {
   role: "user" | "assistant";
@@ -24,6 +25,7 @@ export default function HomeworkPage() {
   const [inputSubject, setInputSubject] = useState("");
   const [inputLevel, setInputLevel] = useState("Lycée / Bac");
   const [inputContent, setInputContent] = useState("");
+  const [showFlashcardsModal, setShowFlashcardsModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -84,6 +86,11 @@ export default function HomeworkPage() {
 
   return (
     <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black">
+      <FlashcardModal
+        isOpen={showFlashcardsModal}
+        onClose={() => setShowFlashcardsModal(false)}
+        topic={inputSubject || "Révision Académique"}
+      />
       <Sidebar sessions={sessions} />
       
       <div className="flex-1 flex flex-col h-screen overflow-y-auto">
@@ -204,19 +211,31 @@ export default function HomeworkPage() {
                 <span>L'IA fournira la méthode détaillée de résolution en priorité.</span>
               </div>
 
-              <button
-                onClick={handleLaunchAi}
-                disabled={!inputContent.trim()}
-                className={`w-full sm:w-auto px-8 py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-3 border-2 border-black shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer ${
-                  inputContent.trim()
-                    ? "bg-primary text-white hover:bg-black hover:translate-y-[-2px]"
-                    : "bg-black/10 text-black/40 border-black/20 shadow-none cursor-not-allowed"
-                }`}
-              >
-                <Sparkles size={18} />
-                <span>Générer avec le Professeur IA</span>
-                <ArrowRight size={16} />
-              </button>
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                {activeTool === "flashcards" && (
+                  <button
+                    type="button"
+                    onClick={() => setShowFlashcardsModal(true)}
+                    className="w-full sm:w-auto bg-[#FFFBF5] hover:bg-[#FF5500] text-black hover:text-white px-6 py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-2 border-black shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer shrink-0"
+                  >
+                    <span>🃏</span>
+                    <span>Lancer le Deck 3D</span>
+                  </button>
+                )}
+                <button
+                  onClick={handleLaunchAi}
+                  disabled={!inputContent.trim()}
+                  className={`w-full sm:w-auto px-8 py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-3 border-2 border-black shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer ${
+                    inputContent.trim()
+                      ? "bg-primary text-white hover:bg-black hover:translate-y-[-2px]"
+                      : "bg-black/10 text-black/40 border-black/20 shadow-none cursor-not-allowed"
+                  }`}
+                >
+                  <Sparkles size={18} />
+                  <span>Générer avec le Professeur IA</span>
+                  <ArrowRight size={16} />
+                </button>
+              </div>
             </div>
           </div>
 

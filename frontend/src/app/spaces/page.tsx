@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { Folder, Plus, Sparkles, ArrowRight, Lock, Clock, Trash2, Wand2, Download, Check, Award, BookOpen, X, Cpu } from "lucide-react";
 import Link from "next/link";
 import { DEFAULT_SKILLS, SkillItem } from "@/components/MainContent";
+import { FlashcardModal } from "@/components/FlashcardModal";
 
 interface Message {
   role: "user" | "assistant";
@@ -49,6 +50,7 @@ export default function SpacesPage() {
   const [newSkillBadge, setNewSkillBadge] = useState("Custom");
   const [newSkillIcon, setNewSkillIcon] = useState("⚡");
   const [installedIds, setInstalledIds] = useState<string[]>([]);
+  const [activeFlashcardTopic, setActiveFlashcardTopic] = useState<string | null>(null);
 
   useEffect(() => {
     // Load chat sessions
@@ -167,6 +169,11 @@ export default function SpacesPage() {
 
   return (
     <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black">
+      <FlashcardModal
+        isOpen={!!activeFlashcardTopic}
+        onClose={() => setActiveFlashcardTopic(null)}
+        topic={activeFlashcardTopic || "Espace de Travail"}
+      />
       <Sidebar sessions={sessions} />
       
       <div className="flex-1 flex flex-col h-screen overflow-y-auto">
@@ -181,6 +188,13 @@ export default function SpacesPage() {
           </div>
           
           <div className="flex items-center gap-3 self-end sm:self-auto">
+            <button
+              onClick={() => setActiveFlashcardTopic("Révision Générale")}
+              className="bg-[#FFFBF5] hover:bg-[#FF5500] text-black hover:text-white font-extrabold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 border-2 border-black shadow-[3px_3px_0px_0px_#000000] cursor-pointer transition-all"
+            >
+              <span>🃏</span>
+              <span className="hidden md:inline">Studio Flashcards 3D</span>
+            </button>
             {activeTab === "spaces" ? (
               <button 
                 onClick={() => setIsCreatingSpace(true)}
@@ -373,19 +387,26 @@ export default function SpacesPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between border-t-2 border-black/10 pt-4 mt-2">
-                        <div className="flex items-center gap-3 text-xs font-bold text-black/60">
-                          <span className="flex items-center gap-1.5 bg-black/5 px-3 py-1 rounded-lg border border-black/5">
-                            <Clock size={14} className="text-primary" />
-                            <span>{space.chatsCount} discussion(s)</span>
+                      <div className="flex flex-wrap items-center justify-between border-t-2 border-black/10 pt-4 mt-2 gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="flex items-center gap-1 bg-black/5 px-2.5 py-1.5 rounded-lg border border-black/5 text-xs font-bold text-black/60" title="Nombre de discussions">
+                            <Clock size={13} className="text-primary" />
+                            <span>{space.chatsCount}</span>
                           </span>
+                          <button
+                            onClick={() => setActiveFlashcardTopic(space.title)}
+                            className="bg-[#FFFBF5] hover:bg-[#FF5500] text-black hover:text-white font-black py-1.5 px-3 rounded-xl flex items-center gap-1.5 text-xs border-2 border-black transition-all shadow-[2px_2px_0px_0px_#000000] cursor-pointer shrink-0"
+                            title="Lancer un Deck Flashcards 3D interactif pour cet espace"
+                          >
+                            <span>🃏 Flashcards 3D</span>
+                          </button>
                         </div>
 
                         <Link
                           href={`/?spaceTitle=${encodeURIComponent(space.title)}&spacePrompt=${encodeURIComponent(space.systemPrompt || space.description)}`}
-                          className="bg-black text-white hover:bg-primary font-extrabold py-2.5 px-5 rounded-xl flex items-center gap-2 text-xs border-2 border-black transition-all shadow-[3px_3px_0px_0px_#000000] hover:translate-x-1"
+                          className="bg-black text-white hover:bg-primary font-extrabold py-2 px-4 rounded-xl flex items-center gap-1.5 text-xs border-2 border-black transition-all shadow-[3px_3px_0px_0px_#000000] hover:translate-x-1"
                         >
-                          <span>Lancer une discussion</span>
+                          <span>Lancer</span>
                           <ArrowRight size={14} />
                         </Link>
                       </div>
