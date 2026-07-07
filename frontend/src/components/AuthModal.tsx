@@ -53,12 +53,13 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            emailRedirectTo: window.location.origin,
-          },
         });
         if (error) throw error;
-        setMessage("🎉 Email de vérification envoyé ! Veuillez vérifier votre boîte de réception (et vos spams) pour activer votre compte Pro.");
+        setMessage("🎉 Compte créé avec succès ! Connexion instantanée...");
+        if (onSuccess) onSuccess();
+        setTimeout(() => {
+          onClose();
+        }, 1000);
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
