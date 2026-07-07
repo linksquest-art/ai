@@ -248,10 +248,10 @@ export default function PricingPage() {
                 className={`w-full text-center font-black py-3 rounded-xl border-2 border-black transition-all text-sm cursor-pointer ${
                   currentPlan === "pro"
                     ? "bg-emerald-500 text-white shadow-[4px_4px_0px_0px_#000000] cursor-default"
-                    : "bg-primary hover:bg-black text-white shadow-[4px_4px_0px_0px_#000000]"
+                    : "bg-[#FF5500] hover:bg-black text-white shadow-[4px_4px_0px_0px_#000000]"
                 }`}
               >
-                {isUpgrading ? "Activation en cours..." : currentPlan === "pro" ? "★ Plan Gama Pro Actif ★" : "Activer Gama Pro (Simulation Stripe)"}
+                {isUpgrading ? "Ouverture de Stripe..." : currentPlan === "pro" ? "★ Plan Gama Pro Actif ★" : "👑 Passer à Gama Pro (Paiement Stripe)"}
               </button>
             </div>
 

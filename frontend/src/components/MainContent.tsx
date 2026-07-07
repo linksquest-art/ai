@@ -278,17 +278,36 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                 className={`w-48 h-48 md:w-56 md:h-56 object-contain transition-all ${isGenerating ? 'animate-spin' : 'hover:scale-105 filter drop-shadow-[0_10px_15px_rgba(255,85,0,0.2)]'}`} 
               />
               <div className="flex items-center gap-2.5 mt-2 mb-4">
-                <Link 
-                  href="/pricing"
-                  className={`text-xs md:text-sm font-black tracking-widest uppercase px-3.5 py-1 rounded-xl transition-all shadow-[2px_2px_0px_0px_#000000] flex items-center gap-1.5 ${
-                    isPro
-                      ? "bg-gradient-to-r from-amber-500 to-yellow-600 text-white hover:scale-105"
-                      : "bg-black text-white hover:bg-primary"
-                  }`}
-                  title={isPro ? "Gama Pro Actif" : "Cliquez pour passer à Gama Pro"}
-                >
-                  <span>{isPro ? "★ PRO STUDIO EDITION" : "HOBBY STUDIO EDITION"}</span>
-                </Link>
+                {isPro ? (
+                  <span className="text-xs md:text-sm font-black tracking-widest uppercase px-3.5 py-1 rounded-xl transition-all shadow-[2px_2px_0px_0px_#000000] flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-600 text-white">
+                    ★ PRO STUDIO EDITION
+                  </span>
+                ) : (
+                  <button 
+                    onClick={async () => {
+                      if (!user) {
+                        router.push("/pricing");
+                        return;
+                      }
+                      try {
+                        const res = await fetch("/api/stripe/checkout", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ userId: user.id, userEmail: user.email, returnUrl: window.location.origin })
+                        });
+                        const data = await res.json();
+                        if (data.url) window.location.href = data.url;
+                        else alert("Erreur Stripe : " + (data.error || "Impossible d'ouvrir le paiement"));
+                      } catch (e: any) {
+                        alert("Erreur Stripe : " + e.message);
+                      }
+                    }}
+                    className="text-xs md:text-sm font-black tracking-widest uppercase px-4 py-1.5 rounded-xl transition-all shadow-[3px_3px_0px_0px_#000000] flex items-center gap-1.5 bg-[#FF5500] hover:bg-black text-white hover:scale-105 cursor-pointer animate-pulse"
+                    title="Cliquez pour ouvrir directement la page de paiement Stripe"
+                  >
+                    <span>👑 PASSER À PRO (STRIPE)</span>
+                  </button>
+                )}
                 <span className="text-xs font-bold text-black/60 bg-black/5 px-3 py-1 rounded-xl border border-black/10">
                   ⚡ {isPro ? "Quotas Débridés & VIP" : "Multi-Modèle & Veille Web"}
                 </span>

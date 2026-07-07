@@ -125,7 +125,7 @@ export function UpgradeModal({ isOpen, onClose, user }: UpgradeModalProps) {
             ) : (
               <>
                 <Crown size={18} className="fill-white" />
-                <span>Activer Gama Pro — 19€ / mois</span>
+                <span>👑 Passer à Gama Pro (Paiement Stripe 19€/mois)</span>
                 <ArrowRight size={18} />
               </>
             )}

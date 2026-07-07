@@ -342,9 +342,9 @@ export default function AccountPage() {
                       <button
                         onClick={handleUpgradePro}
                         disabled={isUpgrading}
-                        className="bg-primary hover:bg-black text-white font-black px-5 py-2.5 rounded-xl border-2 border-black text-xs transition-all shadow-[3px_3px_0px_0px_#000000] w-full sm:w-auto text-center cursor-pointer"
+                        className="bg-[#FF5500] hover:bg-black text-white font-black px-5 py-2.5 rounded-xl border-2 border-black text-xs transition-all shadow-[3px_3px_0px_0px_#000000] w-full sm:w-auto text-center cursor-pointer"
                       >
-                        {isUpgrading ? "Activation..." : "Activer Gama Pro (Stripe)"}
+                        {isUpgrading ? "Ouverture de Stripe..." : "👑 Passer à Gama Pro (Paiement Stripe)"}
                       </button>
                     )}
                   </div>

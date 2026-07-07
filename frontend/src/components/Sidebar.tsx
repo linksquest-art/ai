@@ -210,6 +210,28 @@ export function Sidebar({
 
         {/* UI/UX PRO MAX - Minimalist Bottom Account Rectangle */}
         <div className="pt-3 border-t-2 border-black/10 flex flex-col gap-2 shrink-0">
+          {user && !isPro && (
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/stripe/checkout", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ userId: user.id, userEmail: user.email, returnUrl: window.location.origin })
+                  });
+                  const data = await res.json();
+                  if (data.url) window.location.href = data.url;
+                  else alert("Erreur Stripe : " + (data.error || "Impossible d'ouvrir le paiement"));
+                } catch (e: any) {
+                  alert("Erreur Stripe : " + e.message);
+                }
+              }}
+              className="w-full bg-gradient-to-r from-[#FF5500] to-[#FF8800] hover:from-black hover:to-black text-white font-black py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs border-2 border-black shadow-[2px_2px_0px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer animate-pulse"
+              title="Passer à Gama Pro via paiement Stripe sécurisé"
+            >
+              <span>👑 Passer à Pro (Stripe)</span>
+            </button>
+          )}
           {user ? (
             <Link 
               href="/account"
