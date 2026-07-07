@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2025-02-24.acacia" as any,
-});
+const getStripe = () => {
+  const key = process.env.STRIPE_SECRET_KEY || "sk_test_dummy";
+  return new Stripe(key, {
+    apiVersion: "2025-02-24.acacia" as any,
+  });
+};
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "whsec_k2YZXKs0ea9pSE3BczU0w1z6ES2x7Qjr";
 
@@ -17,6 +20,7 @@ export async function POST(req: Request) {
 
     try {
       if (sig && webhookSecret && !webhookSecret.endsWith("...")) {
+        const stripe = getStripe();
         event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
       } else {
         // Fallback en mode test si le secret n'est pas complet

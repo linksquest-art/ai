@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2025-02-24.acacia" as any,
-});
+const getStripe = () => {
+  const key = process.env.STRIPE_SECRET_KEY || "sk_test_dummy";
+  return new Stripe(key, {
+    apiVersion: "2025-02-24.acacia" as any,
+  });
+};
 
 export async function POST(req: Request) {
   try {
@@ -24,6 +27,7 @@ export async function POST(req: Request) {
       var baseOrigin = rawOrigin.replace(/\/.*$/, "");
     }
 
+    const stripe = getStripe();
     // Créer la session de paiement Stripe Checkout (Abonnement Récurrent 19€/mois)
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
