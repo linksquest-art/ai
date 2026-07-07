@@ -46,10 +46,14 @@ function HomeContent() {
 
     const syncUserSessions = async (currentUser: any) => {
       setUser(currentUser);
+      const isProPlan = currentUser?.user_metadata?.plan === "pro";
       if (currentUser) {
         // Au moment de la connexion, récupérer l'historique de chat cloud depuis les métadonnées Supabase
-        const cloudSessions = currentUser.user_metadata?.chat_sessions;
+        let cloudSessions = currentUser.user_metadata?.chat_sessions;
         if (cloudSessions && Array.isArray(cloudSessions) && cloudSessions.length > 0) {
+          if (!isProPlan && cloudSessions.length > 5) {
+            cloudSessions = cloudSessions.slice(0, 5);
+          }
           setSessions(cloudSessions);
           localStorage.setItem("gama_sessions", JSON.stringify(cloudSessions));
           if (savedActive && cloudSessions.some((s: ChatSession) => s.id === savedActive)) {
@@ -58,6 +62,18 @@ function HomeContent() {
             setActiveSessionId(cloudSessions[0].id);
             localStorage.setItem("gama_active_session", cloudSessions[0].id);
           }
+        }
+      } else {
+        const saved = localStorage.getItem("gama_sessions");
+        if (saved) {
+          try {
+            let parsed = JSON.parse(saved);
+            if (parsed.length > 5) {
+              parsed = parsed.slice(0, 5);
+              setSessions(parsed);
+              localStorage.setItem("gama_sessions", JSON.stringify(parsed));
+            }
+          } catch (e) {}
         }
       }
     };
@@ -82,16 +98,19 @@ function HomeContent() {
     }
   }, [searchParams]);
 
-  // 2. Save sessions to localStorage & sync to Supabase user profile when logged in
-  const saveSessions = async (updated: ChatSession[]) => {
-    setSessions(updated);
-    localStorage.setItem("gama_sessions", JSON.stringify(updated));
+  // 2. Save sessions to localStorage & sync to Supabase user profile when logged in (max 5 chats for Free plan)
+  const saveSessions = async (updated: ChatSession[], customUser?: any) => {
+    const targetUser = customUser !== undefined ? customUser : user;
+    const isProPlan = targetUser?.user_metadata?.plan === "pro";
+    const finalSessions = isProPlan ? updated : updated.slice(0, 5);
 
-    // Si l'utilisateur est connecté, synchroniser immédiatement dans son profil Supabase (Cloud sécurisé sans besoin de table SQL !)
-    if (user) {
+    setSessions(finalSessions);
+    localStorage.setItem("gama_sessions", JSON.stringify(finalSessions));
+
+    if (targetUser) {
       try {
         await supabase.auth.updateUser({
-          data: { chat_sessions: updated }
+          data: { chat_sessions: finalSessions }
         });
       } catch (e) {
         console.warn("Erreur de synchronisation cloud Supabase:", e);

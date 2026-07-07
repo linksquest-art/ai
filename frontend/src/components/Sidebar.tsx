@@ -146,12 +146,12 @@ export function Sidebar({
           {/* History Section - Scrollable & Real */}
           <div className="flex flex-col gap-1 pt-3 border-t-2 border-black/10 overflow-y-auto flex-1 min-h-0">
             <div className="flex items-center justify-between px-2.5 text-xs font-black text-black/40 uppercase tracking-wider mb-1 sticky top-0 bg-[#FFFFFF] py-1 z-10">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5" title={isPro ? "Historique Illimité en Pro" : "5 conversations conservées en Plan Hobby gratuit"}>
                 <History size={14} />
-                <span>Historique Réel</span>
+                <span>Historique {isPro ? "" : "(5 max)"}</span>
               </div>
-              <span className="text-[10px] bg-black/5 px-1.5 py-0.5 rounded text-black/60">
-                {sessions.length}
+              <span className="text-[10px] bg-black/5 px-1.5 py-0.5 rounded text-black/60 font-mono">
+                {sessions.length}{isPro ? "" : "/5"}
               </span>
             </div>
 

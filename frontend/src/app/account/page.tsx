@@ -190,15 +190,15 @@ export default function AccountPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-black/5 p-4 rounded-xl border border-black/10 flex flex-col gap-1">
+                <div className="bg-black/5 p-5 rounded-xl border border-black/10 flex items-center justify-between">
+                  <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-black uppercase text-black/40">Adresse E-mail du Compte</span>
-                    <span className="text-sm font-black text-black">{user.email}</span>
+                    <span className="text-base font-black text-black">{user.email}</span>
                   </div>
-                  <div className="bg-black/5 p-4 rounded-xl border border-black/10 flex flex-col gap-1">
-                    <span className="text-[10px] font-black uppercase text-black/40">Identifiant Unique Supabase (UUID)</span>
-                    <span className="text-xs font-mono font-bold text-black/70 truncate">{user.id}</span>
-                  </div>
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-300 flex items-center gap-1.5 shadow-sm">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Compte Actif</span>
+                  </span>
                 </div>
 
                 <div className="flex justify-end pt-2">
@@ -262,18 +262,14 @@ export default function AccountPage() {
                       ></div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                      <div className="bg-black/5 p-3 rounded-xl border border-black/10">
-                        <span className="text-[10px] font-black uppercase text-black/40 block">Bridage Tokens</span>
-                        <span className="text-xs font-black text-black">700 tokens / réponse</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                      <div className="bg-black/5 p-3.5 rounded-xl border border-black/10 flex flex-col gap-1">
+                        <span className="text-[10px] font-black uppercase text-black/40">Historique Conservé</span>
+                        <span className="text-xs font-black text-black">5 conversations max (Suppression auto des plus anciens)</span>
                       </div>
-                      <div className="bg-black/5 p-3 rounded-xl border border-black/10">
-                        <span className="text-[10px] font-black uppercase text-black/40 block">Modèles VIP</span>
-                        <span className="text-xs font-black text-red-600">Verrouillés</span>
-                      </div>
-                      <div className="bg-black/5 p-3 rounded-xl border border-black/10">
-                        <span className="text-[10px] font-black uppercase text-black/40 block">Priorité Serveur</span>
-                        <span className="text-xs font-black text-black/70">Standard</span>
+                      <div className="bg-black/5 p-3.5 rounded-xl border border-black/10 flex flex-col gap-1">
+                        <span className="text-[10px] font-black uppercase text-black/40">Modèles VIP (GPT-5, Claude Pro)</span>
+                        <span className="text-xs font-black text-amber-700">Disponibles en passant à Gama Pro ★</span>
                       </div>
                     </div>
 
@@ -356,12 +352,14 @@ export default function AccountPage() {
                     <div>
                       <h4 className="text-xs font-black text-black">Historique des conversations cloud</h4>
                       <p className="text-[11px] font-bold text-black/60">
-                        Vos {sessions.length} discussions sont synchronisées en temps réel et chiffrées dans vos métadonnées Supabase.
+                        {isPro 
+                          ? "Vos discussions sont synchronisées en temps réel et sans limite dans le cloud." 
+                          : "En plan Hobby gratuit, vos 5 discussions les plus récentes sont conservées automatiquement."}
                       </p>
                     </div>
                   </div>
-                  <span className="text-lg font-black text-blue-900 bg-white px-3 py-1 rounded-lg border border-blue-300 shadow-sm">
-                    {sessions.length} sessions
+                  <span className="text-lg font-black text-blue-900 bg-white px-3 py-1 rounded-lg border border-blue-300 shadow-sm shrink-0 ml-2">
+                    {sessions.length} {isPro ? "session(s)" : "/ 5 max"}
                   </span>
                 </div>
               </div>
