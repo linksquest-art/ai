@@ -59,7 +59,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
   const [query, setQuery] = useState("");
   const [model, setModel] = useState("GPT-4o Mini (OpenAI)");
   const [searchMode, setSearchMode] = useState("Recherche Globale");
-  const [attachedFiles, setAttachedFiles] = useState<{ name: string; type: string }[]>([]);
+  const [attachedFiles, setAttachedFiles] = useState<{ name: string; type: string; base64?: string }[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   
   // Dropdown states
@@ -141,7 +141,8 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
     { name: "GPT-4o Mini (OpenAI)", id: "gpt-4o-mini", desc: "Rapide & économique (Gratuit)", icon: Zap, color: "text-emerald-500" },
     { name: "GPT-5 (OpenAI)", id: "gpt-4o", desc: "Intelligence maximale", icon: Sparkles, color: "text-purple-500" },
     { name: "Gemini 2.5 Pro (Google)", id: "google/gemini-2.5-pro", desc: "Raisonnement & analyse logique approfondie", icon: Globe, color: "text-blue-500" },
-    { name: "Claude Auto (OpenRouter)", id: "openrouter/auto", desc: "Routeur automatique débridé", icon: Cpu, color: "text-indigo-500" },
+    { name: "Claude 3.5 Sonnet (Anthropic)", id: "anthropic/claude-3-5-haiku", desc: "Analyse avancée & Créativité", icon: Cpu, color: "text-indigo-500" },
+    { name: "Nemotron 3 Ultra (NVIDIA)", id: "nvidia/nemotron-3-ultra-550b-a55b", desc: "Puissance 550B paramètres", icon: Zap, color: "text-emerald-600" },
     { name: "Grok 3 (xAI)", id: "x-ai/grok-2-1212", desc: "Expert Maths & Actualité", icon: Zap, color: "text-[#FF5500]" },
   ];
 
@@ -160,10 +161,28 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
       setIsRecording(false);
     }
 
-    let finalContent = query.trim();
+    let finalContent: any = query.trim();
     if (attachedFiles.length > 0) {
-      const filesText = attachedFiles.map(f => `[📎 Fichier joint : ${f.name}]`).join("\n");
-      finalContent = finalContent ? `${finalContent}\n\n${filesText}` : filesText;
+      const images = attachedFiles.filter(f => f.type === "image" && f.base64);
+      const otherFiles = attachedFiles.filter(f => f.type !== "image" || !f.base64);
+      
+      let textPart = finalContent;
+      if (otherFiles.length > 0) {
+        const filesText = otherFiles.map(f => `[📎 Fichier joint : ${f.name}]`).join("\n");
+        textPart = textPart ? `${textPart}\n\n${filesText}` : filesText;
+      }
+      
+      if (images.length > 0) {
+        finalContent = [
+          { type: "text", text: textPart || "Analyse et décris en détail cette image jointe." },
+          ...images.map(img => ({
+            type: "image_url",
+            image_url: { url: img.base64 }
+          }))
+        ];
+      } else {
+        finalContent = textPart;
+      }
     }
 
     const selectedModelObj = availableModels.find(m => m.name === model) || availableModels[0];
@@ -181,12 +200,27 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const newFiles = Array.from(e.target.files).map(file => ({
-        name: file.name,
-        type: file.type.startsWith("image/") ? "image" : "file"
-      }));
+      const filesArray = Array.from(e.target.files);
+      const newFiles = await Promise.all(
+        filesArray.map(async (file) => {
+          const isImg = file.type.startsWith("image/");
+          let base64 = "";
+          if (isImg) {
+            base64 = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.readAsDataURL(file);
+            });
+          }
+          return {
+            name: file.name,
+            type: isImg ? "image" : "file",
+            base64
+          };
+        })
+      );
       setAttachedFiles(prev => [...prev, ...newFiles]);
     }
     closeAllMenus();
@@ -594,7 +628,28 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                     /* User Message: Aligned to right as a neat message bubble */
                     <div className="flex justify-end w-full pl-12">
                       <div className="bg-[#FAFAFA] ink-border-sm rounded-2xl px-5 py-3.5 max-w-2xl text-lg font-black text-[#000000] shadow-[3px_3px_0px_0px_#000000] whitespace-pre-wrap leading-relaxed">
-                        {msg.content}
+                        {typeof msg.content === "string" ? (
+                          msg.content
+                        ) : Array.isArray(msg.content) ? (
+                          <div className="flex flex-col gap-3">
+                            {msg.content.map((part: any, idx: number) => {
+                              if (part.type === "text") return <span key={idx}>{part.text}</span>;
+                              if (part.type === "image_url") {
+                                return (
+                                  <img 
+                                    key={idx} 
+                                    src={part.image_url?.url} 
+                                    alt="Image analysée" 
+                                    className="max-h-60 max-w-full rounded-xl border border-black/20 object-contain bg-white shadow-sm mt-1" 
+                                  />
+                                );
+                              }
+                              return null;
+                            })}
+                          </div>
+                        ) : (
+                          String(msg.content)
+                        )}
                       </div>
                     </div>
                   ) : (
@@ -616,7 +671,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                         </div>
                         
                         <div className="text-lg font-medium text-black/90 leading-relaxed whitespace-pre-wrap pt-0.5">
-                          {msg.content}
+                          {typeof msg.content === "string" ? msg.content : (Array.isArray(msg.content) ? msg.content.map((p: any) => p.text || "").join("") : String(msg.content))}
                         </div>
 
                         <div className="flex items-center gap-3 pt-2">
@@ -651,19 +706,19 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
             </div>
 
             {/* Sticky Bottom Search Box - Always visible with solid borders when in chat */}
-            <div className="border-t-[3px] border-[#000000]/15 p-4 bg-[#FFFFFF] shrink-0 z-10">
-              <div className={`max-w-3xl mx-auto bg-[#FFFBF5] ink-border rounded-xl p-3 flex flex-col gap-3 transition-all relative ${
+            <div className="border-t-[3px] border-[#000000]/15 p-2 sm:p-4 bg-[#FFFFFF] shrink-0 z-10">
+              <div className={`max-w-3xl mx-auto bg-[#FFFBF5] ink-border rounded-xl p-2.5 sm:p-3 flex flex-col gap-3 transition-all relative ${
                 isRecording ? "shadow-[5px_5px_0px_0px_#EF4444] border-red-600 bg-red-50/20" : "ink-shadow"
               }`}>
                 
                 {/* Attached Files inside chat bottom box */}
                 {attachedFiles.length > 0 && (
-                  <div className="flex items-center gap-2 flex-wrap pb-2 border-b border-black/10">
+                  <div className="flex flex-wrap gap-2 pt-1">
                     {attachedFiles.map((file, idx) => (
-                      <span key={idx} className="bg-white border-2 border-black text-black px-2.5 py-0.5 rounded-lg text-xs font-black flex items-center gap-1.5">
-                        {file.type === "image" ? <ImageIcon size={12} className="text-primary" /> : <Paperclip size={12} />}
-                        <span className="max-w-[150px] truncate">{file.name}</span>
-                        <button onClick={() => removeFile(idx)} className="hover:text-red-500 font-extrabold ml-1">×</button>
+                      <span key={idx} className="bg-white border-2 border-black text-black font-extrabold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-[2px_2px_0px_0px_#000000]">
+                        <span>{file.type === "image" ? "🖼️" : "📄"}</span>
+                        <span className="max-w-[120px] sm:max-w-[150px] truncate">{file.name}</span>
+                        <button onClick={() => removeFile(idx)} className="hover:text-red-500 font-extrabold ml-1 p-0.5">×</button>
                       </span>
                     ))}
                   </div>
@@ -673,14 +728,14 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={isRecording ? "🎤 Parlez maintenant... La transcription s'écrit en direct..." : "Posez une question de suivi... ou cliquez sur + pour le menu"}
-                  className="w-full resize-none outline-none text-lg font-black bg-transparent placeholder-[#666666] text-[#000000] min-h-[44px] px-1 pt-1 notranslate"
+                  placeholder={isRecording ? "🎤 Parlez maintenant..." : "Posez une question de suivi... (+ pour joindre une image)"}
+                  className="w-full resize-none outline-none text-base sm:text-lg font-black bg-transparent placeholder-[#666666] text-[#000000] min-h-[44px] px-1 pt-1 notranslate"
                   translate="no"
                   rows={1}
                 />
                 
-                <div className="flex items-center justify-between border-t-2 border-[#000000]/10 pt-2 relative">
-                  <div className="flex items-center gap-2 relative">
+                <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 border-t-2 border-[#000000]/10 pt-2 relative">
+                  <div className="flex items-center gap-1.5 sm:gap-2 relative">
                     
                     {/* 1. Plus Dropdown Menu (Bottom Chat Bar) */}
                     {showPlusMenu && (
@@ -693,7 +748,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                             closeAllMenus();
                             fileInputRef.current?.click();
                           }}
-                          className="flex items-center gap-3 w-full px-3 py-2 rounded-xl hover:bg-black hover:text-white text-black font-extrabold text-xs transition-colors text-left"
+                          className="flex items-center gap-3 w-full px-3 py-2 rounded-xl hover:bg-black hover:text-white text-black font-extrabold text-xs transition-colors text-left min-h-[44px]"
                         >
                           <Paperclip size={15} className="text-primary shrink-0" />
                           <span>Joindre image ou fichier</span>
@@ -703,7 +758,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                             closeAllMenus();
                             setQuery("Génère une idée innovante et complète de projet SaaS en 2026");
                           }}
-                          className="flex items-center gap-3 w-full px-3 py-2 rounded-xl hover:bg-black hover:text-white text-black font-extrabold text-xs transition-colors text-left"
+                          className="flex items-center gap-3 w-full px-3 py-2 rounded-xl hover:bg-black hover:text-white text-black font-extrabold text-xs transition-colors text-left min-h-[44px]"
                         >
                           <Sparkles size={15} className="text-amber-500 shrink-0" />
                           <span>Suggérer une idée créative</span>
@@ -713,7 +768,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                             closeAllMenus();
                             setQuery("Analyse ces données et extrais les tendances principales :\n\n");
                           }}
-                          className="flex items-center gap-3 w-full px-3 py-2 rounded-xl hover:bg-black hover:text-white text-black font-extrabold text-xs transition-colors text-left"
+                          className="flex items-center gap-3 w-full px-3 py-2 rounded-xl hover:bg-black hover:text-white text-black font-extrabold text-xs transition-colors text-left min-h-[44px]"
                         >
                           <Table size={15} className="text-emerald-500 shrink-0" />
                           <span>Analyser des données (CSV)</span>
@@ -723,7 +778,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                             closeAllMenus();
                             setQuery("Fais une synthèse de ce lien Web : https://");
                           }}
-                          className="flex items-center gap-3 w-full px-3 py-2 rounded-xl hover:bg-black hover:text-white text-black font-extrabold text-xs transition-colors text-left"
+                          className="flex items-center gap-3 w-full px-3 py-2 rounded-xl hover:bg-black hover:text-white text-black font-extrabold text-xs transition-colors text-left min-h-[44px]"
                         >
                           <LinkIcon size={15} className="text-blue-500 shrink-0" />
                           <span>Résumer une page Web</span>
@@ -749,7 +804,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                                 setSearchMode(item.name);
                                 closeAllMenus();
                               }}
-                              className={`flex items-start gap-3 w-full px-3 py-2 rounded-xl transition-colors text-left ${
+                              className={`flex items-start gap-3 w-full px-3 py-2 rounded-xl transition-colors text-left min-h-[44px] ${
                                 isSelected ? "bg-black text-white" : "hover:bg-black/5 text-black"
                               }`}
                             >
@@ -775,7 +830,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                         closeAllMenus();
                         if (!wasOpen) setShowPlusMenu(true);
                       }}
-                      className={`p-1.5 rounded-lg ink-border-sm flex items-center justify-center transition-all shadow-[2px_2px_0px_0px_#000000] ${
+                      className={`p-2 sm:p-1.5 rounded-lg ink-border-sm flex items-center justify-center transition-all shadow-[2px_2px_0px_0px_#000000] min-h-[40px] min-w-[40px] ${
                         showPlusMenu ? "bg-black text-white" : "bg-[#FFFFFF] text-[#000000] hover:bg-[#000000] hover:text-[#FFFFFF]"
                       }`}
                       title="Menu d'actions (+)"
@@ -788,21 +843,21 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                         closeAllMenus();
                         if (!wasOpen) setShowSearchMenu(true);
                       }}
-                      className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ink-border-sm font-bold text-xs transition-all shadow-[2px_2px_0px_0px_#000000] ${
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg ink-border-sm font-bold text-xs transition-all shadow-[2px_2px_0px_0px_#000000] min-h-[40px] ${
                         showSearchMenu ? "bg-black text-white" : "bg-[#FFFFFF] text-[#000000] hover:bg-[#000000] hover:text-[#FFFFFF]"
                       }`}
                     >
-                      <Globe size={14} className="text-primary" />
-                      <span>{searchMode}</span>
-                      <ChevronDown size={14} />
+                      <Globe size={14} className="text-primary shrink-0" />
+                      <span className="max-w-[80px] sm:max-w-none truncate">{searchMode}</span>
+                      <ChevronDown size={14} className="shrink-0" />
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-2 relative" ref={modelMenuRef}>
+                  <div className="flex items-center gap-1.5 sm:gap-2 relative ml-auto" ref={modelMenuRef}>
                     
                     {/* 3. Model Selector Dropdown Menu (Bottom Chat Bar) */}
                     {showModelMenu && (
-                      <div className="absolute bottom-11 left-0 z-50 w-72 bg-white ink-border ink-shadow rounded-2xl p-2 flex flex-col gap-1 shadow-[5px_5px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150">
+                      <div className="absolute bottom-11 right-0 z-50 w-72 bg-white ink-border ink-shadow rounded-2xl p-2 flex flex-col gap-1 shadow-[5px_5px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150">
                         <div className="text-[10px] font-black uppercase text-black/40 px-3 py-1 border-b border-black/10 mb-1">
                           Sélectionner le Modèle IA (Multi-Moteurs)
                         </div>
@@ -818,7 +873,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                                 setModel(item.name);
                                 closeAllMenus();
                               }}
-                              className={`flex items-start gap-3 w-full px-3 py-2 rounded-xl transition-colors text-left ${
+                              className={`flex items-start gap-3 w-full px-3 py-2 rounded-xl transition-colors text-left min-h-[44px] ${
                                 isSelected ? "bg-black text-white" : "hover:bg-black/5 text-black"
                               }`}
                             >
@@ -844,18 +899,18 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                         closeAllMenus();
                         if (!wasOpen) setShowModelMenu(true);
                       }}
-                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg ink-border-sm font-black text-xs transition-all shadow-[2px_2px_0px_0px_#000000] ${
+                      className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg ink-border-sm font-black text-xs transition-all shadow-[2px_2px_0px_0px_#000000] min-h-[40px] ${
                         showModelMenu ? "bg-black text-white" : "bg-[#FF5500]/15 text-[#FF5500] hover:bg-[#FF5500] hover:text-[#FFFFFF]"
                       }`}
                     >
-                      <Sparkles size={14} />
-                      <span className="notranslate" translate="no">{model}</span>
-                      <ChevronDown size={14} />
+                      <Sparkles size={14} className="shrink-0" />
+                      <span className="notranslate max-w-[100px] sm:max-w-none truncate" translate="no">{model}</span>
+                      <ChevronDown size={14} className="shrink-0" />
                     </button>
 
                     <button 
                       onClick={toggleVoiceRecognition}
-                      className={`p-1.5 rounded-lg ink-border-sm transition-all shadow-[2px_2px_0px_0px_#000000] ${
+                      className={`p-2 sm:p-1.5 rounded-lg ink-border-sm transition-all shadow-[2px_2px_0px_0px_#000000] min-h-[40px] min-w-[40px] flex items-center justify-center ${
                         isRecording 
                           ? "bg-red-600 text-white animate-pulse border-red-800 shadow-[2px_2px_0px_0px_#7F1D1D]" 
                           : "bg-[#FFFFFF] text-[#000000] hover:bg-[#000000] hover:text-[#FFFFFF]"
@@ -868,14 +923,14 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                     <button 
                       onClick={handleSend}
                       disabled={(!query.trim() && attachedFiles.length === 0) || isGenerating}
-                      className={`py-1.5 px-4 rounded-lg ink-border-sm font-extrabold shadow-[2px_2px_0px_0px_#000000] text-xs flex items-center gap-1.5 transition-all ${
+                      className={`py-1.5 px-3 sm:px-4 rounded-lg ink-border-sm font-extrabold shadow-[2px_2px_0px_0px_#000000] text-xs flex items-center gap-1.5 transition-all min-h-[40px] ${
                         (query.trim() || attachedFiles.length > 0)
                           ? "bg-[#FF5500] text-[#FFFFFF] hover:bg-[#000000] cursor-pointer" 
                           : "bg-[#000000]/10 text-[#000000]/40 border-[#000000]/20 shadow-none cursor-not-allowed"
                       }`}
                     >
                       <span>Envoyer</span>
-                      <ArrowRight size={14} />
+                      <ArrowRight size={14} className="shrink-0" />
                     </button>
                   </div>
                 </div>

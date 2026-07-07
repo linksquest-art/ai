@@ -133,19 +133,14 @@ function HomeContent() {
     }
   };
 
-  const handleNewChat = () => {
-    const isProPlan = user?.user_metadata?.plan === "pro";
-    if (!isProPlan && sessions.length >= 5) {
-      setShowUpgradeModal(true);
-      return;
-    }
-    setActiveSessionId(null);
-    localStorage.removeItem("gama_active_session");
-  };
-
   const handleSelectSession = (id: string) => {
     setActiveSessionId(id);
     localStorage.setItem("gama_active_session", id);
+  };
+
+  const handleNewChat = () => {
+    setActiveSessionId(null);
+    localStorage.removeItem("gama_active_session");
   };
 
   const handleDeleteSession = (id: string) => {
@@ -159,14 +154,16 @@ function HomeContent() {
     }
   };
 
-  const handleSendMessage = async (text: string, modelId?: string, modelName?: string) => {
+  const handleSendMessage = async (text: any, modelId?: string, modelName?: string) => {
     let currentSessions = [...sessions];
     let activeSession = currentSessions.find(s => s.id === activeSessionId);
     let targetSessionId = activeSessionId;
 
     const userMessage: Message = { role: "user", content: text };
-    const targetModelId = modelId || activeSession?.modelId || "anthropic/claude-3.5-sonnet";
-    const targetModelName = modelName || activeSession?.modelName || "Claude 3.5 Sonnet";
+    const targetModelId = modelId || activeSession?.modelId || "deepseek/deepseek-chat";
+    const targetModelName = modelName || activeSession?.modelName || "Best ★";
+
+    const titleText = typeof text === "string" ? text : (Array.isArray(text) ? (text.find((p: any) => p.type === "text")?.text || "📷 Image analysée") : "Nouvelle discussion");
 
     if (!activeSession) {
       const isProPlan = user?.user_metadata?.plan === "pro";
@@ -177,7 +174,7 @@ function HomeContent() {
       const newId = Math.random().toString(36).substring(2, 15);
       const newSession: ChatSession = {
         id: newId,
-        title: text.length > 25 ? text.substring(0, 25) + "..." : text,
+        title: titleText.length > 25 ? titleText.substring(0, 25) + "..." : titleText,
         messages: [userMessage],
         createdAt: Date.now(),
         modelId: targetModelId,
@@ -194,19 +191,6 @@ function HomeContent() {
       if (modelName) activeSession.modelName = modelName;
       saveSessions(currentSessions);
     }
-
-    // Suivi quotidien des quotas de messages dans le navigateur pour la barre visuelle UI/UX Pro Max
-    const todayStr = new Date().toISOString().split("T")[0];
-    const savedQuota = localStorage.getItem("gama_daily_quota");
-    let quotaObj = { date: todayStr, count: 0 };
-    if (savedQuota) {
-      try {
-        const parsed = JSON.parse(savedQuota);
-        if (parsed.date === todayStr) quotaObj.count = parsed.count || 0;
-      } catch (e) {}
-    }
-    quotaObj.count += 1;
-    localStorage.setItem("gama_daily_quota", JSON.stringify(quotaObj));
 
     setIsGenerating(true);
 
@@ -228,9 +212,12 @@ function HomeContent() {
       });
 
       if (!res.ok) throw new Error("API call failed");
-
       const data = await res.json();
-      
+
+      if (data.restrictedModel) {
+        setShowUpgradeModal(true);
+      }
+
       const updatedSessions = currentSessions.map(s => {
         if (s.id === targetSessionId) {
           return {
@@ -262,19 +249,66 @@ function HomeContent() {
   const activeSession = sessions.find(s => s.id === activeSessionId) || null;
 
   return (
-    <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black">
-      <Sidebar 
-        sessions={sessions} 
-        activeSessionId={activeSessionId} 
-        onSelectSession={handleSelectSession} 
-        onNewChat={handleNewChat}
-        onDeleteSession={handleDeleteSession}
-      />
-      <MainContent 
-        activeSession={activeSession} 
-        onSendMessage={handleSendMessage} 
-        isGenerating={isGenerating} 
-      />
+    <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black relative">
+      {/* Mobile Top Bar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white border-b-[3px] border-black px-4 flex items-center justify-between z-30 shadow-sm notranslate" translate="no">
+        <button 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="p-2 -ml-2 text-black hover:bg-black/5 rounded-xl transition-colors flex items-center gap-2 font-black"
+          title="Menu"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+          </svg>
+          <span className="text-sm font-extrabold">Menu</span>
+        </button>
+        <div className="flex items-center gap-2 font-black text-lg">
+          <img src="/7.png" alt="Logo" className="w-7 h-7 object-contain" />
+          <span>Gama Studio</span>
+        </div>
+        <button 
+          onClick={handleNewChat}
+          className="p-2 -mr-2 text-black hover:bg-black/5 rounded-xl transition-colors font-black flex items-center gap-1"
+          title="Nouvelle discussion"
+        >
+          <svg className="w-6 h-6 text-[#FF5500]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Backdrop for mobile sidebar */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden animate-fade-in"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - responsive: slide over on mobile, static on desktop */}
+      <div className={`fixed md:relative inset-y-0 left-0 z-50 transform ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 transition-transform duration-300 ease-in-out md:flex shrink-0 h-full`}>
+        <Sidebar 
+          sessions={sessions} 
+          activeSessionId={activeSessionId} 
+          onSelectSession={(id) => {
+            handleSelectSession(id);
+            setMobileMenuOpen(false);
+          }} 
+          onNewChat={() => {
+            handleNewChat();
+            setMobileMenuOpen(false);
+          }}
+          onDeleteSession={handleDeleteSession}
+        />
+      </div>
+
+      <div className="flex-1 flex flex-col min-h-0 w-full pt-14 md:pt-0 overflow-hidden">
+        <MainContent 
+          activeSession={activeSession} 
+          onSendMessage={handleSendMessage} 
+          isGenerating={isGenerating} 
+        />
+      </div>
       <UpgradeModal
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}

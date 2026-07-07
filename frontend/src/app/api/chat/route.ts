@@ -69,11 +69,14 @@ export async function POST(req: Request) {
     const isRestrictedModel = selectedModel === "gpt-4o" || 
                               selectedModel.includes("gpt-5") || 
                               selectedModel.includes("grok") || 
-                              selectedModel.includes("gemini-2.5-pro");
+                              selectedModel.includes("gemini-2.5-pro") ||
+                              selectedModel.includes("claude") ||
+                              selectedModel.includes("nemotron") ||
+                              selectedModel.includes("nvidia");
     if (!isPro && isRestrictedModel) {
       return NextResponse.json({
         role: "assistant",
-        content: `🔒 **Modèle Exclusif Gama Pro** : L'intelligence avancée de **${selectedModel}** est réservée aux abonnés Pro.\n\n💡 *Astuce : Vous pouvez utiliser **GPT-4o Mini**, **Best ★** ou **Routeur Auto** gratuitement ou activer le plan Pro dans l'onglet **Tarifs** pour y accéder immédiatement !*`,
+        content: `🔒 **Modèle Exclusif Gama Pro** : L'intelligence avancée de **${selectedModel}** est réservée aux abonnés Pro.\n\n💡 *Astuce : Vous pouvez utiliser **GPT-4o Mini** ou **Best ★** gratuitement ou activer le plan Pro dans l'onglet **Tarifs** pour y accéder immédiatement !*`,
         restrictedModel: true
       });
     }
