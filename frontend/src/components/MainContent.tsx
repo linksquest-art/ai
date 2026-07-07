@@ -273,8 +273,8 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
             {/* Mascot in the middle of Welcome Screen instead of old logo */}
             <div className="mb-3 relative flex flex-col items-center justify-center">
               <img 
-                src="/mascot.png" 
-                alt="Gama Studio Mascot" 
+                src="/Arrowai.png" 
+                alt="Gama Studio AI" 
                 className={`w-48 h-48 md:w-56 md:h-56 object-contain transition-all ${isGenerating ? 'animate-spin' : 'hover:scale-105 filter drop-shadow-[0_10px_15px_rgba(255,85,0,0.2)]'}`} 
               />
               <div className="flex items-center gap-2.5 mt-2 mb-4">
@@ -577,8 +577,8 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                     /* Assistant Message: Clean natural conversation thread (no giant boxed card) */
                     <div className="flex items-start gap-4 w-full py-3 pr-8">
                       <img 
-                        src="/mascot.png" 
-                        alt="AI Mascot" 
+                        src="/Arrowai.png" 
+                        alt="Gama AI Star" 
                         className="w-10 h-10 object-contain rounded-full shrink-0 mt-0.5 border border-black/15 p-0.5 bg-white shadow-sm" 
                       />
                       <div className="flex-1 flex flex-col gap-2">

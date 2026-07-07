@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   Plus, 
   Folder, 
@@ -48,6 +48,24 @@ export function Sidebar({
   onDeleteSession = () => {} 
 }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleSelectChat = (id: string) => {
+    localStorage.setItem("gama_active_session", id);
+    onSelectSession(id);
+    if (pathname !== "/") {
+      router.push("/");
+    }
+  };
+
+  const handleNewChatClick = () => {
+    localStorage.removeItem("gama_active_session");
+    onNewChat();
+    if (pathname !== "/") {
+      router.push("/");
+    }
+  };
+
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [dailyCount, setDailyCount] = useState<number>(0);
@@ -103,8 +121,8 @@ export function Sidebar({
         <div className="flex flex-col gap-4 overflow-hidden flex-1 min-h-0">
           {/* Top Header Logo */}
           <div className="flex items-center justify-between px-2 pt-1 shrink-0">
-            <Link href="/" onClick={onNewChat} className="flex items-center gap-3 group text-left">
-              <img src="/logo.png" alt="Gama Studio Logo" className="w-8 h-8 object-contain group-hover:scale-110 transition-transform" />
+            <Link href="/" onClick={handleNewChatClick} className="flex items-center gap-3 group text-left">
+              <img src="/Arrowai.png" alt="Gama Studio Logo" className="w-8 h-8 object-contain group-hover:scale-110 transition-transform" />
               <span className="font-black text-xl tracking-tight text-black group-hover:text-primary transition-colors">
                 Gama Studio
               </span>
@@ -114,7 +132,7 @@ export function Sidebar({
           {/* New Chat Button */}
           <Link
             href="/"
-            onClick={onNewChat}
+            onClick={handleNewChatClick}
             className="ink-btn bg-[#FFFFFF] hover:bg-primary hover:text-white text-black font-extrabold py-2.5 px-3 rounded-xl flex items-center gap-2.5 w-full text-sm shrink-0 border-[2.5px] border-black shadow-[3px_3px_0px_0px_#000000]"
           >
             <Plus size={18} strokeWidth={3} />
@@ -164,7 +182,7 @@ export function Sidebar({
               sessions.map((session) => (
                 <div
                   key={session.id}
-                  onClick={() => onSelectSession(session.id)}
+                  onClick={() => handleSelectChat(session.id)}
                   className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 ${
                     activeSessionId === session.id
                       ? "bg-black text-white border-black shadow-[2px_2px_0px_0px_#000000]"
@@ -199,8 +217,8 @@ export function Sidebar({
               title="Mon Compte, Quotas & Paramètres"
             >
               <div className="flex items-center gap-2.5 overflow-hidden">
-                <div className={`w-8 h-8 rounded-lg text-white font-black flex items-center justify-center shrink-0 text-xs shadow-sm ${isPro ? "bg-gradient-to-br from-amber-500 to-yellow-600" : "bg-emerald-500"}`}>
-                  {isPro ? "★" : (user.email?.[0].toUpperCase() || "U")}
+                <div className={`w-8 h-8 rounded-lg text-white font-black flex items-center justify-center shrink-0 text-xs shadow-sm overflow-hidden ${isPro ? "bg-[#FF5500]" : "bg-emerald-500"}`}>
+                  {isPro ? <img src="/Arrowai.png" alt="Pro" className="w-full h-full object-cover" /> : (user.email?.[0].toUpperCase() || "U")}
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="text-xs font-black text-black truncate group-hover:text-primary transition-colors">

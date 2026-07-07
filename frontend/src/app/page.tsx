@@ -69,6 +69,9 @@ function HomeContent() {
               setSessions(parsed);
               localStorage.setItem("gama_sessions", JSON.stringify(parsed));
             } catch (e) {}
+          } else {
+            setSessions([]);
+            setActiveSessionId(null);
           }
         }
       };
@@ -77,8 +80,16 @@ function HomeContent() {
       syncUserSessions(session?.user ?? null);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      syncUserSessions(session?.user ?? null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        localStorage.removeItem("gama_sessions");
+        localStorage.removeItem("gama_active_session");
+        setSessions([]);
+        setActiveSessionId(null);
+        setUser(null);
+      } else {
+        syncUserSessions(session?.user ?? null);
+      }
     });
 
     return () => subscription.unsubscribe();

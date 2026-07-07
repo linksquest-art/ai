@@ -102,6 +102,8 @@ export default function AccountPage() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    localStorage.removeItem("gama_sessions");
+    localStorage.removeItem("gama_active_session");
     setUser(null);
     router.push("/");
   };
