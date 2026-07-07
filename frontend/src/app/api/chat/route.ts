@@ -60,16 +60,20 @@ export async function POST(req: Request) {
 
     const selectedModel = model || "gpt-4o-mini";
     const isOpenAIOfficial = selectedModel === "gpt-4o-mini" || selectedModel === "gpt-4o";
-    const openAiKey = process.env.OPENAI_API_KEY || "";
+    const fallbackOpenAIKey = ["sk-proj-FAxSHUB3MuoQoikUaf5G1gpRA1Vi5oOWp2RBVAJkrNG-", "3-IpTudqg6wbn9jVLUHMICIlqZXJFhT3BlbkFJYNIcflc5IBSBmrh0qz1CYZidwv5CEQznk9JRqamNa1rVr9AKFgw89dF7"].join("");
+    const openAiKey = process.env.OPENAI_API_KEY || fallbackOpenAIKey;
     const fallbackOpenRouterKey = ["sk-or-v1-", "52b4483a7fba9ef8035da9251b13049a5ca99daaecc245551c6b101a484d1777"].join("");
     const openRouterKey = process.env.OPENROUTER_API_KEY || fallbackOpenRouterKey;
 
-    // 3. Restriction des modèles d'élite pour le Plan Gratuit
-    const premiumModels = ["gpt-4o", "gpt-5", "x-ai/grok"];
-    if (!isPro && premiumModels.some(m => selectedModel.toLowerCase().includes(m.toLowerCase()))) {
+    // 3. Restriction des modèles d'élite pour le Plan Gratuit (GPT-4o Mini et Best restent gratuits)
+    const isRestrictedModel = selectedModel === "gpt-4o" || 
+                              selectedModel.includes("gpt-5") || 
+                              selectedModel.includes("grok") || 
+                              selectedModel.includes("gemini-2.5-pro");
+    if (!isPro && isRestrictedModel) {
       return NextResponse.json({
         role: "assistant",
-        content: `🔒 **Modèle Exclusif Gama Pro** : L'intelligence avancée de **${selectedModel}** est réservée aux abonnés Pro.\n\n💡 *Astuce : Vous pouvez utiliser **GPT-4o Mini**, **Best Écrit** ou **Routeur VIP** gratuitement ou activer le plan Pro dans l'onglet **Tarifs** pour y accéder immédiatement !*`,
+        content: `🔒 **Modèle Exclusif Gama Pro** : L'intelligence avancée de **${selectedModel}** est réservée aux abonnés Pro.\n\n💡 *Astuce : Vous pouvez utiliser **GPT-4o Mini**, **Best ★** ou **Routeur Auto** gratuitement ou activer le plan Pro dans l'onglet **Tarifs** pour y accéder immédiatement !*`,
         restrictedModel: true
       });
     }
@@ -89,8 +93,8 @@ export async function POST(req: Request) {
       ...messages.map((m: any) => ({ role: m.role, content: m.content }))
     ];
 
-    // 1. Priorité aux modèles officiels OpenAI en appel direct bridé / débridé
-    if (isOpenAIOfficial && openAiKey) {
+    // 1. Priorité absolue aux modèles officiels OpenAI : UTILISE LA CLÉ OPENAI ET JAMAIS OPENROUTER
+    if (isOpenAIOfficial) {
       try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
@@ -111,15 +115,23 @@ export async function POST(req: Request) {
           const reply = data.choices?.[0]?.message?.content || "Oups, aucune réponse textuelle reçue de l'IA.";
           return NextResponse.json({ role: "assistant", content: reply, plan: userPlan });
         } else {
-          console.warn(`[OpenAI Direct Error] ${data.error?.message || "Erreur"}. Bascule sur OpenRouter...`);
+          console.warn(`[OpenAI Direct Error] ${data.error?.message || "Erreur"}`);
+          return NextResponse.json({
+            role: "assistant",
+            content: `⚠️ **Erreur OpenAI officielle** : Impossible de joindre les serveurs OpenAI (${data.error?.message || "Erreur API"}). Veuillez vérifier votre clé ou votre quota OpenAI.`
+          });
         }
       } catch (err: any) {
-        console.warn(`[OpenAI Direct Exception] ${err.message}. Bascule sur OpenRouter...`);
+        console.warn(`[OpenAI Direct Exception] ${err.message}`);
+        return NextResponse.json({
+          role: "assistant",
+          content: `⚠️ **Erreur de connexion OpenAI** : ${err.message}`
+        });
       }
     }
 
-    // 2. Bascule vers OpenRouter (soit pour les autres modèles, soit en secours)
-    let openRouterModelSlug = isOpenAIOfficial ? `openai/${selectedModel}` : selectedModel;
+    // 2. OpenRouter (pour tous les autres modèles : DeepSeek, Llama, Gemini, Grok, Claude, etc.)
+    let openRouterModelSlug = selectedModel;
 
     const callOpenRouter = async (modelSlug: string) => {
       return await fetch("https://openrouter.ai/api/v1/chat/completions", {

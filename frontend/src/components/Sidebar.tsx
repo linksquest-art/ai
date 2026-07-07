@@ -189,7 +189,7 @@ export function Sidebar({
                       : "border-transparent text-black hover:bg-black/5 hover:border-black/15"
                   }`}
                 >
-                  <span className="truncate max-w-[150px]">{session.title}</span>
+                  <span className="truncate max-w-[150px] notranslate" translate="no">{session.title}</span>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -264,7 +264,7 @@ export function Sidebar({
             >
               <div className="flex items-center gap-2">
                 <LogIn size={18} strokeWidth={2.5} />
-                <span>Connexion / S'inscrire</span>
+                <span>S'inscrire / Connexion</span>
               </div>
               <div className="p-1 rounded bg-black/20 group-hover:bg-black/40 transition-colors">
                 <Settings size={15} />

@@ -57,7 +57,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
   const searchMenuRef = useRef<HTMLDivElement>(null);
   
   const [query, setQuery] = useState("");
-  const [model, setModel] = useState("GPT-4o Mini");
+  const [model, setModel] = useState("GPT-4o Mini (OpenAI)");
   const [searchMode, setSearchMode] = useState("Recherche Globale");
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; type: string }[]>([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -137,12 +137,12 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
 
   // OpenAI & OpenRouter Paid Models
   const availableModels = [
-    { name: "GPT-4o Mini", id: "gpt-4o-mini", desc: "Rapide & économique", icon: Zap, color: "text-emerald-500" },
-    { name: "GPT-5", id: "gpt-4o", desc: "Intelligence maximale", icon: Sparkles, color: "text-purple-500" },
-    { name: "Best Écrit", id: "deepseek/deepseek-chat", desc: "Excellence rédactionnelle & création", icon: Sparkles, color: "text-amber-500" },
-    { name: "Raisonnement / Modèle Référence", id: "google/gemini-2.5-pro", desc: "Analyse logique & précision Google", icon: Globe, color: "text-blue-500" },
-    { name: "Claude VIP (Routeur)", id: "openrouter/auto", desc: "Routeur auto débridé au max", icon: Cpu, color: "text-indigo-500" },
-    { name: "Grok 3 Reasoning (xAI)", id: "x-ai/grok-2-1212", desc: "Expert Maths & Actualité en direct", icon: Zap, color: "text-[#FF5500]" },
+    { name: "Best ★", id: "deepseek/deepseek-chat", desc: "Modèle d'excellence", icon: Sparkles, color: "text-amber-500" },
+    { name: "GPT-4o Mini (OpenAI)", id: "gpt-4o-mini", desc: "Rapide & économique (Gratuit)", icon: Zap, color: "text-emerald-500" },
+    { name: "GPT-5 (OpenAI)", id: "gpt-4o", desc: "Intelligence maximale", icon: Sparkles, color: "text-purple-500" },
+    { name: "Gemini 2.5 Pro (Google)", id: "google/gemini-2.5-pro", desc: "Raisonnement & analyse logique approfondie", icon: Globe, color: "text-blue-500" },
+    { name: "Claude Auto (OpenRouter)", id: "openrouter/auto", desc: "Routeur automatique débridé", icon: Cpu, color: "text-indigo-500" },
+    { name: "Grok 3 (xAI)", id: "x-ai/grok-2-1212", desc: "Expert Maths & Actualité", icon: Zap, color: "text-[#FF5500]" },
   ];
 
   const availableSearchModes = [
@@ -357,7 +357,8 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={isRecording ? "🎤 Parlez maintenant... La transcription s'écrit en direct..." : "Demandez ce que vous voulez... ou utilisez les menus ci-dessous"}
-                className="w-full resize-none outline-none text-xl md:text-2xl font-black bg-transparent placeholder-[#666666] text-[#000000] min-h-[70px] px-2 pt-1 leading-relaxed"
+                className="w-full resize-none outline-none text-xl md:text-2xl font-black bg-transparent placeholder-[#666666] text-[#000000] min-h-[70px] px-2 pt-1 leading-relaxed notranslate"
+                translate="no"
                 rows={2}
                 autoFocus
               />
@@ -513,7 +514,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                             <Icon size={16} className={`${item.color} shrink-0 mt-0.5`} />
                             <div className="flex flex-col">
                               <span className="font-black text-xs flex items-center gap-1.5">
-                                <span>{item.name}</span>
+                                <span className="notranslate" translate="no">{item.name}</span>
                                 {isSelected && <Check size={12} className="text-primary" />}
                               </span>
                               <span className={`text-[10px] font-bold ${isSelected ? "text-white/70" : "text-black/50"}`}>
@@ -537,7 +538,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                     }`}
                   >
                     <Sparkles size={15} />
-                    <span>{model}</span>
+                    <span className="notranslate" translate="no">{model}</span>
                     <ChevronDown size={14} />
                   </button>
 
@@ -586,7 +587,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
           /* Chat History View (Conversation Log - Clean Natural Thread without giant boxes) */
           <div className="flex-1 flex flex-col min-h-0">
             {/* Scrollable Conversation Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-8 w-full max-w-4xl mx-auto flex flex-col gap-6">
+            <div className="flex-1 overflow-y-auto px-6 py-8 w-full max-w-4xl mx-auto flex flex-col gap-6 notranslate" translate="no">
               {activeSession.messages.map((msg, index) => (
                 <div key={index} className="flex flex-col w-full">
                   {msg.role === "user" ? (
@@ -673,7 +674,8 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder={isRecording ? "🎤 Parlez maintenant... La transcription s'écrit en direct..." : "Posez une question de suivi... ou cliquez sur + pour le menu"}
-                  className="w-full resize-none outline-none text-lg font-black bg-transparent placeholder-[#666666] text-[#000000] min-h-[44px] px-1 pt-1"
+                  className="w-full resize-none outline-none text-lg font-black bg-transparent placeholder-[#666666] text-[#000000] min-h-[44px] px-1 pt-1 notranslate"
+                  translate="no"
                   rows={1}
                 />
                 
@@ -754,7 +756,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                               <Icon size={15} className={`${item.color} shrink-0 mt-0.5`} />
                               <div className="flex flex-col">
                                 <span className="font-black text-xs flex items-center gap-1.5">
-                                  <span>{item.name}</span>
+                                  <span className="notranslate" translate="no">{item.name}</span>
                                   {isSelected && <Check size={12} className="text-primary" />}
                                 </span>
                                 <span className={`text-[10px] font-bold ${isSelected ? "text-white/70" : "text-black/50"}`}>
@@ -823,7 +825,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                               <Icon size={15} className={`${item.color} shrink-0 mt-0.5`} />
                               <div className="flex flex-col">
                                 <span className="font-black text-xs flex items-center gap-1.5">
-                                  <span>{item.name}</span>
+                                  <span className="notranslate" translate="no">{item.name}</span>
                                   {isSelected && <Check size={12} className="text-primary" />}
                                 </span>
                                 <span className={`text-[10px] font-bold ${isSelected ? "text-white/70" : "text-black/50"}`}>
@@ -847,7 +849,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating }: Main
                       }`}
                     >
                       <Sparkles size={14} />
-                      <span>{model}</span>
+                      <span className="notranslate" translate="no">{model}</span>
                       <ChevronDown size={14} />
                     </button>
 

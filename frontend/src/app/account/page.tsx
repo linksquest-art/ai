@@ -351,53 +351,6 @@ export default function AccountPage() {
                 </div>
               </div>
 
-              {/* 🛠️ ENCART MODE DEV / SIMULATION */}
-              <div className="w-full bg-amber-50/90 border-[3px] border-dashed border-amber-600 rounded-2xl p-6 shadow-[5px_5px_0px_0px_#d97706] flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black text-2xl shadow-sm shrink-0">
-                    🛠️
-                  </div>
-                  <div>
-                    <h3 className="text-base font-black text-amber-950 flex items-center gap-2">
-                      <span>Espace Simulation Dev Studio</span>
-                      <span className="bg-amber-200 text-amber-900 text-[10px] px-2 py-0.5 rounded-full font-extrabold uppercase border border-amber-400">Mode Dev Actif</span>
-                    </h3>
-                    <p className="text-xs font-bold text-amber-800/90 max-w-md">
-                      Basculez votre compte entre le mode Gratuit et le mode Pro en 1 clic pour tester et simuler l'interface sans passer par Stripe.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0">
-                  <button
-                    onClick={async () => {
-                      const { data } = await supabase.auth.updateUser({ data: { plan: "pro" } });
-                      if (data.user) setUser(data.user);
-                      alert("🛠️ MODE DEV : Statut basculé en Gama Pro ★ !");
-                    }}
-                    disabled={isPro}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-black border-2 border-black transition-all shadow-[2px_2px_0px_0px_#000000] cursor-pointer ${
-                      isPro ? "bg-amber-200 text-amber-800 opacity-60 cursor-default" : "bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:scale-105"
-                    }`}
-                  >
-                    ⚡ Simuler Gama Pro ★
-                  </button>
-                  <button
-                    onClick={async () => {
-                      const { data } = await supabase.auth.updateUser({ data: { plan: "free" } });
-                      if (data.user) setUser(data.user);
-                      alert("🛠️ MODE DEV : Statut rebasculé en Plan Gratuit !");
-                    }}
-                    disabled={!isPro}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-black border-2 border-black transition-all shadow-[2px_2px_0px_0px_#000000] cursor-pointer ${
-                      !isPro ? "bg-gray-200 text-gray-500 opacity-60 cursor-default" : "bg-white hover:bg-black hover:text-white text-black"
-                    }`}
-                  >
-                    🌱 Simuler Gratuit
-                  </button>
-                </div>
-              </div>
-
               {/* SECTION 4: SAUVEGARDE CLOUD & HISTORIQUE */}
               <div className="bg-white border-[3px] border-black rounded-2xl p-6 shadow-[5px_5px_0px_0px_#000000] flex flex-col gap-6">
                 <div className="flex items-center justify-between border-b-2 border-black/10 pb-4">
