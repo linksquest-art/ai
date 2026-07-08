@@ -182,7 +182,7 @@ export default function PricingPage() {
                   <span>Gama Pro</span>
                 </h3>
                 <p className="text-black/70 font-extrabold mb-6 text-sm">Pour les créateurs et studios qui exigent le maximum d'intelligence.</p>
-                <div className="text-5xl font-black mb-8">19€ <span className="text-base text-black/50 font-bold">/mois</span></div>
+                <div className="text-5xl font-black mb-8">9€ <span className="text-base text-black/50 font-bold">/mois</span></div>
                 
                 <ul className="flex flex-col gap-3 mb-8 border-t-2 border-black/10 pt-6 text-sm font-extrabold">
                   <li className="flex items-center gap-3"><Check className="text-primary" strokeWidth={3} size={18} /> Messages ILLIMITÉS 24h/24</li>

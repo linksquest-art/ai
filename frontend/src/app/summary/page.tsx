@@ -62,7 +62,7 @@ export default function SummaryPage() {
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const isPro = user?.user_metadata?.plan === "pro";
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === "pro";
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -96,7 +96,7 @@ export default function SummaryPage() {
     }
   }, []);
 
-  const saveToHistory = (summary: SavedSummary) => {
+  const saveNewSummary = (summary: SavedSummary) => {
     const updated = [summary, ...savedSummaries];
     setSavedSummaries(updated);
     localStorage.setItem("gama_saved_summaries", JSON.stringify(updated));
@@ -119,6 +119,10 @@ export default function SummaryPage() {
 
   // Generate YouTube Summary
   const handleGenerateYoutube = async () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     if (!youtubeUrl.trim()) return;
     const youtubeCount = savedSummaries.filter(s => s.type === "youtube").length;
     if (!isPro && youtubeCount >= 2) {
@@ -146,7 +150,7 @@ export default function SummaryPage() {
       const generated = data.content || "Aucun résumé généré.";
       setSummaryResult(generated);
 
-      saveToHistory({
+      saveNewSummary({
         id: "yt_" + Date.now(),
         type: "youtube",
         title: data.title ? `${data.title}` : (vidId ? `Vidéo YouTube (${vidId})` : "Résumé Vidéo YouTube"),
@@ -165,6 +169,10 @@ export default function SummaryPage() {
 
   // Generate Course Summary
   const handleGenerateCourse = async () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     if (!courseContent.trim()) return;
     setIsGenerating(true);
     setSummaryResult(null);

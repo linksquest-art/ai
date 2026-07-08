@@ -480,7 +480,7 @@ export default function AccountPage() {
                         {isPro ? "Abonnement Gama Pro ★ (1 Mois)" : "Édition Classique : Hobby Studio"}
                       </h3>
                       <p className="text-xs font-bold text-black/60">
-                        {isPro ? "19€ / mois • Durée d'abonnement : 1 mois • Renouvelable" : "0€ / mois • Tokens bridés à 700 / message"}
+                        {isPro ? "9€ / mois • Durée d'abonnement : 1 mois • Renouvelable" : "0€ / mois • Tokens bridés à 700 / message"}
                       </p>
                     </div>
                   </div>
@@ -495,7 +495,7 @@ export default function AccountPage() {
                         onClick={() => setShowUpgradePopup(true)}
                         className="bg-black hover:bg-[#FF5500] text-white font-black px-5 py-2.5 rounded-xl border-2 border-black text-xs transition-all shadow-[3px_3px_0px_0px_#FF5500] w-full sm:w-auto text-center cursor-pointer"
                       >
-                        👑 Passer à Premium — 19€/mois
+                        👑 Passer à Premium — 9€/mois
                       </button>
                     )}
                   </div>
@@ -605,7 +605,7 @@ export default function AccountPage() {
                 className="w-full bg-[#FF5500] hover:bg-black text-white font-black py-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_#000000] text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Crown size={18} />
-                <span>{isUpgrading ? "Ouverture de Stripe..." : "Souscrire maintenant — 19€ / mois"}</span>
+                <span>{isUpgrading ? "Ouverture de Stripe..." : "Souscrire maintenant — 9€ / mois"}</span>
               </button>
               <button
                 onClick={() => setShowUpgradePopup(false)}

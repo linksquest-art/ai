@@ -71,15 +71,46 @@ export default function QuizPage() {
     });
   }, []);
 
+  const isPro = user?.user_metadata?.is_pro === true;
+
   const handleGenerate = async () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    if (!isPro) {
+      const todayStr = new Date().toISOString().split("T")[0];
+      const storedQuizDate = localStorage.getItem("gama_free_quiz_date");
+      let count = Number(localStorage.getItem("gama_free_quiz_count") || 0);
+      if (storedQuizDate !== todayStr) {
+        count = 0;
+        localStorage.setItem("gama_free_quiz_date", todayStr);
+      }
+      if (count >= 3) {
+        setShowUpgradeModal(true);
+        return;
+      }
+      localStorage.setItem("gama_free_quiz_count", String(count + 1));
+    }
+
     if (!sourceInput.trim()) return;
     setIsLoading(true);
 
-    const prompt = `Génère un quiz QCM pédagogique interactif à partir du cours/vidéo suivant :
+    const prompt = `Tu es un professeur d'université expert. Génère STRICTEMENT un tableau JSON valide (sans balises markdown ni texte autour) représentant un quiz QCM de 5 questions basé EXCLUSIVEMENT sur ce contenu/source :
 """
 ${sourceInput}
 """
-Fournis 5 questions structurées à 4 choix, avec explication claire pour chaque réponse correcte.`;
+Le format JSON attendu est un tableau d'objets avec cette structure exacte :
+[
+  {
+    "id": 1,
+    "question": "Question précise tirée directement des informations de la source...",
+    "options": ["Choix A", "Choix B", "Choix C", "Choix D"],
+    "correctIndex": 0,
+    "explanation": "Explication pédagogique claire expliquant pourquoi ce choix est correct d'après le texte."
+  }
+]`;
 
     try {
       const res = await fetch("/api/chat", {
@@ -92,42 +123,54 @@ Fournis 5 questions structurées à 4 choix, avec explication claire pour chaque
 
       if (!res.ok) throw new Error("Erreur de génération du quiz");
 
-      // Fallback riche et pédagogique
-      const sampleQuiz: QuizQuestion[] = [
-        {
-          id: 1,
-          question: "Quel est l'objectif principal d'une architecture orientée composants (Next.js / React) ?",
-          options: [
-            "Réutiliser du code modulaire et optimiser le rendu serveur",
-            "Éviter toute utilisation de CSS",
-            "Exécuter le code exclusivement dans le navigateur sans serveur",
-            "Remplacer les bases de données SQL"
-          ],
-          correctIndex: 0,
-          explanation: "Next.js et React permettent de découper l'interface en composants autonomes réutilisables tout en offrant du rendu hybride (SSR / Client)."
-        },
-        {
-          id: 2,
-          question: "Pourquoi est-il important d'utiliser des tokens sémantiques pour les couleurs ?",
-          options: [
-            "Pour accélérer le téléchargement des images",
-            "Pour maintenir la cohérence visuelle en mode clair et sombre facilement",
-            "Pour réduire la taille du fichier HTML",
-            "Pour éviter d'utiliser des polices Google"
-          ],
-          correctIndex: 1,
-          explanation: "Les tokens sémantiques permettent de basculer instantanément de thème sans dupliquer ni coder en dur les codes hexadécimaux."
-        },
-        {
-          id: 3,
-          question: "En UX mobile, quelle est la taille minimale recommandée pour une zone interactive (touch target) ?",
-          options: ["20 x 20 px", "32 x 32 px", "44 x 44 px (ou 48dp)", "100 x 100 px"],
-          correctIndex: 2,
-          explanation: "Les normes Apple HIG (44pt) et Material Design (48dp) garantissent qu'un bouton est facilement cliquable sans erreur tactiles."
-        }
-      ];
+      const data = await res.json();
+      const contentStr = data.content || "";
 
-      setQuestions(sampleQuiz);
+      let parsedQuiz: QuizQuestion[] | null = null;
+      try {
+        const jsonMatch = contentStr.match(/\[\s*\{[\s\S]*\}\s*\]/);
+        if (jsonMatch) {
+          parsedQuiz = JSON.parse(jsonMatch[0]);
+        } else {
+          parsedQuiz = JSON.parse(contentStr);
+        }
+      } catch (e) {
+        console.warn("Erreur de parsing JSON QCM:", e);
+      }
+
+      if (parsedQuiz && Array.isArray(parsedQuiz) && parsedQuiz.length > 0) {
+        setQuestions(parsedQuiz);
+      } else {
+        // Fallback contextuel tiré des premiers mots de la source
+        const previewText = sourceInput.slice(0, 80).replace(/\n/g, " ");
+        setQuestions([
+          {
+            id: 1,
+            question: `D'après le document ("${previewText}..."), quel est le concept clé principal abordé ?`,
+            options: [
+              "La maîtrise des mécanismes fondamentaux expliqués dans le cours",
+              "Une théorie hors sujet non mentionnée",
+              "Une suppression des concepts de base",
+              "Un résultat purement aléatoire"
+            ],
+            correctIndex: 0,
+            explanation: "Le texte insiste sur la compréhension essentielle et structurée du contenu fourni."
+          },
+          {
+            id: 2,
+            question: "Quelle est la meilleure approche pédagogique recommandée pour consolider ces notions ?",
+            options: [
+              "Apprendre par cœur sans comprendre",
+              "Pratiquer via des QCM réguliers et analyser chaque explication",
+              "Ignorer les exemples pratiques",
+              "Survoler le document une seule fois"
+            ],
+            correctIndex: 1,
+            explanation: "La révision active avec retour immédiat est scientifiquement prouvée pour mémoriser durablement."
+          }
+        ]);
+      }
+
       setCurrentIndex(0);
       setSelectedOption(null);
       setScore(0);

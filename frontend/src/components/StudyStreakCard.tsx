@@ -24,45 +24,73 @@ export function StudyStreakCard({ onIncrement }: { onIncrement?: () => void }) {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user?.user_metadata?.study_streak) {
-        setStreak(session.user.user_metadata.study_streak);
-      }
-    });
+    const todayStr = new Date().toISOString().split("T")[0];
+    const todayIndex = (new Date().getDay() + 6) % 7; // Lun=0 ... Dim=6
+    const todayLabel = DAYS[todayIndex];
 
-    const localData = localStorage.getItem("gama_study_streak");
-    if (localData) {
-      try {
-        const parsed = JSON.parse(localData);
-        // Ne jamais garder d'anciennes fausses données de démonstration (ex: 3 ou 4 jours par défaut)
-        if (
-          (parsed.currentStreak === 3 && parsed.completedThisWeek?.length === 3) ||
-          (parsed.currentStreak === 4 && parsed.completedThisWeek?.length === 4)
-        ) {
-          const zeroData: StudyStreakData = {
-            currentStreak: 0,
-            lastActiveDate: "",
-            weeklyGoal: 5,
-            completedThisWeek: []
-          };
-          setStreak(zeroData);
-          localStorage.setItem("gama_study_streak", JSON.stringify(zeroData));
-        } else {
-          setStreak(parsed);
-        }
-      } catch (e) {}
-    } else {
-      // Zéro absolu à la création d'un compte (aucune fausse donnée)
-      const zeroData: StudyStreakData = {
+    const loadAndSyncStreak = async () => {
+      let currentData: StudyStreakData = {
         currentStreak: 0,
         lastActiveDate: "",
         weeklyGoal: 5,
         completedThisWeek: []
       };
-      setStreak(zeroData);
-      localStorage.setItem("gama_study_streak", JSON.stringify(zeroData));
-    }
+
+      // 1. Lire d'abord depuis localStorage ou Supabase metadata
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+
+      if (session?.user?.user_metadata?.study_streak) {
+        currentData = session.user.user_metadata.study_streak;
+      } else {
+        const localData = localStorage.getItem("gama_study_streak");
+        if (localData) {
+          try {
+            const parsed = JSON.parse(localData);
+            // Purger les anciennes fausses données par défaut (3 ou 4 jours arbitraires)
+            if (
+              (parsed.currentStreak === 3 && parsed.completedThisWeek?.length === 3) ||
+              (parsed.currentStreak === 4 && parsed.completedThisWeek?.length === 4)
+            ) {
+              currentData = { currentStreak: 0, lastActiveDate: "", weeklyGoal: 5, completedThisWeek: [] };
+            } else {
+              currentData = parsed;
+            }
+          } catch (e) {}
+        }
+      }
+
+      // 2. Valider automatiquement la connexion / activité d'aujourd'hui comme une vraie streak !
+      const alreadyLoggedToday = currentData.lastActiveDate === todayStr;
+      const updatedDays = currentData.completedThisWeek.includes(todayLabel)
+        ? currentData.completedThisWeek
+        : [...currentData.completedThisWeek, todayLabel];
+
+      const newStreakCount = alreadyLoggedToday
+        ? currentData.currentStreak
+        : Math.max(1, currentData.currentStreak + 1);
+
+      const syncedData: StudyStreakData = {
+        currentStreak: newStreakCount,
+        lastActiveDate: todayStr,
+        weeklyGoal: currentData.weeklyGoal || 5,
+        completedThisWeek: updatedDays
+      };
+
+      setStreak(syncedData);
+      localStorage.setItem("gama_study_streak", JSON.stringify(syncedData));
+
+      // 3. Synchroniser avec Supabase en arrière-plan si connecté
+      if (session?.user) {
+        supabase.auth.updateUser({
+          data: {
+            study_streak: syncedData
+          }
+        });
+      }
+    };
+
+    loadAndSyncStreak();
   }, []);
 
   const incrementStreak = () => {
@@ -131,16 +159,23 @@ export function StudyStreakCard({ onIncrement }: { onIncrement?: () => void }) {
       <div className="grid grid-cols-7 gap-2">
         {DAYS.map((day) => {
           const isDone = streak.completedThisWeek.includes(day);
+          const todayIndex = (new Date().getDay() + 6) % 7;
+          const isToday = day === DAYS[todayIndex];
+
           return (
             <div
               key={day}
-              className={`flex flex-col items-center justify-center py-2.5 px-1 rounded-xl border-2 transition-all ${
+              className={`relative flex flex-col items-center justify-center py-2.5 px-1 rounded-xl border-2 transition-all ${
                 isDone
                   ? "bg-[#FF5500] text-white border-black shadow-[2px_2px_0px_0px_#000000] scale-105"
+                  : isToday
+                  ? "bg-amber-100 text-black border-black/50"
                   : "bg-[#FAFAFA] text-black/40 border-black/15"
               }`}
             >
-              <span className="text-[10px] font-black uppercase mb-1">{day}</span>
+              <span className="text-[10px] font-black uppercase mb-1 flex items-center gap-1">
+                {day}
+              </span>
               {isDone ? (
                 <Flame size={16} className="fill-white" />
               ) : (
