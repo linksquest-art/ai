@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Calendar as CalendarIcon, Plus, Sparkles, Clock, Trash2, ChevronLeft, ChevronRight, CheckCircle2, Tag, AlertCircle, X, Check, Copy, CalendarDays } from "lucide-react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
 interface Message {
   role: "user" | "assistant";
@@ -37,6 +38,7 @@ const toLocalYYYYMMDD = (d: Date): string => {
 export default function CalendarPage() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [user, setUser] = useState<any>(null);
   const [currentDate, setCurrentDate] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 12, 0, 0));
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("Tous");
   
@@ -54,13 +56,14 @@ export default function CalendarPage() {
       try { setSessions(JSON.parse(savedSessions)); } catch (e) {}
     }
 
-    const savedEvents = localStorage.getItem("gama_calendar_events");
-    if (savedEvents) {
-      try {
-        setEvents(JSON.parse(savedEvents));
-      } catch (e) {}
-    } else {
-      // Default sample events
+    const loadLocalOrDefaults = () => {
+      const savedEvents = localStorage.getItem("gama_calendar_events");
+      if (savedEvents) {
+        try {
+          setEvents(JSON.parse(savedEvents));
+          return;
+        } catch (e) {}
+      }
       const today = toLocalYYYYMMDD(new Date());
       const defaults: CalendarEvent[] = [
         { id: "1", title: "Rendu du Projet Algorithmique", date: today, time: "14:00", category: "Études / Devoirs", color: "bg-purple-500" },
@@ -69,12 +72,53 @@ export default function CalendarPage() {
       ];
       setEvents(defaults);
       localStorage.setItem("gama_calendar_events", JSON.stringify(defaults));
-    }
+    };
+
+    const syncUserEvents = (currentUser: any) => {
+      setUser(currentUser);
+      if (currentUser) {
+        const cloudEvents = currentUser.user_metadata?.calendar_events;
+        if (cloudEvents && Array.isArray(cloudEvents) && cloudEvents.length > 0) {
+          setEvents(cloudEvents);
+          localStorage.setItem("gama_calendar_events", JSON.stringify(cloudEvents));
+        } else {
+          loadLocalOrDefaults();
+        }
+      } else {
+        loadLocalOrDefaults();
+      }
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      syncUserEvents(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        setUser(null);
+        loadLocalOrDefaults();
+      } else {
+        syncUserEvents(session?.user ?? null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const saveEvents = (updated: CalendarEvent[]) => {
+  const saveEvents = async (updated: CalendarEvent[]) => {
     setEvents(updated);
     localStorage.setItem("gama_calendar_events", JSON.stringify(updated));
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await supabase.auth.updateUser({
+          data: { calendar_events: updated }
+        });
+      }
+    } catch (e) {
+      console.warn("Erreur sauvegarde calendrier Supabase:", e);
+    }
   };
 
   const handleAddEvent = () => {
@@ -182,7 +226,12 @@ export default function CalendarPage() {
               <CalendarIcon size={24} strokeWidth={2.5} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-black uppercase tracking-tight">Calendrier & Organisation IA</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-black text-black uppercase tracking-tight">Calendrier & Organisation IA</h1>
+                <span className="text-[10px] bg-[#F0FDF4] text-[#16A34A] border border-[#16A34A] px-2 py-0.5 rounded-full font-extrabold uppercase flex items-center gap-1">
+                  ☁️ Supabase Sync
+                </span>
+              </div>
               <p className="text-xs font-bold text-black/50">Planifiez vos projets, examens et sessions avec l'assistance IA Pro</p>
             </div>
           </div>
