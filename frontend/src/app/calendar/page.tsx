@@ -226,12 +226,7 @@ export default function CalendarPage() {
               <CalendarIcon size={24} strokeWidth={2.5} />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-black text-black uppercase tracking-tight">Calendrier & Organisation IA</h1>
-                <span className="text-[10px] bg-[#F0FDF4] text-[#16A34A] border border-[#16A34A] px-2 py-0.5 rounded-full font-extrabold uppercase flex items-center gap-1">
-                  ☁️ Supabase Sync
-                </span>
-              </div>
+              <h1 className="text-2xl font-black text-black uppercase tracking-tight">Calendrier & Organisation IA</h1>
               <p className="text-xs font-bold text-black/50">Planifiez vos projets, examens et sessions avec l'assistance IA Pro</p>
             </div>
           </div>
