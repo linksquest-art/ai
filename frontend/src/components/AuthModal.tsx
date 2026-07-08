@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Mail, Lock, LogIn, UserPlus, Sparkles, AlertCircle, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -17,8 +18,13 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -82,9 +88,9 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-white rounded-3xl p-8 shadow-[8px_8px_0px_0px_#000000] border-4 border-black animate-in zoom-in-95 duration-200">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+      <div className="relative w-full max-w-md bg-white rounded-3xl p-8 shadow-[8px_8px_0px_0px_#000000] border-4 border-black animate-in zoom-in-95 duration-200 my-auto">
         
         {/* Close Button */}
         <button
@@ -197,10 +203,10 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-12 rounded-2xl bg-[#FF4500] text-white border-2 border-black font-black text-sm flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_#000000] hover:bg-[#E03E00] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#000000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all disabled:opacity-50 mt-2"
+            className="w-full h-12 rounded-2xl bg-[#FF4500] hover:bg-[#E03E00] text-white border-2 border-black font-black text-sm flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#000000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all disabled:opacity-50 mt-2"
           >
             {loading ? (
-              <span className="animate-pulse">Chargement...</span>
+              <span>Chargement...</span>
             ) : isSignUp ? (
               <>
                 <UserPlus size={18} strokeWidth={2.5} />
@@ -233,6 +239,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -64,14 +64,7 @@ export default function CalendarPage() {
           return;
         } catch (e) {}
       }
-      const today = toLocalYYYYMMDD(new Date());
-      const defaults: CalendarEvent[] = [
-        { id: "1", title: "Rendu du Projet Algorithmique", date: today, time: "14:00", category: "Études / Devoirs", color: "bg-purple-500" },
-        { id: "2", title: "Réunion d'Équipe Architecture", date: today, time: "16:30", category: "Projet SaaS", color: "bg-amber-500" },
-        { id: "3", title: "Session Révisions Intensives", date: today, time: "18:00", category: "Études / Devoirs", color: "bg-blue-500" },
-      ];
-      setEvents(defaults);
-      localStorage.setItem("gama_calendar_events", JSON.stringify(defaults));
+      setEvents([]);
     };
 
     const syncUserEvents = (currentUser: any) => {

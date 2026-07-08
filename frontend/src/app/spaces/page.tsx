@@ -393,13 +393,6 @@ export default function SpacesPage() {
                             <Clock size={13} className="text-primary" />
                             <span>{space.chatsCount}</span>
                           </span>
-                          <button
-                            onClick={() => setActiveFlashcardTopic(space.title)}
-                            className="bg-[#FFFBF5] hover:bg-[#FF5500] text-black hover:text-white font-black py-1.5 px-3 rounded-xl flex items-center gap-1.5 text-xs border-2 border-black transition-all shadow-[2px_2px_0px_0px_#000000] cursor-pointer shrink-0"
-                            title="Lancer un Deck Flashcards 3D interactif pour cet espace"
-                          >
-                            <span>🃏 Flashcards 3D</span>
-                          </button>
                         </div>
 
                         <Link

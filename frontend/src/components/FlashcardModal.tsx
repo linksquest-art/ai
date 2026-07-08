@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, RotateCw, Check, Sparkles, Plus, ArrowRight, ArrowLeft, HelpCircle, Lightbulb, Trophy, Brain, Award, RefreshCw, Loader2 } from "lucide-react";
+import { createPortal } from "react-dom";
+import { X, RotateCw, Check, Sparkles, Plus, ArrowRight, ArrowLeft, HelpCircle, Lightbulb, Trophy, Brain, Award, RefreshCw, Loader2, BookOpen, Wand2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export interface Flashcard {
@@ -65,42 +66,28 @@ export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", i
   const [newQuestion, setNewQuestion] = useState("");
   const [newAnswer, setNewAnswer] = useState("");
   const [newCategory, setNewCategory] = useState("");
+  const [mounted, setMounted] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
+  const [themeInput, setThemeInput] = useState("");
+  const [selectedCount, setSelectedCount] = useState<number>(5);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
-      if (initialText && initialText.trim()) {
-        setCards([]);
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setIsFinished(false);
-        handleGenerateAI(initialText);
-      } else if (initialCards && initialCards.length > 0) {
+      if (initialCards && initialCards.length > 0) {
         setCards(initialCards.map(c => ({ ...c, known: undefined })));
         setCurrentIndex(0);
         setIsFlipped(false);
         setIsFinished(false);
-      } else if (topic && topic !== "Espace de Travail" && topic !== "Révision Académique") {
-        setCards([]);
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setIsFinished(false);
-        handleGenerateAI();
+        setHasStarted(true);
       } else {
-        // Find matching topic or load default cards
-        const matchedTopic = Object.keys(DEFAULT_FLASHCARDS_BY_TOPIC).find(k => 
-          topic.toLowerCase().includes(k.toLowerCase())
-        );
-        const loadCards = matchedTopic ? DEFAULT_FLASHCARDS_BY_TOPIC[matchedTopic] : DEFAULT_FLASHCARDS_BY_TOPIC.default;
-        
-        const customized = loadCards.map((c, i) => ({
-          ...c,
-          category: i === 0 ? topic : c.category,
-          known: undefined
-        }));
-        setCards(customized);
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setIsFinished(false);
+        const defaultPrompt = initialText || (topic && topic !== "Espace de Travail" ? topic : "");
+        setThemeInput(defaultPrompt);
+        setHasStarted(false);
+        setIsGeneratingAI(false);
       }
     }
   }, [isOpen, topic, initialCards, initialText]);
@@ -197,14 +184,13 @@ export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", i
     }
   };
 
-  const handleGenerateAI = async (customText?: any) => {
-    const textToUse = typeof customText === "string" ? customText : undefined;
+  const handleGenerateAI = async (customText?: any, countOverride?: number) => {
+    const textToUse = typeof customText === "string" && customText.trim() ? customText : themeInput || topic;
+    const countToGenerate = typeof countOverride === "number" ? countOverride : selectedCount;
     setIsGeneratingAI(true);
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession();
-      const promptContent = textToUse 
-        ? `Génère exactement 5 flashcards de révision (Questions/Réponses) très pertinentes et pédagogiques à partir de ce texte/cours :\n\n${textToUse.substring(0, 1800)}` 
-        : `Génère exactement 5 flashcards de niveau universitaire et expertes pour tester et maîtriser le sujet : "${topic}".`;
+      const promptContent = `Génère exactement ${countToGenerate} flashcards de révision (Questions/Réponses) très pertinentes, structurées et pédagogiques pour tester et maîtriser ce sujet/cours :\n\n"${textToUse}"`;
 
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -215,7 +201,7 @@ export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", i
         body: JSON.stringify({
           messages: [{ role: "user", content: promptContent }],
           model: "deepseek/deepseek-chat",
-          systemPrompt: "Tu es un professeur et concepteur pédagogique d'élite. Tu DOIS répondre UNIQUEMENT et STRICTEMENT par un tableau JSON valide contenant exactement 5 objets flashcards. Aucun texte autour, aucune introduction, aucune conclusion, pas de balises markdown ```json. Le format strict de chaque objet est : {\"question\": \"La question précise\", \"answer\": \"La réponse détaillée et claire\", \"category\": \"Le sous-thème\"}"
+          systemPrompt: `Tu es un professeur et concepteur pédagogique d'élite. Tu DOIS répondre UNIQUEMENT et STRICTEMENT par un tableau JSON valide contenant exactement ${countToGenerate} objets flashcards. Aucun texte autour, aucune introduction, aucune conclusion, pas de balises markdown \`\`\`json. Le format strict de chaque objet est : {"question": "La question précise", "answer": "La réponse détaillée et claire", "category": "Le sous-thème"}`
         })
       });
 
@@ -237,15 +223,10 @@ export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", i
           known: undefined
         }));
         
-        setCards(prev => {
-          // If previous cards were only defaults or empty, replace them with real AI cards
-          if (prev.length === 0 || textToUse) return newCards;
-          return [...prev, ...newCards];
-        });
-        if (isFinished) {
-          setCurrentIndex(cards.length);
-          setIsFinished(false);
-        }
+        setCards(newCards);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setIsFinished(false);
       } else {
         throw new Error("Format JSON invalide");
       }

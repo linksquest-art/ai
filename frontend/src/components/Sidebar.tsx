@@ -17,7 +17,8 @@ import {
   TrendingUp,
   Settings,
   Calendar,
-  GraduationCap
+  GraduationCap,
+  FileText
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AuthModal } from "./AuthModal";
@@ -113,6 +114,7 @@ export function Sidebar({
     { name: "Découvrir", href: "/discover", icon: Compass },
     { name: "Espaces & Skills", href: "/spaces", icon: Folder },
     { name: "Devoirs IA", href: "/homework", icon: GraduationCap },
+    { name: "Résumés & YouTube", href: "/summary", icon: FileText },
     { name: "Calendrier", href: "/calendar", icon: Calendar },
     { name: "Tarifs", href: "/pricing", icon: Sparkles },
   ];
