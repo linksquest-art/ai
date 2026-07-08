@@ -107,7 +107,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
             <Sparkles className="w-7 h-7 text-[#FF4500]" />
           </div>
           <h2 className="text-2xl font-black text-black">
-            {isSignUp ? "Créer un compte Pro" : "Connexion Gama Studio"}
+            {isSignUp ? "Créer un compte gratuit" : "Connexion Gama Studio"}
           </h2>
           <p className="text-xs font-bold text-black/60 mt-1 max-w-[280px]">
             Sauvegardez votre historique dans le Cloud & synchronisez sur PC, Mac et mobile.
@@ -210,7 +210,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
             ) : isSignUp ? (
               <>
                 <UserPlus size={18} strokeWidth={2.5} />
-                Créer mon compte Pro
+                Créer mon compte gratuit
               </>
             ) : (
               <>

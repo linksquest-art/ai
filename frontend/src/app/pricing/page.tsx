@@ -115,7 +115,7 @@ export default function PricingPage() {
                       ? "bg-amber-100 text-amber-800 border-amber-500 shadow-[2px_2px_0px_0px_#f59e0b]" 
                       : "bg-gray-100 text-gray-700 border-gray-400"
                   }`}>
-                    {currentPlan === "pro" ? "★ Votre Plan Actuel : Gama Pro" : "Votre Plan Actuel : Hobby Studio (Gratuit)"}
+                    {currentPlan === "pro" ? "★ Votre Plan Actuel : Gama Pro" : "Votre Plan Actuel : Hobby Studio"}
                   </span>
                 )}
               </h1>

@@ -258,18 +258,20 @@ export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", i
       <div className="bg-[#FFFFFF] border-[3px] border-black rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-[10px_10px_0px_0px_#000000] overflow-hidden relative">
         
         {/* Top Bar */}
-        <div className="px-6 py-4 bg-[#FFFBF5] border-b-[3px] border-black flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2.5 min-w-0">
+        <div className="px-5 py-4 bg-[#FFFBF5] border-b-[3px] border-black flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
             <div className="w-10 h-10 rounded-2xl bg-[#FF5500]/15 border-2 border-[#FF5500] flex items-center justify-center text-[#FF5500] shrink-0 shadow-[2px_2px_0px_0px_#000000]">
               <Brain size={20} strokeWidth={2.5} />
             </div>
-            <div className="min-w-0">
-              <h2 className="text-base sm:text-lg font-black text-black uppercase tracking-tight truncate flex items-center gap-2">
-                <span>🃏 Flashcards Pro Max</span>
-                <span className="text-[10px] bg-black text-white px-2 py-0.5 rounded-md uppercase font-extrabold shrink-0">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-sm sm:text-base font-black text-black uppercase tracking-tight truncate">
+                  🃏 FLASHCARDS PRO MAX
+                </h2>
+                <span className="text-[10px] bg-black text-white px-2 py-0.5 rounded-md uppercase font-extrabold shrink-0 truncate max-w-[110px]">
                   {topic}
                 </span>
-              </h2>
+              </div>
               <p className="text-[11px] font-bold text-black/60 truncate">
                 Révisez et testez vos connaissances en mode interactif 3D
               </p>

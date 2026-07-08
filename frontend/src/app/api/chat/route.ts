@@ -35,10 +35,10 @@ export async function POST(req: Request) {
           const currentCount = isSameDay ? (user.user_metadata?.daily_messages_count || 0) : 0;
           const currentTokens = isSameDay ? (user.user_metadata?.daily_tokens_used || 0) : 0;
 
-          if (userPlan !== "pro" && currentCount >= 10) {
+          if (userPlan !== "pro" && currentCount >= 20) {
             return NextResponse.json({
               role: "assistant",
-              content: `⚠️ **Limite Quotidienne Atteinte (Plan Hobby Gratuit)** : Vous avez utilisé vos 10 messages gratuits d'aujourd'hui.\n\n✨ **Passez au plan Gama Pro** dans l'onglet *Tarifs* ou *Mon Compte* pour débloquer 500 messages/jour, l'accès à GPT-5 et la puissance maximale !`,
+              content: `⚠️ **Limite Quotidienne Atteinte (Plan Hobby Gratuit)** : Vous avez utilisé vos 20 messages gratuits d'aujourd'hui.\n\n✨ **Passez au plan Gama Pro** dans l'onglet *Tarifs* ou *Mon Compte* pour débloquer 500 messages/jour, l'accès à GPT-5 et la puissance maximale !`,
               limitExceeded: true
             });
           }

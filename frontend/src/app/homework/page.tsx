@@ -57,13 +57,13 @@ export default function HomeworkPage() {
 
   const tools = [
     {
-      id: "socratic",
-      title: "Professeur IA Interactif (Socratique)",
-      subtitle: "Pose des questions une par une au lieu de donner la réponse d'un coup",
+      id: "stepbystep",
+      title: "Professeur IA Interactif (Pas-à-Pas)",
+      subtitle: "Guidance progressive et claire pour comprendre le raisonnement",
       icon: GraduationCap,
       color: "bg-[#FF5500]",
       placeholder: "Quel concept, exercice ou devoir voulez-vous résoudre guidé étape par étape ?",
-      promptPrefix: "Agis exclusivement comme un Professeur IA Socratique. RÈGLE D'OR : NE DONNE PAS LA RÉPONSE FINALE D'UN COUP. Pose d'abord une première question ciblée pour faire réfléchir l'étudiant et guide-le pas à pas : \n\n"
+      promptPrefix: "Agis comme un Professeur IA bienveillant et pédagogue. RÈGLE D'OR : NE DONNE PAS LA RÉPONSE FINALE D'UN COUP. Guide l'étudiant pas à pas en expliquant le raisonnement avec clarté : \n\n"
     },
     {
       id: "math",
@@ -111,7 +111,7 @@ export default function HomeworkPage() {
     setAiResult(null);
 
     const fullPrompt = `[Niveau : ${inputLevel}] ${inputSubject ? `[Matière : ${inputSubject}] ` : ""}\n\n${currentToolObj.promptPrefix}${inputContent.trim()}`;
-    const systemContext = "Tu es un Professeur IA Socratique d'élite. SUR CETTE PAGE DE DEVOIRS ET RÉVISIONS : tu ne donnes jamais la solution complète immédiatement. Tu poses des questions une par une pour guider l'étudiant dans sa réflexion, en expliquant le 'pourquoi' et le 'comment' avec clarté et gamification encourageante.";
+    const systemContext = "Tu es un Professeur IA d'élite pédagogique et patient. SUR CETTE PAGE DE DEVOIRS ET RÉVISIONS : explique clairement les étapes, guide l'étudiant dans sa réflexion, en expliquant le 'pourquoi' et le 'comment' avec clarté et bienveillance.";
 
     try {
       const response = await fetch("/api/chat", {
