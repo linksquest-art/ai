@@ -15,10 +15,10 @@ const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
 export function StudyStreakCard({ onIncrement }: { onIncrement?: () => void }) {
   const [streak, setStreak] = useState<StudyStreakData>({
-    currentStreak: 4,
+    currentStreak: 0,
     lastActiveDate: "",
     weeklyGoal: 5,
-    completedThisWeek: ["Lun", "Mar", "Mer", "Jeu"]
+    completedThisWeek: []
   });
 
   const [user, setUser] = useState<any>(null);
@@ -26,24 +26,42 @@ export function StudyStreakCard({ onIncrement }: { onIncrement?: () => void }) {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      if (session?.user?.user_metadata?.study_streak) {
+        setStreak(session.user.user_metadata.study_streak);
+      }
     });
 
     const localData = localStorage.getItem("gama_study_streak");
     if (localData) {
       try {
         const parsed = JSON.parse(localData);
-        setStreak(parsed);
+        // Ne jamais garder d'anciennes fausses données de démonstration (ex: 3 ou 4 jours par défaut)
+        if (
+          (parsed.currentStreak === 3 && parsed.completedThisWeek?.length === 3) ||
+          (parsed.currentStreak === 4 && parsed.completedThisWeek?.length === 4)
+        ) {
+          const zeroData: StudyStreakData = {
+            currentStreak: 0,
+            lastActiveDate: "",
+            weeklyGoal: 5,
+            completedThisWeek: []
+          };
+          setStreak(zeroData);
+          localStorage.setItem("gama_study_streak", JSON.stringify(zeroData));
+        } else {
+          setStreak(parsed);
+        }
       } catch (e) {}
     } else {
-      // Initialize with a motivational default
-      const defaultData: StudyStreakData = {
-        currentStreak: 3,
-        lastActiveDate: new Date().toISOString().split("T")[0],
+      // Zéro absolu à la création d'un compte (aucune fausse donnée)
+      const zeroData: StudyStreakData = {
+        currentStreak: 0,
+        lastActiveDate: "",
         weeklyGoal: 5,
-        completedThisWeek: ["Lun", "Mar", "Mer"]
+        completedThisWeek: []
       };
-      setStreak(defaultData);
-      localStorage.setItem("gama_study_streak", JSON.stringify(defaultData));
+      setStreak(zeroData);
+      localStorage.setItem("gama_study_streak", JSON.stringify(zeroData));
     }
   }, []);
 

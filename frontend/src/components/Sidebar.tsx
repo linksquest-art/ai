@@ -149,7 +149,7 @@ export function Sidebar({
           </Link>
 
           {/* Primary Navigation */}
-          <nav className="flex flex-col gap-1 text-sm font-bold text-black/80 pt-1 shrink-0">
+          <nav className="flex flex-col gap-1 text-xs md:text-sm font-bold text-black/80 pt-1 overflow-y-auto flex-1 min-h-0 pr-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -157,21 +157,18 @@ export function Sidebar({
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all border-2 ${
+                  className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all border-2 shrink-0 ${
                     isActive
                       ? "bg-black text-white border-black shadow-[2px_2px_0px_0px_#FF5500]"
                       : "border-transparent text-black hover:bg-black/5 hover:border-black/20"
                   }`}
                 >
-                  <Icon size={18} className={isActive ? "text-primary" : "text-black/70"} />
+                  <Icon size={17} className={isActive ? "text-primary" : "text-black/70"} />
                   <span>{item.name}</span>
                 </Link>
               );
             })}
           </nav>
-
-          {/* Clean spacer for nav items */}
-          <div className="flex-1" />
         </div>
 
         {/* UI/UX PRO MAX - Minimalist Bottom Account Rectangle */}
