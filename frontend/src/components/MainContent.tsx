@@ -1035,8 +1035,8 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                     /* Assistant Message: Clean natural conversation thread (no giant boxed card) */
                     <div className="flex items-start gap-4 w-full py-3 pr-8">
                       <img 
-                        src="/Arrowai.png" 
-                        alt="Gama AI Star" 
+                        src="/dragon-avatar.png" 
+                        alt="Gama Dragon AI" 
                         className="w-10 h-10 object-contain rounded-full shrink-0 mt-0.5 border border-black/15 p-0.5 bg-white shadow-sm" 
                       />
                       <div className="flex-1 flex flex-col gap-2">
@@ -1085,7 +1085,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                           <button className="text-xs font-bold text-black/50 hover:text-black flex items-center gap-1 transition-colors bg-black/5 px-2.5 py-1 rounded-lg">
                             🔄 Régénérer
                           </button>
-                          <span className="text-[10px] font-bold text-black/40 ml-auto hidden sm:inline">Généré instantanément via OpenRouter</span>
+                          <span className="text-[10px] font-bold text-black/40 ml-auto hidden sm:inline">Généré instantanément via Gama AI</span>
                         </div>
                       </div>
                     </div>
@@ -1096,7 +1096,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
               {/* Thinking Animation */}
               {isGenerating && (
                 <div className="flex items-center gap-4 py-4 px-2 animate-pulse">
-                  <img src="/Arrowai.png" alt="Thinking Arrow AI" className="w-10 h-10 object-contain animate-spin shrink-0" />
+                  <Sparkles className="animate-spin text-primary shrink-0" size={28} />
                   <div className="flex flex-col">
                     <span className="text-sm font-black text-black uppercase tracking-wide">
                       L'IA réfléchit en direct... ({activeSession.modelName || model})

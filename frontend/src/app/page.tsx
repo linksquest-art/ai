@@ -236,6 +236,7 @@ function HomeContent() {
       targetSessionId = newId;
       activeSession = newSession;
       setActiveSessionId(newId);
+      if (!isIncognito) localStorage.setItem("gama_active_session", newId);
       saveSessions(currentSessions, undefined, isIncognito);
     } else {
       activeSession.messages.push(userMessage);
@@ -272,29 +273,61 @@ function HomeContent() {
         setShowUpgradeModal(true);
       }
 
-      const updatedSessions = currentSessions.map(s => {
-        if (s.id === targetSessionId) {
-          return {
-            ...s,
-            messages: [...s.messages, { role: data.role, content: data.content }]
-          };
-        }
-        return s;
-      });
+      // 1. Comptabilisation Live des Tokens & Messages
+      const estimatedTokens = data.tokensUsed || Math.round((String(text).length + String(data.content || "").length) / 3) + 150;
+      const todayStr = new Date().toISOString().split("T")[0];
+      const savedDate = localStorage.getItem("gama_usage_date");
+      let dailyTokens = Number(localStorage.getItem("gama_daily_tokens") || 0);
+      let dailyMessages = Number(localStorage.getItem("gama_daily_messages") || 0);
+      if (savedDate !== todayStr) {
+        dailyTokens = 0;
+        dailyMessages = 0;
+        localStorage.setItem("gama_usage_date", todayStr);
+      }
+      dailyTokens += estimatedTokens;
+      dailyMessages += 1;
+      localStorage.setItem("gama_daily_tokens", String(dailyTokens));
+      localStorage.setItem("gama_daily_messages", String(dailyMessages));
+      window.dispatchEvent(new Event("gama_usage_updated"));
 
-      saveSessions(updatedSessions, undefined, activeSession.isIncognito || isIncognito);
+      // 2. Mise à jour de l'historique fiable (état + localStorage)
+      setSessions(prev => {
+        const updated = prev.map(s => {
+          if (s.id === targetSessionId) {
+            return {
+              ...s,
+              messages: [...s.messages, { role: data.role, content: data.content }]
+            };
+          }
+          return s;
+        });
+        if (!isIncognito && !(activeSession && activeSession.isIncognito)) {
+          const persistSessions = updated.filter(s => !s.isIncognito);
+          localStorage.setItem("gama_sessions", JSON.stringify(persistSessions));
+          if (user) {
+            supabase.auth.updateUser({ data: { chat_sessions: persistSessions } }).catch(() => {});
+          }
+        }
+        return updated;
+      });
     } catch (err) {
       console.error("Error communicating with AI:", err);
-      const updatedSessions = currentSessions.map(s => {
-        if (s.id === targetSessionId) {
-          return {
-            ...s,
-            messages: [...s.messages, { role: "assistant" as const, content: "⚠️ Désolé, une erreur technique est survenue lors de la communication avec OpenRouter. Veuillez vérifier votre connexion ou choisir un autre modèle." }]
-          };
+      setSessions(prev => {
+        const updated = prev.map(s => {
+          if (s.id === targetSessionId) {
+            return {
+              ...s,
+              messages: [...s.messages, { role: "assistant" as const, content: "⚠️ Désolé, une erreur technique est survenue lors de la communication avec le serveur IA Gama. Veuillez vérifier votre connexion ou choisir un autre modèle." }]
+            };
+          }
+          return s;
+        });
+        if (!isIncognito && !(activeSession && activeSession.isIncognito)) {
+          const persistSessions = updated.filter(s => !s.isIncognito);
+          localStorage.setItem("gama_sessions", JSON.stringify(persistSessions));
         }
-        return s;
+        return updated;
       });
-      saveSessions(updatedSessions, undefined, activeSession.isIncognito || isIncognito);
     } finally {
       setIsGenerating(false);
     }

@@ -45,6 +45,7 @@ export default function AccountPage() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [user, setUser] = useState<any>(null);
   const [dailyCount, setDailyCount] = useState<number>(0);
+  const [dailyTokensState, setDailyTokensState] = useState<number>(0);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -113,12 +114,15 @@ export default function AccountPage() {
       const storedDate = localStorage.getItem("gama_usage_date");
       if (storedDate === todayStr) {
         const msgs = Number(localStorage.getItem("gama_daily_messages") || 0);
+        const tokens = Number(localStorage.getItem("gama_daily_tokens") || 0);
         setDailyCount(msgs);
+        setDailyTokensState(tokens);
       } else {
         localStorage.setItem("gama_usage_date", todayStr);
         localStorage.setItem("gama_daily_messages", "0");
         localStorage.setItem("gama_daily_tokens", "0");
         setDailyCount(0);
+        setDailyTokensState(0);
       }
     };
     checkQuota();
@@ -160,9 +164,9 @@ export default function AccountPage() {
   const subProgressPercent = Math.min(100, Math.round((subDaysElapsed / 30) * 100));
 
   // Tokens quotidiens (bridés en plan gratuit à 4 000 max / jour)
-  const metaTokens = user?.user_metadata?.daily_tokens;
+  const metaTokens = user?.user_metadata?.daily_tokens_used || user?.user_metadata?.daily_tokens;
   const localDailyTokens = typeof window !== "undefined" ? Number(localStorage.getItem("gama_daily_tokens") || 0) : 0;
-  const dailyTokensUsed = (metaDate === todayStr && metaTokens !== undefined) ? Number(metaTokens) : (localDailyTokens || realCount * 380);
+  const dailyTokensUsed = Math.max(dailyTokensState, localDailyTokens, (metaDate === todayStr && metaTokens !== undefined) ? Number(metaTokens) : 0, realCount * 380);
   const dailyTokensMax = isPro ? 250000 : 4000;
   const tokenPercentage = Math.min(100, Math.round((dailyTokensUsed / dailyTokensMax) * 100));
 

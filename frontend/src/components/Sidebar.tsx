@@ -21,7 +21,9 @@ import {
   FileText,
   CheckSquare,
   Moon,
-  Sun
+  Sun,
+  MessageSquare,
+  Trash2
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AuthModal } from "./AuthModal";

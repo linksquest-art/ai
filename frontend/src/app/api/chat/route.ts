@@ -225,7 +225,8 @@ export async function POST(req: Request) {
     }
 
     const reply = data.choices?.[0]?.message?.content || "Oups, aucune réponse textuelle reçue de l'IA.";
-    return NextResponse.json({ role: "assistant", content: reply, plan: userPlan });
+    const tokensUsed = data.usage?.total_tokens || Math.round((reply.length + 250) / 3);
+    return NextResponse.json({ role: "assistant", content: reply, plan: userPlan, tokensUsed });
   } catch (error: any) {
     console.error("Error in chat route:", error);
     return NextResponse.json({ 

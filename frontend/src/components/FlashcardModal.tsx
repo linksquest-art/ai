@@ -54,9 +54,10 @@ interface FlashcardModalProps {
   topic?: string;
   initialCards?: Flashcard[];
   initialText?: string;
+  autoGenerate?: boolean;
 }
 
-export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", initialCards, initialText }: FlashcardModalProps) {
+export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", initialCards, initialText, autoGenerate = false }: FlashcardModalProps) {
   const [cards, setCards] = useState<Flashcard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -86,11 +87,16 @@ export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", i
       } else {
         const defaultPrompt = initialText || (topic && topic !== "Espace de Travail" ? topic : "");
         setThemeInput(defaultPrompt);
-        setHasStarted(false);
-        setIsGeneratingAI(false);
+        if (autoGenerate && defaultPrompt) {
+          setHasStarted(true);
+          handleGenerateAI(defaultPrompt);
+        } else {
+          setHasStarted(false);
+          setIsGeneratingAI(false);
+        }
       }
     }
-  }, [isOpen, topic, initialCards, initialText]);
+  }, [isOpen, topic, initialCards, initialText, autoGenerate]);
 
   // Keyboard navigation support (UI/UX Pro Max Accessibility & Interaction)
   useEffect(() => {
@@ -200,7 +206,7 @@ export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", i
         },
         body: JSON.stringify({
           messages: [{ role: "user", content: promptContent }],
-          model: "deepseek/deepseek-chat",
+          model: "gpt-4o-mini",
           systemPrompt: `Tu es un professeur et concepteur pédagogique d'élite. Tu DOIS répondre UNIQUEMENT et STRICTEMENT par un tableau JSON valide contenant exactement ${countToGenerate} objets flashcards. Aucun texte autour, aucune introduction, aucune conclusion, pas de balises markdown \`\`\`json. Le format strict de chaque objet est : {"question": "La question précise", "answer": "La réponse détaillée et claire", "category": "Le sous-thème"}`
         })
       });
@@ -384,7 +390,7 @@ export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", i
                   Le Professeur IA génère vos Flashcards...
                 </h3>
                 <p className="text-xs font-bold text-black/50 mt-1">
-                  Analyse du sujet et création de 5 Q&A interactives en cours via OpenRouter
+                  Analyse du sujet et création de 5 Q&A interactives en cours via Gama AI
                 </p>
               </div>
             </div>

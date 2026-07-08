@@ -32,6 +32,10 @@ export default function HomeworkPage() {
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [aiResult, setAiResult] = useState<string | null>(null);
+  const [conversation, setConversation] = useState<Array<{ role: "user" | "assistant", content: string }>>([]);
+  const [followUpInput, setFollowUpInput] = useState("");
+  const [isSendingFollowUp, setIsSendingFollowUp] = useState(false);
+  const [autoGenFlashcards, setAutoGenFlashcards] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const router = useRouter();
@@ -109,6 +113,7 @@ export default function HomeworkPage() {
     if (!inputContent.trim()) return;
     setIsGenerating(true);
     setAiResult(null);
+    setConversation([]);
 
     const fullPrompt = `[Niveau : ${inputLevel}] ${inputSubject ? `[Matière : ${inputSubject}] ` : ""}\n\n${currentToolObj.promptPrefix}${inputContent.trim()}`;
     const systemContext = "Tu es un Professeur IA d'élite pédagogique et patient. SUR CETTE PAGE DE DEVOIRS ET RÉVISIONS : explique clairement les étapes, guide l'étudiant dans sa réflexion, en expliquant le 'pourquoi' et le 'comment' avec clarté et bienveillance.";
@@ -127,6 +132,10 @@ export default function HomeworkPage() {
       const data = await response.json();
       if (data.content) {
         setAiResult(data.content);
+        setConversation([
+          { role: "user", content: inputContent.trim() },
+          { role: "assistant", content: data.content }
+        ]);
       } else {
         setAiResult("⚠️ Impossible de générer la résolution. Veuillez réessayer.");
       }
@@ -137,14 +146,53 @@ export default function HomeworkPage() {
     }
   };
 
+  const handleSendFollowUp = async () => {
+    if (!followUpInput.trim() || isSendingFollowUp) return;
+    const userMsg = { role: "user" as const, content: followUpInput.trim() };
+    const updatedHistory = [...conversation, userMsg];
+    setConversation(updatedHistory);
+    setFollowUpInput("");
+    setIsSendingFollowUp(true);
+
+    const systemContext = "Tu es un Professeur IA d'élite pédagogique et patient. SUR CETTE PAGE DE DEVOIRS ET RÉVISIONS : explique clairement les étapes, guide l'étudiant dans sa réflexion, en expliquant le 'pourquoi' et le 'comment' avec clarté et bienveillance. Tiens compte de tout l'historique pour poursuivre la discussion de manière interactive.";
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: updatedHistory,
+          model: "gpt-4o-mini",
+          systemPrompt: systemContext
+        })
+      });
+
+      const data = await response.json();
+      if (data.content) {
+        setConversation([...updatedHistory, { role: "assistant" as const, content: data.content }]);
+        setAiResult(data.content);
+      }
+    } catch (err) {
+      alert("⚠️ Erreur de connexion au serveur IA.");
+    } finally {
+      setIsSendingFollowUp(false);
+    }
+  };
+
   return (
     <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black">
       <FlashcardModal
         isOpen={showFlashcardsModal}
-        onClose={() => setShowFlashcardsModal(false)}
+        onClose={() => {
+          setShowFlashcardsModal(false);
+          setAutoGenFlashcards(false);
+        }}
         topic={inputSubject || "Révision Académique"}
+        autoGenerate={autoGenFlashcards}
         initialText={
-          inputContent.trim()
+          aiResult
+            ? `Sujet: ${inputSubject || "Cours"} (${inputLevel})\n\nLeçon détaillée:\n${aiResult}`
+            : inputContent.trim()
             ? `Sujet/Matière: ${inputSubject || "Révision"} (${inputLevel})\n\nContenu:\n${inputContent.trim()}`
             : inputSubject.trim()
             ? `Sujet de révision: ${inputSubject} (${inputLevel})`
@@ -161,14 +209,14 @@ export default function HomeworkPage() {
               <GraduationCap size={26} strokeWidth={2.5} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-black uppercase tracking-tight">Devoirs IA & Académie Pro</h1>
-              <p className="text-xs font-bold text-black/50">Outils spécialisés pour étudiants : mathématiques, dissertation, sciences et mémorisation</p>
+              <h1 className="text-2xl font-black text-black dark:text-white uppercase tracking-tight">Devoirs IA & Académie Pro</h1>
+              <p className="text-xs font-bold text-black/50 dark:text-white/60">Outils spécialisés pour étudiants : mathématiques, dissertation, sciences et mémorisation</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-black/5 px-3 py-1.5 rounded-xl border border-black/10">
+          <div className="flex items-center gap-2 bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-xl border border-black/10 dark:border-white/10">
             <Sparkles size={16} className="text-primary animate-pulse" />
-            <span className="text-xs font-extrabold text-black/80">Méthode Pédagogique Socratique</span>
+            <span className="text-xs font-extrabold text-black/80 dark:text-white/80">Méthode Pédagogique Pas-à-Pas</span>
           </div>
         </header>
 

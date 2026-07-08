@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { History, Search, Trash2, MessageSquare, ArrowRight, Calendar, Sparkles } from "lucide-react";
 import { AuthModal } from "@/components/AuthModal";
+import { Sidebar } from "@/components/Sidebar";
 import { supabase } from "@/lib/supabase";
 
 interface Message {
@@ -30,7 +31,7 @@ export default function HistoryPage() {
       setUser(session?.user ?? null);
     });
 
-    const saved = localStorage.getItem("gama_chat_sessions");
+    const saved = localStorage.getItem("gama_sessions");
     if (saved) {
       try {
         setSessions(JSON.parse(saved));
@@ -42,7 +43,7 @@ export default function HistoryPage() {
     e.stopPropagation();
     const updated = sessions.filter((s) => s.id !== id);
     setSessions(updated);
-    localStorage.setItem("gama_chat_sessions", JSON.stringify(updated));
+    localStorage.setItem("gama_sessions", JSON.stringify(updated));
     if (localStorage.getItem("gama_active_session") === id) {
       localStorage.removeItem("gama_active_session");
     }
@@ -60,35 +61,45 @@ export default function HistoryPage() {
   );
 
   return (
-    <main className="flex-1 bg-[#FFFBF5] min-h-screen p-4 md:p-8 flex flex-col max-w-5xl mx-auto gap-6">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-[3px] border-black pb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center shadow-[4px_4px_0px_0px_#FF5500]">
-            <History size={26} />
-          </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">
-              Historique des Discussions
-            </h1>
-            <p className="text-xs md:text-sm font-bold text-black/60">
-              Retrouvez, filtrez ou reprenez toutes vos conversations enregistrées sur Gama Studio.
-            </p>
-          </div>
-        </div>
+    <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black">
+      <Sidebar sessions={sessions} />
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              localStorage.removeItem("gama_active_session");
-              router.push("/");
-            }}
-            className="bg-[#FF5500] text-white hover:bg-black font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
-          >
-            <span>+ Nouvelle Discussion</span>
-          </button>
-        </div>
-      </div>
+      <div className="flex-1 flex flex-col h-screen overflow-y-auto bg-[#FFFBF5]">
+        <div className="p-4 md:p-8 flex flex-col max-w-5xl mx-auto gap-6 w-full">
+          {/* Page Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-[3px] border-black pb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center shadow-[4px_4px_0px_0px_#FF5500]">
+                <History size={26} />
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">
+                  Historique des Discussions
+                </h1>
+                <p className="text-xs md:text-sm font-bold text-black/60">
+                  Retrouvez, filtrez ou reprenez toutes vos conversations enregistrées sur Gama Studio.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push("/")}
+                className="bg-white text-black hover:bg-black hover:text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
+              >
+                <span>← Retour au Chat</span>
+              </button>
+              <button
+                onClick={() => {
+                  localStorage.removeItem("gama_active_session");
+                  router.push("/");
+                }}
+                className="bg-[#FF5500] text-white hover:bg-black font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
+              >
+                <span>+ Nouvelle Discussion</span>
+              </button>
+            </div>
+          </div>
 
       {/* Search Bar */}
       <div className="relative">
@@ -186,6 +197,8 @@ export default function HistoryPage() {
           })}
         </div>
       )}
+        </div>
+      </div>
 
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </main>
