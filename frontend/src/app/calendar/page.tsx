@@ -48,7 +48,7 @@ export default function CalendarPage() {
   const [showModal, setShowModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const isPro = user?.user_metadata?.plan === "pro";
+  const isPro = user?.user_metadata?.plan === "pro" || user?.user_metadata?.is_pro === true;
   const [newTitle, setNewTitle] = useState("");
   const [newDate, setNewDate] = useState(() => toLocalYYYYMMDD(new Date()));
   const [newTime, setNewTime] = useState("09:00");

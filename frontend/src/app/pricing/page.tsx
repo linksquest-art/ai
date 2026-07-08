@@ -158,10 +158,10 @@ export default function PricingPage() {
                 <div className="text-5xl font-black mb-8">0€ <span className="text-base text-black/50 font-bold">/mois</span></div>
                 
                 <ul className="flex flex-col gap-3 mb-8 border-t-2 border-black/10 pt-6 text-sm font-extrabold">
-                  <li className="flex items-center gap-3"><Check className="text-black" strokeWidth={3} size={18} /> 50 messages quotidiens (Bridé à 700 tokens)</li>
+                  <li className="flex items-center gap-3"><Check className="text-black" strokeWidth={3} size={18} /> 10 messages quotidiens (Bridé à 400 tokens)</li>
+                  <li className="flex items-center gap-3"><Check className="text-black" strokeWidth={3} size={18} /> Limite de 5 discussions actives dans l&apos;historique</li>
                   <li className="flex items-center gap-3"><Check className="text-black" strokeWidth={3} size={18} /> Accès à GPT-4o Mini & modèles gratuits</li>
-                  <li className="flex items-center gap-3"><Check className="text-black" strokeWidth={3} size={18} /> Sauvegarde cloud sécurisée sur Supabase</li>
-                  <li className="flex items-center gap-3 text-black/40"><Check className="text-black/20" strokeWidth={3} size={18} /> Pas d'accès aux modèles Pro (GPT-5 / Claude 3.5 Sonnet)</li>
+                  <li className="flex items-center gap-3 text-black/40"><Check className="text-black/20" strokeWidth={3} size={18} /> Pas d&apos;accès aux modèles Pro (GPT-5 / Claude 3.5 Sonnet)</li>
                 </ul>
               </div>
               
@@ -181,8 +181,14 @@ export default function PricingPage() {
                   <Zap className="text-primary fill-primary" size={28} />
                   <span>Gama Pro</span>
                 </h3>
-                <p className="text-black/70 font-extrabold mb-6 text-sm">Pour les créateurs et studios qui exigent le maximum d'intelligence.</p>
-                <div className="text-5xl font-black mb-8">9€ <span className="text-base text-black/50 font-bold">/mois</span></div>
+                <p className="text-black/70 font-extrabold mb-4 text-sm">Pour les créateurs et studios qui exigent le maximum d&apos;intelligence.</p>
+                <div className="flex items-baseline gap-3 mb-8">
+                  <div className="text-5xl font-black">9€ <span className="text-base text-black/50 font-bold">/mois</span></div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl font-bold text-black/40 line-through">13€</span>
+                    <span className="bg-[#FF5500] text-white font-black text-xs px-2.5 py-1 rounded-full">-30% RÉDUCTION</span>
+                  </div>
+                </div>
                 
                 <ul className="flex flex-col gap-3 mb-8 border-t-2 border-black/10 pt-6 text-sm font-extrabold">
                   <li className="flex items-center gap-3"><Check className="text-primary" strokeWidth={3} size={18} /> Messages ILLIMITÉS 24h/24</li>
@@ -202,7 +208,7 @@ export default function PricingPage() {
                     : "bg-[#FF5500] hover:bg-black text-white shadow-[4px_4px_0px_0px_#000000]"
                 }`}
               >
-                {isUpgrading ? "Ouverture de Stripe..." : currentPlan === "pro" ? "★ Plan Gama Pro Actif ★" : "👑 Passer à Gama Pro (Paiement Stripe)"}
+                {isUpgrading ? "Ouverture du paiement sécurisé..." : currentPlan === "pro" ? "★ Plan Gama Pro Actif ★" : "👑 Passer à Gama Pro — 9€/mois"}
               </button>
             </div>
 
@@ -211,7 +217,7 @@ export default function PricingPage() {
           {/* Guarantee badge */}
           <div className="mt-12 text-center bg-black/5 border-2 border-black/10 rounded-xl p-4 max-w-xl">
             <p className="text-xs font-bold text-black/60">
-              🔒 Vos paiements sont sécurisés par Stripe. Le statut de votre abonnement est géré nativement dans Supabase et synchronisé en temps réel sur l'application.
+              🔒 Paiement 100% sécurisé et chiffré. Le statut de votre abonnement est géré en toute sécurité et synchronisé en temps réel.
             </p>
           </div>
         </div>

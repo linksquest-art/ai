@@ -53,7 +53,7 @@ export default function HomeworkPage() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const isPro = user?.user_metadata?.plan === "pro";
+  const isPro = user?.user_metadata?.plan === "pro" || user?.user_metadata?.is_pro === true;
 
   const tools = [
     {

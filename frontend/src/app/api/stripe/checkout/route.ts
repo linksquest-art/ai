@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     }
 
     const stripe = getStripe();
-    // Créer la session de paiement Stripe Checkout (Abonnement Récurrent 19€/mois)
+    // Créer la session de paiement Stripe Checkout (Abonnement Récurrent 9€/mois)
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "subscription",
@@ -39,12 +39,29 @@ export async function POST(req: Request) {
         userId: userId,
         plan: "pro",
       },
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
+      line_items: process.env.STRIPE_PRO_PRICE_ID
+        ? [
+            {
+              price: process.env.STRIPE_PRO_PRICE_ID,
+              quantity: 1,
+            },
+          ]
+        : [
+            {
+              price_data: {
+                currency: "eur",
+                product_data: {
+                  name: "Gama Pro ★ (Abonnement Mensuel)",
+                  description: "Accès illimité à GPT-5, Quotas Débridés & Veille Web VIP",
+                },
+                unit_amount: 900,
+                recurring: {
+                  interval: "month",
+                },
+              },
+              quantity: 1,
+            },
+          ],
       success_url: `${baseOrigin}/account?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseOrigin}/pricing?canceled=true`,
     });

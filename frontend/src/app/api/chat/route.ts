@@ -26,7 +26,7 @@ export async function POST(req: Request) {
         const { data: { user }, error } = await supabase.auth.getUser(token);
         if (user && !error) {
           userId = user.id;
-          if (user.user_metadata?.plan === "pro") {
+          if (user.user_metadata?.plan === "pro" || user.user_metadata?.is_pro === true) {
             userPlan = "pro";
           }
 

@@ -19,7 +19,9 @@ import {
   Calendar,
   GraduationCap,
   FileText,
-  CheckSquare
+  CheckSquare,
+  Moon,
+  Sun
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AuthModal } from "./AuthModal";
@@ -53,6 +55,27 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("gama_theme") as "light" | "dark" | null;
+    if (savedTheme === "dark") {
+      setTheme("dark");
+    } else {
+      setTheme("light");
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
+    localStorage.setItem("gama_theme", nextTheme);
+    if (nextTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  };
 
   const handleSelectChat = (id: string) => {
     localStorage.setItem("gama_active_session", id);
@@ -122,7 +145,7 @@ export function Sidebar({
     { name: "Tarifs", href: "/pricing", icon: Sparkles },
   ];
 
-  const isPro = user?.user_metadata?.plan === "pro";
+  const isPro = user?.user_metadata?.plan === "pro" || user?.user_metadata?.is_pro === true;
 
   return (
     <>
@@ -190,9 +213,9 @@ export function Sidebar({
                 }
               }}
               className="w-full bg-gradient-to-r from-[#FF5500] to-[#FF8800] hover:from-black hover:to-black text-white font-black py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs border-2 border-black shadow-[2px_2px_0px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer animate-pulse"
-              title="Passer à Gama Pro via paiement Stripe sécurisé"
+              title="Passer à Gama Pro"
             >
-              <span>👑 Passer à Pro (Stripe)</span>
+              <span>👑 Passer à Pro — 9€/mois</span>
             </button>
           )}
           {user ? (
@@ -235,13 +258,20 @@ export function Sidebar({
             </button>
           )}
 
-          {/* Subtle Operational Status */}
-          <div className="flex items-center justify-between px-1 pt-0.5 text-[10px] font-black uppercase text-black/40 select-none">
+          {/* Subtle Operational Status + Theme Toggle */}
+          <div className="flex items-center justify-between px-1 pt-0.5 text-[10px] font-black uppercase text-black/50 select-none">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
               <span>IA Opérationnelle</span>
             </span>
-            <span>v2.9</span>
+            <button
+              onClick={toggleTheme}
+              className="flex items-center gap-1 bg-black/5 hover:bg-[#FF5500] hover:text-white px-2 py-0.5 rounded-md border border-black/20 transition-all cursor-pointer"
+              title="Basculer Mode Clair / Sombre"
+            >
+              {theme === "dark" ? <Sun size={12} className="text-amber-400" /> : <Moon size={12} className="text-[#FF5500]" />}
+              <span>{theme === "dark" ? "Clair" : "Sombre"}</span>
+            </button>
           </div>
         </div>
       </aside>

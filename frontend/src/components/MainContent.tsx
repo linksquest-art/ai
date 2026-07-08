@@ -204,7 +204,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
     setShowSkillModal(false);
   };
 
-  const isPro = user?.user_metadata?.plan === "pro";
+  const isPro = user?.user_metadata?.plan === "pro" || user?.user_metadata?.is_pro === true;
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -704,9 +704,9 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                       }
                     }}
                     className="text-xs md:text-sm font-black tracking-widest uppercase px-4 py-1.5 rounded-xl transition-all shadow-[3px_3px_0px_0px_#000000] flex items-center gap-1.5 bg-[#FF5500] hover:bg-black text-white hover:scale-105 cursor-pointer animate-pulse"
-                    title="Cliquez pour ouvrir directement la page de paiement Stripe"
+                    title="Passer à Gama Pro — 9€/mois"
                   >
-                    <span>👑 PASSER À PRO (STRIPE)</span>
+                    <span>👑 PASSER À PRO — 9€/MOIS</span>
                   </button>
                 )}
                 <span className="text-xs font-bold text-black/60 bg-black/5 px-3 py-1 rounded-xl border border-black/10">

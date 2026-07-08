@@ -33,6 +33,7 @@ export default function QuizPage() {
   const [sourceType, setSourceType] = useState<"text" | "youtube" | "pdf">("text");
   const [sourceInput, setSourceInput] = useState("");
   const [uploadedFile, setUploadedFile] = useState<{ name: string; size: number } | null>(null);
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -47,6 +48,8 @@ export default function QuizPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadedFile({ name: file.name, size: file.size });
+    setPdfBase64(null);
+
     if (file.type === "text/plain" || file.name.endsWith(".txt")) {
       const reader = new FileReader();
       reader.onload = (ev) => {
@@ -54,7 +57,13 @@ export default function QuizPage() {
       };
       reader.readAsText(file);
     } else {
-      setSourceInput(`[Fichier PDF importé : ${file.name}] Contenu pédagogique à tester sur les concepts essentiels du document.`);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const base64Str = ev.target?.result as string;
+        setPdfBase64(base64Str);
+        setSourceInput(`[Fichier PDF importé : ${file.name}] Prêt à être analysé en profondeur.`);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -71,7 +80,7 @@ export default function QuizPage() {
     });
   }, []);
 
-  const isPro = user?.user_metadata?.is_pro === true;
+  const isPro = user?.user_metadata?.plan === "pro" || user?.user_metadata?.is_pro === true;
 
   const handleGenerate = async () => {
     if (!user) {
@@ -97,86 +106,38 @@ export default function QuizPage() {
     if (!sourceInput.trim()) return;
     setIsLoading(true);
 
-    const prompt = `Tu es un professeur d'université expert. Génère STRICTEMENT un tableau JSON valide (sans balises markdown ni texte autour) représentant un quiz QCM de 5 questions basé EXCLUSIVEMENT sur ce contenu/source :
-"""
-${sourceInput}
-"""
-Le format JSON attendu est un tableau d'objets avec cette structure exacte :
-[
-  {
-    "id": 1,
-    "question": "Question précise tirée directement des informations de la source...",
-    "options": ["Choix A", "Choix B", "Choix C", "Choix D"],
-    "correctIndex": 0,
-    "explanation": "Explication pédagogique claire expliquant pourquoi ce choix est correct d'après le texte."
-  }
-]`;
-
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch("/api/quiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [{ role: "user", content: prompt }]
+          source: sourceInput,
+          sourceType: sourceType,
+          pdfBase64: pdfBase64,
+          questionCount: isPro ? 10 : 5
         })
       });
 
-      if (!res.ok) throw new Error("Erreur de génération du quiz");
-
       const data = await res.json();
-      const contentStr = data.content || "";
 
-      let parsedQuiz: QuizQuestion[] | null = null;
-      try {
-        const jsonMatch = contentStr.match(/\[\s*\{[\s\S]*\}\s*\]/);
-        if (jsonMatch) {
-          parsedQuiz = JSON.parse(jsonMatch[0]);
-        } else {
-          parsedQuiz = JSON.parse(contentStr);
-        }
-      } catch (e) {
-        console.warn("Erreur de parsing JSON QCM:", e);
+      if (!res.ok || data.error) {
+        alert("⚠️ " + (data.error || "Erreur lors de la génération du QCM depuis cette source."));
+        return;
       }
 
-      if (parsedQuiz && Array.isArray(parsedQuiz) && parsedQuiz.length > 0) {
-        setQuestions(parsedQuiz);
-      } else {
-        // Fallback contextuel tiré des premiers mots de la source
-        const previewText = sourceInput.slice(0, 80).replace(/\n/g, " ");
-        setQuestions([
-          {
-            id: 1,
-            question: `D'après le document ("${previewText}..."), quel est le concept clé principal abordé ?`,
-            options: [
-              "La maîtrise des mécanismes fondamentaux expliqués dans le cours",
-              "Une théorie hors sujet non mentionnée",
-              "Une suppression des concepts de base",
-              "Un résultat purement aléatoire"
-            ],
-            correctIndex: 0,
-            explanation: "Le texte insiste sur la compréhension essentielle et structurée du contenu fourni."
-          },
-          {
-            id: 2,
-            question: "Quelle est la meilleure approche pédagogique recommandée pour consolider ces notions ?",
-            options: [
-              "Apprendre par cœur sans comprendre",
-              "Pratiquer via des QCM réguliers et analyser chaque explication",
-              "Ignorer les exemples pratiques",
-              "Survoler le document une seule fois"
-            ],
-            correctIndex: 1,
-            explanation: "La révision active avec retour immédiat est scientifiquement prouvée pour mémoriser durablement."
-          }
-        ]);
+      if (!data.questions || !Array.isArray(data.questions) || data.questions.length === 0) {
+        alert("⚠️ Impossible d'extraire des questions QCM à partir de cette source.");
+        return;
       }
 
+      setQuestions(data.questions);
       setCurrentIndex(0);
       setSelectedOption(null);
       setScore(0);
       setIsCompleted(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      alert("⚠️ Erreur réseau lors de la communication avec l'API QCM.");
     } finally {
       setIsLoading(false);
     }

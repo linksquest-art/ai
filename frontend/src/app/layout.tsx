@@ -43,11 +43,16 @@ export default function RootLayout({
   return (
     <html lang="fr" className="h-full antialiased">
       <head>
-        {/* Purge automatique et silencieuse des anciens cookies obsolètes afin d'éviter toute erreur Vercel 494 chez les visiteurs */}
+        {/* Purge automatique des cookies obsolètes et initialisation instantanée du thème sombre */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               try {
+                if (localStorage.getItem("gama_theme") === "dark") {
+                  document.documentElement.classList.add("dark");
+                } else {
+                  document.documentElement.classList.remove("dark");
+                }
                 document.cookie.split(";").forEach(function(c) {
                   var name = c.trim().split("=")[0];
                   if (name && (name.indexOf("sb-") === 0 || name.indexOf("supabase") === 0)) {

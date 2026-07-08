@@ -20,7 +20,10 @@ import {
   X,
   Lock,
   Scale,
-  Clock
+  Clock,
+  Moon,
+  Sun,
+  FileText
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -45,11 +48,28 @@ export default function AccountPage() {
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
   const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
+    const savedTheme = localStorage.getItem("gama_theme") as "light" | "dark" | null;
+    if (savedTheme === "dark") {
+      setTheme("dark");
+    } else {
+      setTheme("light");
+    }
   }, []);
+
+  const handleToggleTheme = (newTheme: "light" | "dark") => {
+    setTheme(newTheme);
+    localStorage.setItem("gama_theme", newTheme);
+    if (newTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem("gama_sessions");
@@ -86,28 +106,23 @@ export default function AccountPage() {
     }
   }, []);
 
-  // Suivi de la consommation quotidienne
+  // Suivi de la consommation quotidienne & hebdomadaire synchronisé avec Supabase
   useEffect(() => {
     const checkQuota = () => {
       const todayStr = new Date().toISOString().split("T")[0];
-      const saved = localStorage.getItem("gama_daily_quota");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed.date === todayStr) {
-            setDailyCount(parsed.count || 0);
-          } else {
-            setDailyCount(0);
-          }
-        } catch (e) {
-          setDailyCount(0);
-        }
+      const storedDate = localStorage.getItem("gama_usage_date");
+      if (storedDate === todayStr) {
+        const msgs = Number(localStorage.getItem("gama_daily_messages") || 0);
+        setDailyCount(msgs);
       } else {
+        localStorage.setItem("gama_usage_date", todayStr);
+        localStorage.setItem("gama_daily_messages", "0");
+        localStorage.setItem("gama_daily_tokens", "0");
         setDailyCount(0);
       }
     };
     checkQuota();
-    const interval = setInterval(checkQuota, 2000);
+    const interval = setInterval(checkQuota, 1500);
     return () => clearInterval(interval);
   }, []);
 
@@ -119,14 +134,14 @@ export default function AccountPage() {
     router.push("/");
   };
 
-  const currentPlan = user?.user_metadata?.plan === "pro" ? "pro" : "free";
+  const currentPlan = (user?.user_metadata?.plan === "pro" || user?.user_metadata?.is_pro === true) ? "pro" : "free";
   const isPro = currentPlan === "pro";
 
-  // Consommation en direct synchronisée avec Supabase ou fallback
+  // Consommation en direct synchronisée avec Supabase ou fallback localStorage
   const todayStr = new Date().toISOString().split("T")[0];
-  const metaDate = user?.user_metadata?.usage_date;
-  const realCount = (metaDate === todayStr && user?.user_metadata?.daily_messages_count !== undefined) 
-    ? user.user_metadata.daily_messages_count 
+  const metaDate = user?.user_metadata?.last_usage_date;
+  const realCount = (metaDate === todayStr && user?.user_metadata?.daily_messages !== undefined) 
+    ? Number(user.user_metadata.daily_messages) 
     : dailyCount;
   const maxMessages = isPro ? 500 : 10;
   const percentage = Math.min(100, Math.round((realCount / maxMessages) * 100));
@@ -144,11 +159,19 @@ export default function AccountPage() {
   const subDaysElapsed = Math.max(1, 30 - subDaysRemaining);
   const subProgressPercent = Math.min(100, Math.round((subDaysElapsed / 30) * 100));
 
-  // Tokens (bridés en plan gratuit à 4 000 max / jour)
-  const metaTokens = user?.user_metadata?.daily_tokens_used;
-  const dailyTokensUsed = (metaDate === todayStr && metaTokens !== undefined) ? metaTokens : realCount * 380;
+  // Tokens quotidiens (bridés en plan gratuit à 4 000 max / jour)
+  const metaTokens = user?.user_metadata?.daily_tokens;
+  const localDailyTokens = typeof window !== "undefined" ? Number(localStorage.getItem("gama_daily_tokens") || 0) : 0;
+  const dailyTokensUsed = (metaDate === todayStr && metaTokens !== undefined) ? Number(metaTokens) : (localDailyTokens || realCount * 380);
   const dailyTokensMax = isPro ? 250000 : 4000;
   const tokenPercentage = Math.min(100, Math.round((dailyTokensUsed / dailyTokensMax) * 100));
+
+  // Tokens hebdomadaires
+  const metaWeeklyTokens = user?.user_metadata?.weekly_tokens;
+  const localWeeklyTokens = typeof window !== "undefined" ? Number(localStorage.getItem("gama_weekly_tokens") || 0) : 0;
+  const weeklyTokensUsed = metaWeeklyTokens !== undefined ? Number(metaWeeklyTokens) : (localWeeklyTokens || dailyTokensUsed);
+  const weeklyTokensMax = isPro ? 1500000 : 25000;
+  const weeklyTokenPercentage = Math.min(100, Math.round((weeklyTokensUsed / weeklyTokensMax) * 100));
 
   const handleUpgradePro = async () => {
     if (!user) {
@@ -412,7 +435,26 @@ export default function AccountPage() {
                       </div>
                     </div>
 
-                    {/* Progress Bar 3 : Temps avant renouvellement / essai du mois */}
+                    {/* Progress Bar 3 : Tokens Hebdomadaires */}
+                    <div className="space-y-2 bg-black/[0.03] p-4 rounded-2xl border border-black/10">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-black uppercase tracking-wider text-black block">Consommation de Tokens (Semaine)</span>
+                          <span className="text-[11px] font-bold text-black/60">Cumul hebdomadaire synchronisé sur Supabase</span>
+                        </div>
+                        <span className="text-xs font-black text-black bg-white px-2.5 py-1 rounded-lg border border-black/10">
+                          {weeklyTokensUsed.toLocaleString("fr-FR")} / {weeklyTokensMax.toLocaleString("fr-FR")} tokens
+                        </span>
+                      </div>
+                      <div className="w-full bg-black/10 h-3 rounded-full overflow-hidden border border-black/20">
+                        <div 
+                          className="bg-purple-600 h-full rounded-full transition-all duration-500"
+                          style={{ width: `${Math.max(3, weeklyTokenPercentage)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar 4 : Temps avant renouvellement */}
                     <div className="space-y-2 bg-black/[0.03] p-4 rounded-2xl border border-black/10">
                       <div className="flex items-center justify-between">
                         <div>
@@ -433,12 +475,12 @@ export default function AccountPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="bg-black/5 p-3.5 rounded-xl border border-black/10 flex flex-col gap-1">
-                        <span className="text-[10px] font-black uppercase text-black/40">Historique Conservé</span>
-                        <span className="text-xs font-black text-black">5 conversations max (Suppression auto des plus anciens)</span>
+                        <span className="text-[10px] font-black uppercase text-black/40">Discussions Actives</span>
+                        <span className="text-xs font-black text-black">5 conversations max (Popup d&apos;avertissement au-delà)</span>
                       </div>
                       <div className="bg-black/5 p-3.5 rounded-xl border border-black/10 flex flex-col gap-1">
-                        <span className="text-[10px] font-black uppercase text-black/40">Modèles VIP (GPT-5, Claude Pro)</span>
-                        <span className="text-xs font-black text-[#FF5500]">Disponibles en passant à Gama Pro ★</span>
+                        <span className="text-[10px] font-black uppercase text-black/40">Offre Spéciale — Réduction</span>
+                        <span className="text-xs font-black text-[#FF5500]">9€/mois au lieu de 13€ (-30% de remise) ★</span>
                       </div>
                     </div>
 
@@ -446,15 +488,15 @@ export default function AccountPage() {
                       <div className="flex items-center gap-3">
                         <Crown className="text-[#FF5500] shrink-0" size={26} />
                         <div>
-                          <h4 className="text-sm font-black text-black">Passez à Premium et accédez à tout</h4>
-                          <p className="text-xs font-bold text-black/70">Débloquez les messages & tokens illimités pendant tout votre mois.</p>
+                          <h4 className="text-sm font-black text-black">Offre Spéciale — 9€/mois au lieu de 13€</h4>
+                          <p className="text-xs font-bold text-black/70">Profitez de -30% de réduction pour débloquer l&apos;illimité.</p>
                         </div>
                       </div>
                       <button
                         onClick={() => setShowUpgradePopup(true)}
                         className="bg-[#FF5500] hover:bg-black text-white font-black px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all shadow-[3px_3px_0px_0px_#000000] shrink-0 cursor-pointer"
                       >
-                        👑 Passer à Premium
+                        👑 Passer à Pro — 9€/mois
                       </button>
                     </div>
                   </div>
@@ -499,6 +541,69 @@ export default function AccountPage() {
                       </button>
                     )}
                   </div>
+                </div>
+              </div>
+
+              {/* SECTION 3.5: PRÉFÉRENCES D'AFFICHAGE & THÈMES (MODE CLAIR / SOMBRE) */}
+              <div className="bg-white border-[3px] border-black rounded-2xl p-6 shadow-[5px_5px_0px_0px_#000000] flex flex-col gap-6">
+                <div className="flex items-center justify-between border-b-2 border-black/10 pb-4">
+                  <div className="flex items-center gap-3">
+                    <Moon className="text-[#FF5500]" size={24} />
+                    <h2 className="text-lg font-black uppercase tracking-tight">Préférences d'Affichage & Thème</h2>
+                  </div>
+                  <span className="text-xs font-black bg-amber-100 text-amber-900 border border-amber-400 px-3 py-1 rounded-full">
+                    Personnalisable
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <button
+                    onClick={() => handleToggleTheme("light")}
+                    className={`p-5 rounded-2xl border-[2.5px] border-black text-left flex items-start justify-between gap-3 transition-all cursor-pointer ${
+                      theme === "light"
+                        ? "bg-[#FFFBF5] shadow-[4px_4px_0px_0px_#FF5500] scale-[1.01]"
+                        : "bg-white hover:bg-black/5 opacity-70"
+                    }`}
+                  >
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <Sun size={20} className="text-amber-500" />
+                        <span className="text-sm font-black uppercase tracking-tight text-black">Mode Clair</span>
+                      </div>
+                      <p className="text-xs font-bold text-black/60 leading-relaxed">
+                        Interface néo-brutaliste haute visibilité sur fond blanc texturé.
+                      </p>
+                    </div>
+                    {theme === "light" && (
+                      <div className="w-6 h-6 rounded-full bg-[#FF5500] text-white flex items-center justify-center shrink-0 border border-black">
+                        <Check size={14} strokeWidth={3} />
+                      </div>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => handleToggleTheme("dark")}
+                    className={`p-5 rounded-2xl border-[2.5px] border-black text-left flex items-start justify-between gap-3 transition-all cursor-pointer ${
+                      theme === "dark"
+                        ? "bg-[#1F1F25] text-white shadow-[4px_4px_0px_0px_#FF5500] scale-[1.01]"
+                        : "bg-white hover:bg-black/5 opacity-70"
+                    }`}
+                  >
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <Moon size={20} className="text-[#FF5500]" />
+                        <span className="text-sm font-black uppercase tracking-tight">Mode Sombre</span>
+                      </div>
+                      <p className="text-xs font-bold leading-relaxed opacity-80">
+                        Obsidian Studio optimisé pour la nuit et le confort visuel.
+                      </p>
+                    </div>
+                    {theme === "dark" && (
+                      <div className="w-6 h-6 rounded-full bg-[#FF5500] text-white flex items-center justify-center shrink-0 border border-black">
+                        <Check size={14} strokeWidth={3} />
+                      </div>
+                    )}
+                  </button>
                 </div>
               </div>
 

@@ -69,14 +69,20 @@ export function UpgradeModal({ isOpen, onClose, user }: UpgradeModalProps) {
           </div>
           <div>
             <span className="text-[11px] font-black uppercase tracking-widest bg-amber-100 text-amber-900 border border-amber-400 px-3 py-1 rounded-full mb-2 inline-block">
-              ★ Limite de Plan Atteinte ★
+              ★ Limite de 5 discussions atteinte ★
             </span>
             <h2 className="text-2xl md:text-3xl font-black text-black tracking-tight">
-              Passez à l'Historique Illimité !
+              Passez à l&apos;Historique Illimité !
             </h2>
-            <p className="text-sm font-bold text-black/70 mt-1 max-w-sm mx-auto leading-relaxed">
-              En **Plan Hobby Gratuit**, vous êtes limité à **5 discussions actives**. Ne supprimez plus vos anciens chats pour en lancer de nouveaux !
+            <p className="text-sm font-bold text-black/75 mt-2 max-w-sm mx-auto leading-relaxed">
+              En <span className="font-black">Plan Hobby Gratuit</span>, votre espace est limité à <span className="font-black text-[#FF5500]">5 conversations actives</span>. Supprimez une ancienne discussion dans le menu latéral ou débloquez l&apos;illimité avec <span className="font-black">Gama Pro</span> !
             </p>
+            <div className="mt-2 inline-flex items-center gap-2 bg-[#FF5500]/15 border border-[#FF5500] px-3 py-1 rounded-xl">
+              <span className="text-xs font-black text-black">Offre Spéciale :</span>
+              <span className="text-sm font-black text-[#FF5500]">9€/mois</span>
+              <span className="text-xs font-bold text-black/50 line-through">13€</span>
+              <span className="text-[10px] font-black bg-[#FF5500] text-white px-1.5 py-0.5 rounded">-30%</span>
+            </div>
           </div>
         </div>
 
@@ -98,7 +104,7 @@ export function UpgradeModal({ isOpen, onClose, user }: UpgradeModalProps) {
             </div>
             <div>
               <h4 className="text-xs font-black text-black uppercase">Accès VIP à GPT-5 & Claude 3.5 Sonnet</h4>
-              <p className="text-[11px] font-bold text-black/65">Les modèles d'IA d'élite déverrouillés 24h/24 pour votre studio.</p>
+              <p className="text-[11px] font-bold text-black/65">Les modèles d&apos;IA d&apos;élite déverrouillés 24h/24 pour votre studio.</p>
             </div>
           </div>
 
@@ -121,11 +127,11 @@ export function UpgradeModal({ isOpen, onClose, user }: UpgradeModalProps) {
             className="w-full bg-[#FF5500] hover:bg-black text-white font-black py-3.5 px-6 rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {loading ? (
-              <span>Connexion à Stripe...</span>
+              <span>Ouverture du paiement sécurisé...</span>
             ) : (
               <>
                 <Crown size={18} className="fill-white" />
-                <span>👑 Passer à Gama Pro (Paiement Stripe 9€/mois)</span>
+                <span>👑 Débloquer Gama Pro — 9€/mois (au lieu de 13€)</span>
                 <ArrowRight size={18} />
               </>
             )}
@@ -141,7 +147,7 @@ export function UpgradeModal({ isOpen, onClose, user }: UpgradeModalProps) {
 
         <div className="text-center">
           <span className="text-[10px] font-extrabold text-black/40 uppercase tracking-wider">
-            🔒 Paiement 100% sécurisé par Stripe • Sans engagement • Annulable en 1 clic
+            🔒 Paiement 100% sécurisé • Sans engagement • Annulable en 1 clic
           </span>
         </div>
 
