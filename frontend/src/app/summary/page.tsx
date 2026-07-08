@@ -19,9 +19,11 @@ import {
   Wand2, 
   CheckCircle2, 
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  Lock
 } from "lucide-react";
 import { FlashcardModal } from "@/components/FlashcardModal";
+import { AuthModal } from "@/components/AuthModal";
 import { supabase } from "@/lib/supabase";
 
 interface SavedSummary {
@@ -56,6 +58,20 @@ export default function SummaryPage() {
   // Flashcard Modal
   const [showFlashcardModal, setShowFlashcardModal] = useState(false);
   const [flashcardText, setFlashcardText] = useState("");
+  const [user, setUser] = useState<any>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Extract YouTube ID helper
   const extractVideoId = (url: string): string | null => {
@@ -215,6 +231,7 @@ INSTRUCTIONS STRICTES :
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#FFFBF5] text-black">
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       <Sidebar />
 
       <main className="flex-1 flex flex-col h-screen overflow-y-auto">
@@ -528,9 +545,40 @@ INSTRUCTIONS STRICTES :
                     </p>
                   </div>
                 ) : summaryResult ? (
-                  <div className="prose prose-sm max-w-none text-black font-medium leading-relaxed whitespace-pre-wrap max-h-[500px] overflow-y-auto pr-2">
-                    {summaryResult}
-                  </div>
+                  user ? (
+                    <div className="prose prose-sm max-w-none text-black font-medium leading-relaxed whitespace-pre-wrap max-h-[500px] overflow-y-auto pr-2">
+                      {summaryResult}
+                    </div>
+                  ) : (
+                    <div className="relative overflow-hidden rounded-2xl">
+                      {/* Teaser Preview of Summary */}
+                      <div className="prose prose-sm max-w-none text-black font-medium leading-relaxed whitespace-pre-wrap select-none opacity-85 max-h-[200px] overflow-hidden">
+                        {summaryResult.substring(0, 480) + "..."}
+                      </div>
+
+                      {/* Paywall / Blurred Overlay */}
+                      <div className="relative mt-[-70px] pt-24 pb-6 px-4 bg-gradient-to-b from-transparent via-white/95 to-white flex flex-col items-center justify-center text-center">
+                        <div className="bg-black text-white p-5 rounded-2xl shadow-[6px_6px_0px_0px_#FF5500] max-w-sm w-full flex flex-col items-center gap-3 border-2 border-black animate-in fade-in duration-300">
+                          <div className="w-10 h-10 rounded-full bg-[#FF5500]/20 flex items-center justify-center text-[#FF5500]">
+                            <Lock size={20} />
+                          </div>
+                          <div>
+                            <h4 className="font-black text-sm uppercase tracking-wider">Synthèse Prête & Détectée</h4>
+                            <p className="text-xs text-white/80 mt-1 leading-tight">
+                              Connectez-vous ou créez un compte gratuit pour lire l&apos;intégralité du résumé, des chapitres et convertir en fiches de révision.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShowAuthModal(true)}
+                            className="w-full py-2.5 rounded-xl bg-white text-black hover:bg-[#FF5500] hover:text-white font-black text-xs transition-all cursor-pointer shadow-[2px_2px_0px_0px_#FF5500]"
+                          >
+                            🔐 S&apos;inscrire / Voir la suite gratuite
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
                 ) : (
                   <div className="flex flex-col items-center justify-center py-24 text-center text-black/40 space-y-3">
                     <FileText size={48} strokeWidth={1.5} />
@@ -546,12 +594,16 @@ INSTRUCTIONS STRICTES :
                 <div className="mt-8 pt-6 border-t-2 border-black/10">
                   <button
                     onClick={() => {
+                      if (!user) {
+                        setShowAuthModal(true);
+                        return;
+                      }
                       setFlashcardText(summaryResult);
                       setShowFlashcardModal(true);
                     }}
                     className="w-full h-12 rounded-2xl bg-black hover:bg-primary text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2.5 shadow-[4px_4px_0px_0px_#FF5500] transition-all cursor-pointer"
                   >
-                    <span>🃏 Convertir en Deck Flashcards 3D</span>
+                    <span>{user ? "🃏 Convertir en Deck Flashcards 3D" : "🔐 S'inscrire pour Convertir en Flashcards"}</span>
                   </button>
                 </div>
               )}
