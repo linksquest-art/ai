@@ -6,6 +6,7 @@ import { Calendar as CalendarIcon, Plus, Sparkles, Clock, Trash2, ChevronLeft, C
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { AuthModal } from "@/components/AuthModal";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 interface Message {
   role: "user" | "assistant";
@@ -46,6 +47,8 @@ export default function CalendarPage() {
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const isPro = user?.user_metadata?.plan === "pro";
   const [newTitle, setNewTitle] = useState("");
   const [newDate, setNewDate] = useState(() => toLocalYYYYMMDD(new Date()));
   const [newTime, setNewTime] = useState("09:00");
@@ -143,6 +146,10 @@ export default function CalendarPage() {
       setShowAuthModal(true);
       return;
     }
+    if (!isPro && events.length >= 7) {
+      setShowUpgradeModal(true);
+      return;
+    }
     if (!newTitle.trim()) return;
     const colorMap: Record<string, string> = {
       "Études / Devoirs": "bg-blue-500",
@@ -178,6 +185,10 @@ export default function CalendarPage() {
   };
 
   const duplicateToNextDay = (ev: CalendarEvent) => {
+    if (!isPro && events.length >= 7) {
+      setShowUpgradeModal(true);
+      return;
+    }
     const parts = ev.date.split("-").map(Number);
     const nextD = new Date(parts[0], parts[1] - 1, parts[2] + 1, 12, 0, 0);
     const nextDateStr = toLocalYYYYMMDD(nextD);
@@ -261,7 +272,13 @@ export default function CalendarPage() {
               <span>{isAiPlanning ? "L'IA planifie..." : "✨ Planification IA Idéale"}</span>
             </button>
             <button
-              onClick={() => setShowModal(true)}
+              onClick={() => {
+                if (!isPro && events.length >= 7) {
+                  setShowUpgradeModal(true);
+                } else {
+                  setShowModal(true);
+                }
+              }}
               className="bg-primary text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] cursor-pointer hover:bg-black transition-all"
             >
               <Plus size={16} strokeWidth={3} />
@@ -582,9 +599,11 @@ export default function CalendarPage() {
                 Enregistrer
               </button>
             </div>
-          </div>
         </div>
       )}
+
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} user={user} />
     </main>
   );
 }

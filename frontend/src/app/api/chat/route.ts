@@ -38,7 +38,15 @@ export async function POST(req: Request) {
           if (userPlan !== "pro" && currentCount >= 10) {
             return NextResponse.json({
               role: "assistant",
-              content: `⚠️ **Limite Quotidienne Atteinte (Plan Hobby Gratuit)** : Vous avez utilisé vos 10 messages gratuits d'aujourd'hui.\n\n✨ **Passez au plan Gama Pro** dans l'onglet *Tarifs* ou *Mon Compte* pour débloquer les messages illimités 24h/24, l'accès à GPT-5 et la puissance maximale !`,
+              content: `⚠️ **Limite Quotidienne Atteinte (Plan Hobby Gratuit)** : Vous avez utilisé vos 10 messages gratuits d'aujourd'hui.\n\n✨ **Passez au plan Gama Pro** dans l'onglet *Tarifs* ou *Mon Compte* pour débloquer 500 messages/jour, l'accès à GPT-5 et la puissance maximale !`,
+              limitExceeded: true
+            });
+          }
+
+          if (userPlan === "pro" && currentCount >= 500) {
+            return NextResponse.json({
+              role: "assistant",
+              content: `⚠️ **Quota Pro Quotidien Atteint** : Vous avez atteint votre quota professionnel intensif de 500 messages (ou 250 000 tokens) aujourd'hui. Vos quotas sont automatiquement réinitialisés chaque nuit à minuit.`,
               limitExceeded: true
             });
           }
@@ -47,11 +55,12 @@ export async function POST(req: Request) {
           const authClient = createClient(supabaseUrl, supabaseAnonKey, {
             global: { headers: { Authorization: `Bearer ${token}` } }
           });
+          const addedTokens = userPlan === "pro" ? 1800 : 380;
           await authClient.auth.updateUser({
             data: {
               usage_date: todayStr,
               daily_messages_count: currentCount + 1,
-              daily_tokens_used: currentTokens + 380
+              daily_tokens_used: currentTokens + addedTokens
             }
           });
         }

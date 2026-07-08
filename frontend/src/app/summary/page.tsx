@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { FlashcardModal } from "@/components/FlashcardModal";
 import { AuthModal } from "@/components/AuthModal";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import { supabase } from "@/lib/supabase";
 
 interface SavedSummary {
@@ -60,6 +61,8 @@ export default function SummaryPage() {
   const [flashcardText, setFlashcardText] = useState("");
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const isPro = user?.user_metadata?.plan === "pro";
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -117,6 +120,11 @@ export default function SummaryPage() {
   // Generate YouTube Summary
   const handleGenerateYoutube = async () => {
     if (!youtubeUrl.trim()) return;
+    const youtubeCount = savedSummaries.filter(s => s.type === "youtube").length;
+    if (!isPro && youtubeCount >= 2) {
+      setShowUpgradeModal(true);
+      return;
+    }
     setIsGenerating(true);
     setSummaryResult(null);
 
@@ -621,6 +629,11 @@ INSTRUCTIONS STRICTES :
         onClose={() => setShowFlashcardModal(false)}
         topic="Résumé IA"
         initialText={flashcardText}
+      />
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        user={user}
       />
     </div>
   );

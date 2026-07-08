@@ -289,11 +289,68 @@ export default function AccountPage() {
                         <Crown size={22} className="text-amber-600 fill-amber-500 animate-bounce" />
                         <span>Puissance Gama Pro Débridée</span>
                       </span>
-                      <span className="text-lg font-black text-amber-900 bg-amber-400/30 px-3 py-1 rounded-xl border border-amber-500/40">Illimité ∞</span>
+                      <span className="text-lg font-black text-amber-900 bg-amber-400/30 px-3 py-1 rounded-xl border border-amber-500/40">Gama Pro VIP ★</span>
+                    </div>
+
+                    {/* Progress Bar 1 : Messages Pro (Jour) */}
+                    <div className="space-y-2 bg-white/80 p-4 rounded-xl border border-amber-500/30">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-black uppercase tracking-wider text-amber-950 block">Messages Quotidiens Pro</span>
+                          <span className="text-[11px] font-bold text-amber-900/70">Réinitialisé chaque nuit à minuit</span>
+                        </div>
+                        <span className="text-xs font-black text-amber-950 bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-400">
+                          {realCount} / 500 messages
+                        </span>
+                      </div>
+                      <div className="w-full bg-amber-500/20 h-2.5 rounded-full overflow-hidden border border-amber-500/40">
+                        <div 
+                          className="bg-amber-600 h-full rounded-full transition-all duration-500" 
+                          style={{ width: `${Math.max(2, Math.min(100, (realCount / 500) * 100))}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar 2 : Tokens Quotidiens Pro */}
+                    <div className="space-y-2 bg-white/80 p-4 rounded-xl border border-amber-500/30">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-black uppercase tracking-wider text-amber-950 block">Consommation Tokens Pro (Jour)</span>
+                          <span className="text-[11px] font-bold text-amber-900/70">Limite quotidienne de haute capacité</span>
+                        </div>
+                        <span className="text-xs font-black text-amber-950 bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-400">
+                          {dailyTokensUsed.toLocaleString("fr-FR")} / 250 000 tokens
+                        </span>
+                      </div>
+                      <div className="w-full bg-amber-500/20 h-2.5 rounded-full overflow-hidden border border-amber-500/40">
+                        <div 
+                          className="bg-[#FF5500] h-full rounded-full transition-all duration-500" 
+                          style={{ width: `${Math.max(2, Math.min(100, (dailyTokensUsed / 250000) * 100))}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar 3 : Tokens Mensuels Pro */}
+                    <div className="space-y-2 bg-white/80 p-4 rounded-xl border border-amber-500/30">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-black uppercase tracking-wider text-amber-950 block">Quota de Tokens Mensuel Pro</span>
+                          <span className="text-[11px] font-bold text-amber-900/70">Renouvellement mensuel le {nextCycleFormatted}</span>
+                        </div>
+                        <span className="text-xs font-black text-amber-950 bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-400">
+                          {(dailyTokensUsed * subDaysElapsed).toLocaleString("fr-FR")} / 3 000 000 tokens
+                        </span>
+                      </div>
+                      <div className="w-full bg-amber-500/20 h-2.5 rounded-full overflow-hidden border border-amber-500/40">
+                        <div 
+                          className="bg-emerald-600 h-full rounded-full transition-all duration-500" 
+                          style={{ width: `${Math.max(2, Math.min(100, ((dailyTokensUsed * subDaysElapsed) / 3000000) * 100))}%` }}
+                        ></div>
+                      </div>
                     </div>
 
                     {/* Progress Bar de l'abonnement en cours */}
-                    <div className="space-y-2 bg-white/70 p-4 rounded-xl border border-amber-500/30">
+                    <div className="space-y-2 bg-white/80 p-4 rounded-xl border border-amber-500/30">
                       <div className="flex items-center justify-between text-xs font-black text-amber-900">
                         <span className="flex items-center gap-1.5">
                           <Clock size={14} className="text-amber-600" />
@@ -310,7 +367,7 @@ export default function AccountPage() {
                     </div>
 
                     <p className="text-xs font-extrabold text-amber-900/80 leading-relaxed">
-                      Votre compte bénéficie d&apos;un routage prioritaire sans limite quotidienne. Vos analyses peuvent consommer jusqu&apos;à **2500+ tokens par réponse** avec les modèles d&apos;élite (GPT-5, Claude 3.5 Sonnet).
+                      Votre compte bénéficie d&apos;un routage prioritaire avec des quotas professionnels élevés (500 messages/jour et 3M tokens/mois). Vos analyses peuvent consommer jusqu&apos;à **2500+ tokens par réponse** avec les modèles d&apos;élite (GPT-5, Claude 3.5 Sonnet).
                     </p>
                   </div>
                 ) : (
