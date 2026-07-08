@@ -274,20 +274,73 @@ export default function HomeworkPage() {
                 )}
                 <button
                   onClick={handleLaunchAi}
-                  disabled={!inputContent.trim()}
+                  disabled={!inputContent.trim() || isGenerating}
                   className={`w-full sm:w-auto px-8 py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-3 border-2 border-black shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer ${
-                    inputContent.trim()
+                    inputContent.trim() && !isGenerating
                       ? "bg-primary text-white hover:bg-black hover:translate-y-[-2px]"
                       : "bg-black/10 text-black/40 border-black/20 shadow-none cursor-not-allowed"
                   }`}
                 >
-                  <Sparkles size={18} />
-                  <span>Générer avec le Professeur IA</span>
+                  <Sparkles size={18} className={isGenerating ? "animate-spin" : ""} />
+                  <span>{isGenerating ? "Génération de la résolution..." : "Générer avec le Professeur IA"}</span>
                   <ArrowRight size={16} />
                 </button>
               </div>
             </div>
           </div>
+
+          {/* AI PROFESSOR GENERATING STATE */}
+          {isGenerating && (
+            <div className="bg-amber-50/80 border-[3px] border-black rounded-2xl p-8 shadow-[6px_6px_0px_0px_#000000] flex flex-col items-center justify-center gap-4 text-center animate-pulse">
+              <div className="w-14 h-14 rounded-2xl bg-[#FF5500] text-white flex items-center justify-center border-2 border-black shadow-[3px_3px_0px_0px_#000000]">
+                <Sparkles size={28} className="animate-spin" />
+              </div>
+              <h3 className="text-xl font-black text-black">👨‍🏫 Le Professeur IA analyse votre énoncé...</h3>
+              <p className="text-xs font-bold text-black/70 max-w-md">
+                Nous préparons la méthode détaillée, les formules essentielles et l'explication pas à pas pour vous aider à comprendre parfaitement.
+              </p>
+            </div>
+          )}
+
+          {/* AI PROFESSOR RESULT DISPLAY */}
+          {aiResult && !isGenerating && (
+            <div className="bg-white border-[3px] border-black rounded-3xl p-6 md:p-8 shadow-[8px_8px_0px_0px_#FF5500] flex flex-col gap-6 relative overflow-hidden">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b-2 border-black/10 pb-5 gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-[#FF5500] text-white rounded-2xl border-2 border-black shadow-[3px_3px_0px_0px_#000000]">
+                    <GraduationCap size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-black uppercase tracking-tight">Résolution & Explications du Professeur IA</h3>
+                    <p className="text-xs font-bold text-black/50">Méthode complète — Prêt pour vos révisions et flashcards</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(aiResult);
+                      alert("✅ Résolution copiée dans le presse-papier !");
+                    }}
+                    className="px-4 py-2 bg-black/5 hover:bg-black hover:text-white text-black font-extrabold text-xs rounded-xl border border-black/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>📋 Copier</span>
+                  </button>
+                  <button
+                    onClick={() => setShowFlashcardsModal(true)}
+                    className="px-4 py-2 bg-[#FF5500] hover:bg-black text-white font-extrabold text-xs rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000000] transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>🃏</span>
+                    <span>Créer des Flashcards 3D</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-[#FAFAFA] border-2 border-black/15 rounded-2xl p-6 md:p-8 text-black font-medium text-sm md:text-base leading-relaxed whitespace-pre-wrap select-text">
+                {aiResult}
+              </div>
+            </div>
+          )}
 
           {/* Quick Study Tips / Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
