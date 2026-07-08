@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://ai.gamastudio.fr"),
   title: "Gama Studio Pro • Plateforme Multi-Modèles d'IA & Veille Web",
   description: "Gama Studio Pro est la plateforme de référence pour exploiter l'intelligence artificielle sans limite. Accédez aux meilleurs modèles (OpenAI GPT-4o, GPT-4o Mini, NVIDIA Nemotron 550B, Llama 3) avec recherche web en direct et reconnaissance vocale temps réel.",
   keywords: ["IA", "Gama Studio", "Chatbot IA", "OpenAI GPT-4o", "Multi-modèle", "NVIDIA Nemotron", "OpenSource", "Veille web", "Recherche IA", "Reconnaissance vocale"],
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Gama Studio Pro • Plateforme Multi-Modèles d'IA & Veille Web",
     description: "Exploitez les modèles d'IA les plus puissants en 100% gratuit avec recherche web et transcription vocale en direct.",
-    url: "https://gamastudio.ai",
+    url: "https://ai.gamastudio.fr",
     siteName: "Gama Studio Pro",
     images: [
       {

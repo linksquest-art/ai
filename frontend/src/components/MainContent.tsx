@@ -278,6 +278,10 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
   ];
 
   const handleSend = () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     if ((!query.trim() && attachedFiles.length === 0) || isGenerating) return;
     
     if (isRecording && recognitionRef.current) {
@@ -625,6 +629,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
 
   return (
     <div className="flex-1 flex flex-col h-screen overflow-hidden relative bg-[#FFFFFF]">
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       <FlashcardModal
         isOpen={showFlashcardModal}
         onClose={() => {
