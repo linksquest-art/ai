@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
-import { Calendar as CalendarIcon, Plus, Sparkles, Clock, Trash2, ChevronLeft, ChevronRight, CheckCircle2, Tag, AlertCircle, X, Check } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Sparkles, Clock, Trash2, ChevronLeft, ChevronRight, CheckCircle2, Tag, AlertCircle, X, Check, Copy, CalendarDays } from "lucide-react";
 import Link from "next/link";
 
 interface Message {
@@ -27,15 +27,23 @@ interface CalendarEvent {
   completed?: boolean;
 }
 
+const toLocalYYYYMMDD = (d: Date): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
 export default function CalendarPage() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 12, 0, 0));
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("Tous");
   
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [newTitle, setNewTitle] = useState("");
-  const [newDate, setNewDate] = useState(new Date().toISOString().split("T")[0]);
+  const [newDate, setNewDate] = useState(() => toLocalYYYYMMDD(new Date()));
   const [newTime, setNewTime] = useState("09:00");
   const [newCategory, setNewCategory] = useState<CalendarEvent["category"]>("Études / Devoirs");
   const [isAiPlanning, setIsAiPlanning] = useState(false);
@@ -53,7 +61,7 @@ export default function CalendarPage() {
       } catch (e) {}
     } else {
       // Default sample events
-      const today = new Date().toISOString().split("T")[0];
+      const today = toLocalYYYYMMDD(new Date());
       const defaults: CalendarEvent[] = [
         { id: "1", title: "Rendu du Projet Algorithmique", date: today, time: "14:00", category: "Études / Devoirs", color: "bg-purple-500" },
         { id: "2", title: "Réunion d'Équipe Architecture", date: today, time: "16:30", category: "Projet SaaS", color: "bg-amber-500" },
@@ -104,20 +112,34 @@ export default function CalendarPage() {
     saveEvents(events.filter(ev => ev.id !== id));
   };
 
+  const duplicateToNextDay = (ev: CalendarEvent) => {
+    const parts = ev.date.split("-").map(Number);
+    const nextD = new Date(parts[0], parts[1] - 1, parts[2] + 1, 12, 0, 0);
+    const nextDateStr = toLocalYYYYMMDD(nextD);
+    const duplicated: CalendarEvent = {
+      ...ev,
+      id: Math.random().toString(36).substring(2, 9),
+      date: nextDateStr,
+      completed: false
+    };
+    const updated = [...events, duplicated].sort((a, b) => a.time.localeCompare(b.time));
+    saveEvents(updated);
+  };
+
   const handleAiAutoSchedule = () => {
     setIsAiPlanning(true);
     setTimeout(() => {
-      const today = new Date().toISOString().split("T")[0];
+      const targetDate = toLocalYYYYMMDD(currentDate);
       const aiSuggestions: CalendarEvent[] = [
-        { id: "ai_1", title: "🧠 [IA] Session Deep Work Focus (2h)", date: today, time: "10:00", category: "Projet SaaS", color: "bg-amber-500" },
-        { id: "ai_2", title: "📚 [IA] Révision Fiches Synthèse & Mémorisation", date: today, time: "15:00", category: "Études / Devoirs", color: "bg-blue-500" },
-        { id: "ai_3", title: "⚡ [IA] Veille Tech & Lecture Articles ArXiv", date: today, time: "20:00", category: "Personnel", color: "bg-purple-500" }
+        { id: "ai_" + Math.random().toString(36).substr(2, 5), title: "🧠 [IA] Session Deep Work Focus (2h)", date: targetDate, time: "10:00", category: "Projet SaaS", color: "bg-amber-500" },
+        { id: "ai_" + Math.random().toString(36).substr(2, 5), title: "📚 [IA] Révision Fiches Synthèse & Mémorisation", date: targetDate, time: "15:00", category: "Études / Devoirs", color: "bg-blue-500" },
+        { id: "ai_" + Math.random().toString(36).substr(2, 5), title: "⚡ [IA] Veille Tech & Lecture Articles ArXiv", date: targetDate, time: "20:00", category: "Personnel", color: "bg-purple-500" }
       ];
       const updated = [...events, ...aiSuggestions].sort((a, b) => a.time.localeCompare(b.time));
       saveEvents(updated);
       setIsAiPlanning(false);
-      alert("✨ Organisation AI générée avec succès pour votre journée !");
-    }, 1200);
+      alert(`✨ Organisation AI générée avec succès pour le ${new Date(targetDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} !`);
+    }, 1000);
   };
 
   // Calendar calculations
@@ -133,11 +155,20 @@ export default function CalendarPage() {
   const firstDay = getFirstDayOfMonth(year, month);
   const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
-  const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
-  const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+  const prevMonth = () => setCurrentDate(new Date(year, month - 1, 15, 12, 0, 0));
+  const nextMonth = () => setCurrentDate(new Date(year, month + 1, 15, 12, 0, 0));
+  const jumpToToday = () => {
+    const now = new Date();
+    setCurrentDate(new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0));
+  };
 
-  const selectedDateStr = currentDate.toISOString().split("T")[0];
-  const todaysEvents = events.filter(e => e.date === selectedDateStr);
+  const selectedDateStr = toLocalYYYYMMDD(currentDate);
+  const todayStr = toLocalYYYYMMDD(new Date());
+  const todaysEvents = events
+    .filter(e => e.date === selectedDateStr)
+    .filter(e => selectedCategoryFilter === "Tous" || e.category === selectedCategoryFilter);
+
+  const completedCount = todaysEvents.filter(e => e.completed).length;
 
   return (
     <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black">
@@ -185,14 +216,18 @@ export default function CalendarPage() {
                 {monthNames[month]} {year}
               </h2>
               <div className="flex items-center gap-2">
-                <button onClick={prevMonth} className="p-2 rounded-xl border-2 border-black/20 hover:border-black hover:bg-black/5 transition-colors">
-                  <ChevronLeft size={18} strokeWidth={3} />
+                <button
+                  onClick={jumpToToday}
+                  className="px-3 py-1.5 rounded-xl border-2 border-black/20 hover:border-black font-extrabold text-xs bg-[#FAFAFA] hover:bg-black hover:text-white transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <CalendarDays size={13} />
+                  <span>Aujourd'hui</span>
                 </button>
-                <button onClick={() => setCurrentDate(new Date())} className="px-3 py-1.5 rounded-xl border-2 border-black text-xs font-black hover:bg-black hover:text-white transition-colors">
-                  Aujourd'hui
+                <button onClick={prevMonth} className="p-2 rounded-xl border-2 border-black/10 hover:border-black transition-colors">
+                  <ChevronLeft size={18} />
                 </button>
-                <button onClick={nextMonth} className="p-2 rounded-xl border-2 border-black/20 hover:border-black hover:bg-black/5 transition-colors">
-                  <ChevronRight size={18} strokeWidth={3} />
+                <button onClick={nextMonth} className="p-2 rounded-xl border-2 border-black/10 hover:border-black transition-colors">
+                  <ChevronRight size={18} />
                 </button>
               </div>
             </div>
@@ -212,16 +247,17 @@ export default function CalendarPage() {
 
               {Array.from({ length: daysInMonth }).map((_, idx) => {
                 const dayNum = idx + 1;
-                const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
+                const cellDate = new Date(year, month, dayNum, 12, 0, 0);
+                const dateStr = toLocalYYYYMMDD(cellDate);
                 const dayEvents = events.filter(e => e.date === dateStr);
                 const isSelected = dateStr === selectedDateStr;
-                const isToday = dateStr === new Date().toISOString().split("T")[0];
+                const isToday = dateStr === todayStr;
 
                 return (
                   <div
                     key={dayNum}
                     onClick={() => {
-                      setCurrentDate(new Date(year, month, dayNum));
+                      setCurrentDate(cellDate);
                       setNewDate(dateStr);
                     }}
                     className={`h-20 sm:h-24 rounded-2xl p-2 border-2 transition-all cursor-pointer flex flex-col justify-between overflow-hidden relative ${
@@ -270,30 +306,57 @@ export default function CalendarPage() {
           <div className="bg-white border-[3px] border-black rounded-3xl p-6 md:p-8 shadow-[8px_8px_0px_0px_#000000] flex flex-col justify-between gap-6">
             <div className="flex flex-col gap-6">
               <div className="border-b-2 border-black/10 pb-4">
-                <span className="text-xs font-black uppercase text-primary tracking-wider">
-                  Planning de la journée
-                </span>
-                <h3 className="text-2xl font-black text-black uppercase mt-1">
-                  {new Date(selectedDateStr).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase text-primary tracking-wider">
+                    Planning de la journée
+                  </span>
+                  {todaysEvents.length > 0 && (
+                    <span className="text-xs font-extrabold bg-black/5 px-2.5 py-1 rounded-lg">
+                      {completedCount}/{todaysEvents.length} fait{completedCount > 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-black uppercase mt-1 capitalize">
+                  {currentDate.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
                 </h3>
+
+                {/* Category Filters */}
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {["Tous", "Études / Devoirs", "Projet SaaS", "Réunion", "Urgent"].map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategoryFilter(cat)}
+                      className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                        selectedCategoryFilter === cat
+                          ? "bg-black text-white border-black shadow-[2px_2px_0px_0px_#FF5500]"
+                          : "bg-[#FAFAFA] text-black/70 border-black/15 hover:border-black"
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {todaysEvents.length === 0 ? (
                 <div className="bg-[#FAFAFA] border-2 border-dashed border-black/20 rounded-2xl p-8 text-center flex flex-col items-center justify-center gap-3 my-4">
                   <Clock size={28} className="text-black/30" />
                   <p className="text-xs font-bold text-black/60">
-                    Aucun événement prévu pour cette journée. Profitez de votre temps libre ou demandez une suggestion !
+                    Aucun événement prévu {selectedCategoryFilter !== "Tous" ? `pour la catégorie "${selectedCategoryFilter}"` : "pour cette journée"}.
                   </p>
                   <button
-                    onClick={() => setShowModal(true)}
-                    className="mt-2 text-xs font-extrabold bg-black text-white px-4 py-2 rounded-xl flex items-center gap-1.5 hover:bg-primary transition-colors"
+                    onClick={() => {
+                      setNewDate(selectedDateStr);
+                      setShowModal(true);
+                    }}
+                    className="mt-2 text-xs font-extrabold bg-black text-white px-4 py-2 rounded-xl flex items-center gap-1.5 hover:bg-primary transition-colors cursor-pointer"
                   >
                     <Plus size={14} strokeWidth={3} />
-                    <span>Planifier un créneau</span>
+                    <span>Planifier un créneau le {currentDate.getDate()}</span>
                   </button>
                 </div>
               ) : (
-                <div className="flex flex-col gap-3.5 max-h-[420px] overflow-y-auto pr-1">
+                <div className="flex flex-col gap-3.5 max-h-[380px] overflow-y-auto pr-1">
                   {todaysEvents.map((ev) => (
                     <div
                       key={ev.id}
@@ -306,7 +369,7 @@ export default function CalendarPage() {
                       <div className="flex items-start gap-3">
                         <button
                           onClick={() => toggleComplete(ev.id)}
-                          className={`mt-0.5 w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${
+                          className={`mt-0.5 w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer ${
                             ev.completed ? "bg-green-600 border-green-600 text-white" : "border-black hover:bg-black/10"
                           }`}
                         >
@@ -327,13 +390,22 @@ export default function CalendarPage() {
                         </div>
                       </div>
 
-                      <button
-                        onClick={() => deleteEvent(ev.id)}
-                        className="text-black/30 hover:text-red-600 p-1 transition-colors"
-                        title="Supprimer"
-                      >
-                        <Trash2 size={15} />
-                      </button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => duplicateToNextDay(ev)}
+                          className="text-black/40 hover:text-black p-1.5 transition-colors cursor-pointer rounded-lg hover:bg-black/5"
+                          title="Dupliquer au lendemain (+1 jour)"
+                        >
+                          <Copy size={14} />
+                        </button>
+                        <button
+                          onClick={() => deleteEvent(ev.id)}
+                          className="text-black/40 hover:text-red-600 p-1.5 transition-colors cursor-pointer rounded-lg hover:bg-red-50"
+                          title="Supprimer"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

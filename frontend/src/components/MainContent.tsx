@@ -632,7 +632,15 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
           setFlashcardInitialText(undefined);
         }}
         topic={activeSession ? activeSession.title : "Espace de Travail"}
-        initialText={flashcardInitialText}
+        initialText={
+          flashcardInitialText ||
+          (activeSession?.messages && activeSession.messages.length > 0
+            ? activeSession.messages
+                .slice(-6)
+                .map((m) => `${m.role === "user" ? "Question" : "Explication"}: ${typeof m.content === "string" ? m.content : ""}`)
+                .join("\n\n")
+            : query.trim() || undefined)
+        }
       />
       {/* Invisible backdrop to close menus when clicking outside */}
       {(showPlusMenu || showModelMenu || showSearchMenu) && (

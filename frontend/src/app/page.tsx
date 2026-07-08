@@ -54,15 +54,12 @@ function HomeContent() {
         setUser(currentUser);
         if (currentUser) {
           // Au moment de la connexion, récupérer l'historique de chat cloud depuis les métadonnées Supabase
-          const cloudSessions = currentUser.user_metadata?.chat_sessions;
           if (cloudSessions && Array.isArray(cloudSessions) && cloudSessions.length > 0) {
             setSessions(cloudSessions);
             localStorage.setItem("gama_sessions", JSON.stringify(cloudSessions));
-            if (savedActive && cloudSessions.some((s: ChatSession) => s.id === savedActive)) {
-              setActiveSessionId(savedActive);
-            } else if (cloudSessions[0]) {
-              setActiveSessionId(cloudSessions[0].id);
-              localStorage.setItem("gama_active_session", cloudSessions[0].id);
+            const currentActive = localStorage.getItem("gama_active_session");
+            if (currentActive && cloudSessions.some((s: ChatSession) => s.id === currentActive)) {
+              setActiveSessionId(currentActive);
             }
           }
         } else {

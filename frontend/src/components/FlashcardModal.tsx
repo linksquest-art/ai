@@ -79,6 +79,12 @@ export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", i
         setCurrentIndex(0);
         setIsFlipped(false);
         setIsFinished(false);
+      } else if (topic && topic !== "Espace de Travail" && topic !== "Révision Académique") {
+        setCards([]);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setIsFinished(false);
+        handleGenerateAI();
       } else {
         // Find matching topic or load default cards
         const matchedTopic = Object.keys(DEFAULT_FLASHCARDS_BY_TOPIC).find(k => 
@@ -86,7 +92,6 @@ export function FlashcardModal({ isOpen, onClose, topic = "Espace de Travail", i
         );
         const loadCards = matchedTopic ? DEFAULT_FLASHCARDS_BY_TOPIC[matchedTopic] : DEFAULT_FLASHCARDS_BY_TOPIC.default;
         
-        // Customize first card category to current topic
         const customized = loadCards.map((c, i) => ({
           ...c,
           category: i === 0 ? topic : c.category,

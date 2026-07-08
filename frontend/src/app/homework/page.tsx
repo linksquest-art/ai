@@ -90,6 +90,13 @@ export default function HomeworkPage() {
         isOpen={showFlashcardsModal}
         onClose={() => setShowFlashcardsModal(false)}
         topic={inputSubject || "Révision Académique"}
+        initialText={
+          inputContent.trim()
+            ? `Sujet/Matière: ${inputSubject || "Révision"} (${inputLevel})\n\nContenu:\n${inputContent.trim()}`
+            : inputSubject.trim()
+            ? `Sujet de révision: ${inputSubject} (${inputLevel})`
+            : undefined
+        }
       />
       <Sidebar sessions={sessions} />
       
