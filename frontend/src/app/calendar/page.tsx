@@ -185,6 +185,10 @@ export default function CalendarPage() {
   };
 
   const duplicateToNextDay = (ev: CalendarEvent) => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     if (!isPro && events.length >= 7) {
       setShowUpgradeModal(true);
       return;
@@ -203,6 +207,10 @@ export default function CalendarPage() {
   };
 
   const handleAiAutoSchedule = () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     setIsAiPlanning(true);
     setTimeout(() => {
       const targetDate = toLocalYYYYMMDD(currentDate);
@@ -249,6 +257,9 @@ export default function CalendarPage() {
     <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black">
       <Sidebar sessions={sessions} />
       
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
+      
       <div className="flex-1 flex flex-col h-screen overflow-y-auto">
         {/* Top Header */}
         <header className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 md:px-8 py-5 border-b-2 border-black/10 bg-[#FFFFFF] sticky top-0 z-10 gap-4">
@@ -273,6 +284,10 @@ export default function CalendarPage() {
             </button>
             <button
               onClick={() => {
+                if (!user) {
+                  setShowAuthModal(true);
+                  return;
+                }
                 if (!isPro && events.length >= 7) {
                   setShowUpgradeModal(true);
                 } else {
