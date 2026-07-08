@@ -56,11 +56,29 @@ export default function CalendarPage() {
       try { setSessions(JSON.parse(savedSessions)); } catch (e) {}
     }
 
+    const DEMO_TITLES = [
+      "Rendu du Projet Algorithmique",
+      "Réunion d'Équipe Architecture",
+      "Session Révisions Intensives",
+      "🧠 [IA] Session Deep Work Focus (2h)",
+      "📚 [IA] Révision Fiches Synthèse & Mémorisation",
+      "⚡ [IA] Veille Tech & Lecture Articles ArXiv"
+    ];
+
+    const cleanDemoEvents = (list: CalendarEvent[]) => {
+      return list.filter(e => !DEMO_TITLES.includes(e.title));
+    };
+
     const loadLocalOrDefaults = () => {
       const savedEvents = localStorage.getItem("gama_calendar_events");
       if (savedEvents) {
         try {
-          setEvents(JSON.parse(savedEvents));
+          const parsed = JSON.parse(savedEvents);
+          const cleaned = cleanDemoEvents(parsed);
+          setEvents(cleaned);
+          if (cleaned.length !== parsed.length) {
+            localStorage.setItem("gama_calendar_events", JSON.stringify(cleaned));
+          }
           return;
         } catch (e) {}
       }
@@ -72,8 +90,12 @@ export default function CalendarPage() {
       if (currentUser) {
         const cloudEvents = currentUser.user_metadata?.calendar_events;
         if (cloudEvents && Array.isArray(cloudEvents) && cloudEvents.length > 0) {
-          setEvents(cloudEvents);
-          localStorage.setItem("gama_calendar_events", JSON.stringify(cloudEvents));
+          const cleaned = cleanDemoEvents(cloudEvents);
+          setEvents(cleaned);
+          localStorage.setItem("gama_calendar_events", JSON.stringify(cleaned));
+          if (cleaned.length !== cloudEvents.length) {
+            supabase.auth.updateUser({ data: { calendar_events: cleaned } });
+          }
         } else {
           loadLocalOrDefaults();
         }
@@ -168,14 +190,13 @@ export default function CalendarPage() {
     setTimeout(() => {
       const targetDate = toLocalYYYYMMDD(currentDate);
       const aiSuggestions: CalendarEvent[] = [
-        { id: "ai_" + Math.random().toString(36).substr(2, 5), title: "🧠 [IA] Session Deep Work Focus (2h)", date: targetDate, time: "10:00", category: "Projet SaaS", color: "bg-amber-500" },
-        { id: "ai_" + Math.random().toString(36).substr(2, 5), title: "📚 [IA] Révision Fiches Synthèse & Mémorisation", date: targetDate, time: "15:00", category: "Études / Devoirs", color: "bg-blue-500" },
-        { id: "ai_" + Math.random().toString(36).substr(2, 5), title: "⚡ [IA] Veille Tech & Lecture Articles ArXiv", date: targetDate, time: "20:00", category: "Personnel", color: "bg-purple-500" }
+        { id: "ai_" + Math.random().toString(36).substr(2, 5), title: "✨ Session de Travail & Objectifs prioritaires", date: targetDate, time: "09:30", category: "Projet SaaS", color: "bg-amber-500" },
+        { id: "ai_" + Math.random().toString(36).substr(2, 5), title: "📌 Point d'Avancement & Synthèse", date: targetDate, time: "16:00", category: "Études / Devoirs", color: "bg-blue-500" }
       ];
       const updated = [...events, ...aiSuggestions].sort((a, b) => a.time.localeCompare(b.time));
       saveEvents(updated);
       setIsAiPlanning(false);
-      alert(`✨ Organisation AI générée avec succès pour le ${new Date(targetDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} !`);
+      alert(`✨ Planification générée avec succès pour le ${new Date(targetDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} !`);
     }, 1000);
   };
 
