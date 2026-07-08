@@ -105,27 +105,15 @@ export default function SummaryPage() {
     setSummaryResult(null);
 
     const vidId = extractVideoId(youtubeUrl);
-    const prompt = `Tu es une IA d'élite spécialisée dans l'analyse de vidéos YouTube pédagogiques et techniques.
-L'utilisateur veut un résumé complet et ultra-structuré de la vidéo YouTube suivante : ${youtubeUrl} (ID: ${vidId || "inconnu"}).
-${youtubeNotes ? `Notes additionnelles ou points à surveiller par l'utilisateur : ${youtubeNotes}\n` : ""}
-Format demandé : "${youtubeFormat}".
-
-INSTRUCTIONS STRICTES :
-1. Produis un résumé complet, professionnel, riche en insights et parfaitement structuré en Markdown (titres, listes à puces, points clés, concepts essentiels).
-2. Fournis des explications claires, précises, actionnables et synthétiques.
-3. Si le format demande des horodatages ou des chapitres thématiques, organise clairement par sections chronologiques/logiques.`;
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch("/api/chat", {
+      const res = await fetch("/api/summary", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": session?.access_token ? `Bearer ${session.access_token}` : ""
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [{ role: "user", content: prompt }],
-          model: "deepseek/deepseek-chat"
+          url: youtubeUrl,
+          format: youtubeFormat,
+          notes: youtubeNotes
         })
       });
 
@@ -137,7 +125,7 @@ INSTRUCTIONS STRICTES :
       saveToHistory({
         id: "yt_" + Date.now(),
         type: "youtube",
-        title: vidId ? `Vidéo YouTube (${vidId})` : "Résumé Vidéo YouTube",
+        title: data.title ? `${data.title}` : (vidId ? `Vidéo YouTube (${vidId})` : "Résumé Vidéo YouTube"),
         source: youtubeUrl,
         format: youtubeFormat,
         content: generated,
