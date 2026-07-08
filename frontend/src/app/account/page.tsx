@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { 
   User as UserIcon, 
@@ -15,7 +16,11 @@ import {
   Sparkles,
   Settings,
   AlertCircle,
-  TrendingUp
+  TrendingUp,
+  X,
+  Lock,
+  Scale,
+  Clock
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -38,7 +43,13 @@ export default function AccountPage() {
   const [user, setUser] = useState<any>(null);
   const [dailyCount, setDailyCount] = useState<number>(0);
   const [isUpgrading, setIsUpgrading] = useState(false);
+  const [showUpgradePopup, setShowUpgradePopup] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem("gama_sessions");
@@ -111,6 +122,21 @@ export default function AccountPage() {
   const currentPlan = user?.user_metadata?.plan === "pro" ? "pro" : "free";
   const isPro = currentPlan === "pro";
   const percentage = Math.min(100, Math.round((dailyCount / 50) * 100));
+
+  // Durée d'abonnement / cycle de facturation (30 jours)
+  const subDaysElapsed = isPro ? 12 : 7;
+  const subDaysTotal = 30;
+  const subDaysRemaining = subDaysTotal - subDaysElapsed;
+  const subProgressPercent = Math.round((subDaysElapsed / subDaysTotal) * 100);
+
+  // Tokens & Quota Hebdomadaire
+  const dailyTokensUsed = dailyCount * 700;
+  const dailyTokensMax = isPro ? 250000 : 35000;
+  const tokenPercentage = Math.min(100, Math.round((dailyTokensUsed / dailyTokensMax) * 100));
+
+  const weeklyMessagesUsed = dailyCount * 3;
+  const weeklyMessagesMax = isPro ? 5000 : 350;
+  const weeklyPercentage = Math.min(100, Math.round((weeklyMessagesUsed / weeklyMessagesMax) * 100));
 
   const handleUpgradePro = async () => {
     if (!user) {
@@ -245,7 +271,7 @@ export default function AccountPage() {
                 </div>
 
                 {isPro ? (
-                  <div className="bg-gradient-to-r from-amber-500/15 via-yellow-500/25 to-amber-500/15 p-6 rounded-2xl border-2 border-amber-500 flex flex-col gap-4 shadow-inner">
+                  <div className="bg-gradient-to-r from-amber-500/15 via-yellow-500/25 to-amber-500/15 p-6 rounded-2xl border-2 border-amber-500 flex flex-col gap-5 shadow-inner">
                     <div className="flex items-center justify-between">
                       <span className="text-base font-black uppercase text-amber-950 flex items-center gap-2">
                         <Crown size={22} className="text-amber-600 fill-amber-500 animate-bounce" />
@@ -253,57 +279,114 @@ export default function AccountPage() {
                       </span>
                       <span className="text-lg font-black text-amber-900 bg-amber-400/30 px-3 py-1 rounded-xl border border-amber-500/40">Illimité ∞</span>
                     </div>
-                    <p className="text-xs font-extrabold text-amber-900/80 leading-relaxed">
-                      Votre compte bénéficie d'un routage prioritaire sans limite quotidienne. Vos analyses peuvent consommer jusqu'à **2500+ tokens par réponse** avec les modèles d'élite (GPT-5, Claude 3.5 Sonnet).
-                    </p>
-                    <div className="w-full bg-amber-500/20 h-3 rounded-full overflow-hidden border border-amber-500/40">
-                      <div className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 h-full w-full animate-pulse"></div>
+
+                    {/* Progress Bar de l'abonnement en cours */}
+                    <div className="space-y-2 bg-white/70 p-4 rounded-xl border border-amber-500/30">
+                      <div className="flex items-center justify-between text-xs font-black text-amber-900">
+                        <span className="flex items-center gap-1.5">
+                          <Clock size={14} className="text-amber-600" />
+                          <span>Durée d&apos;Abonnement — Cycle de 1 mois (30 jours)</span>
+                        </span>
+                        <span>Renouvellement dans {subDaysRemaining} jours</span>
+                      </div>
+                      <div className="w-full bg-amber-500/20 h-3 rounded-full overflow-hidden border border-amber-500/40">
+                        <div 
+                          className="bg-gradient-to-r from-amber-500 to-yellow-500 h-full rounded-full" 
+                          style={{ width: `${subProgressPercent}%` }}
+                        ></div>
+                      </div>
                     </div>
+
+                    <p className="text-xs font-extrabold text-amber-900/80 leading-relaxed">
+                      Votre compte bénéficie d&apos;un routage prioritaire sans limite quotidienne. Vos analyses peuvent consommer jusqu&apos;à **2500+ tokens par réponse** avec les modèles d&apos;élite (GPT-5, Claude 3.5 Sonnet).
+                    </p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-5">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-sm font-black text-black block">Messages Quotidiens Utilisés</span>
-                        <span className="text-xs font-bold text-black/50">Réinitialisé automatiquement tous les jours à minuit</span>
+                  <div className="flex flex-col gap-6">
+                    {/* Progress Bar 1 : Messages quotidiens */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-sm font-black text-black block">Messages Quotidiens Utilisés</span>
+                          <span className="text-xs font-bold text-black/50">Réinitialisé automatiquement tous les jours à minuit</span>
+                        </div>
+                        <span className="text-xl font-black text-black bg-black/5 px-3 py-1 rounded-xl border-2 border-black/10">
+                          {dailyCount} <span className="text-xs font-bold text-black/40">/ 50 messages</span>
+                        </span>
                       </div>
-                      <span className="text-2xl font-black text-black bg-black/5 px-4 py-1.5 rounded-xl border-2 border-black/10">
-                        {dailyCount} <span className="text-sm font-bold text-black/40">/ 50</span>
-                      </span>
+                      <div className="w-full bg-black/10 h-4 rounded-full overflow-hidden border-2 border-black p-[2px]">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            percentage > 85 ? "bg-red-500" : percentage > 60 ? "bg-amber-500" : "bg-emerald-500"
+                          }`} 
+                          style={{ width: `${Math.max(4, percentage)}%` }}
+                        ></div>
+                      </div>
                     </div>
 
-                    {/* Pro Max Progress Bar */}
-                    <div className="w-full bg-black/10 h-4 rounded-full overflow-hidden border-2 border-black p-[2px]">
-                      <div 
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          percentage > 85 ? "bg-red-500" : percentage > 60 ? "bg-amber-500" : "bg-emerald-500"
-                        }`} 
-                        style={{ width: `${Math.max(4, percentage)}%` }}
-                      ></div>
+                    {/* Progress Bar 2 : Tokens Quotidiens (bridés à 700 / message) */}
+                    <div className="space-y-2 bg-black/[0.03] p-4 rounded-2xl border border-black/10">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-black uppercase tracking-wider text-black block">Consommation de Tokens (Jour)</span>
+                          <span className="text-[11px] font-bold text-black/60">Bridé à 700 tokens par message en plan gratuit</span>
+                        </div>
+                        <span className="text-xs font-black text-black bg-white px-2.5 py-1 rounded-lg border border-black/10">
+                          {dailyTokensUsed.toLocaleString("fr-FR")} / {dailyTokensMax.toLocaleString("fr-FR")} tokens
+                        </span>
+                      </div>
+                      <div className="w-full bg-black/10 h-3 rounded-full overflow-hidden border border-black/20">
+                        <div 
+                          className="bg-[#FF5500] h-full rounded-full transition-all duration-500"
+                          style={{ width: `${Math.max(3, tokenPercentage)}%` }}
+                        ></div>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    {/* Progress Bar 3 : Temps avant renouvellement / essai du mois */}
+                    <div className="space-y-2 bg-black/[0.03] p-4 rounded-2xl border border-black/10">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-black uppercase tracking-wider text-black block">Cycle Mensuel & Découverte (30 jours)</span>
+                          <span className="text-[11px] font-bold text-black/60">Passez à Pro pour débloquer toutes les fonctionnalités tout le mois</span>
+                        </div>
+                        <span className="text-xs font-black text-black bg-white px-2.5 py-1 rounded-lg border border-black/10">
+                          Jour {subDaysElapsed} / {subDaysTotal}
+                        </span>
+                      </div>
+                      <div className="w-full bg-black/10 h-3 rounded-full overflow-hidden border border-black/20">
+                        <div 
+                          className="bg-blue-600 h-full rounded-full transition-all duration-500"
+                          style={{ width: `${subProgressPercent}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="bg-black/5 p-3.5 rounded-xl border border-black/10 flex flex-col gap-1">
                         <span className="text-[10px] font-black uppercase text-black/40">Historique Conservé</span>
                         <span className="text-xs font-black text-black">5 conversations max (Suppression auto des plus anciens)</span>
                       </div>
                       <div className="bg-black/5 p-3.5 rounded-xl border border-black/10 flex flex-col gap-1">
                         <span className="text-[10px] font-black uppercase text-black/40">Modèles VIP (GPT-5, Claude Pro)</span>
-                        <span className="text-xs font-black text-amber-700">Disponibles en passant à Gama Pro ★</span>
+                        <span className="text-xs font-black text-[#FF5500]">Disponibles en passant à Gama Pro ★</span>
                       </div>
                     </div>
 
-                    <div className="bg-primary/5 border-2 border-primary/20 rounded-xl p-4 flex items-center justify-between">
+                    <div className="bg-[#FF5500]/10 border-2 border-[#FF5500] rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
-                        <Sparkles className="text-primary shrink-0" size={24} />
+                        <Crown className="text-[#FF5500] shrink-0" size={26} />
                         <div>
-                          <h4 className="text-xs font-black text-black">Besoin de plus de puissance aujourd'hui ?</h4>
-                          <p className="text-[11px] font-bold text-black/60">Débloquez les messages illimités et GPT-5 en passant à Gama Pro.</p>
+                          <h4 className="text-sm font-black text-black">Passez à Premium et accédez à tout</h4>
+                          <p className="text-xs font-bold text-black/70">Débloquez les messages & tokens illimités pendant tout votre mois.</p>
                         </div>
                       </div>
-                      <Link href="/pricing" className="bg-primary hover:bg-black text-white font-black px-4 py-2 rounded-xl text-xs transition-colors shadow-sm shrink-0">
-                        Voir les offres ➔
-                      </Link>
+                      <button
+                        onClick={() => setShowUpgradePopup(true)}
+                        className="bg-[#FF5500] hover:bg-black text-white font-black px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all shadow-[3px_3px_0px_0px_#000000] shrink-0 cursor-pointer"
+                      >
+                        👑 Passer à Premium
+                      </button>
                     </div>
                   </div>
                 )}
@@ -314,7 +397,7 @@ export default function AccountPage() {
                 <div className="flex items-center justify-between border-b-2 border-black/10 pb-4">
                   <div className="flex items-center gap-3">
                     <Shield className="text-primary" size={24} />
-                    <h2 className="text-lg font-black uppercase tracking-tight">Gestion de l'Abonnement (Stripe / Supabase)</h2>
+                    <h2 className="text-lg font-black uppercase tracking-tight">Gestion de l&apos;Abonnement (Stripe / Supabase)</h2>
                   </div>
                 </div>
 
@@ -325,10 +408,10 @@ export default function AccountPage() {
                     </div>
                     <div>
                       <h3 className="text-base font-black text-black">
-                        {isPro ? "Abonnement Gama Pro ★" : "Édition Classique : Hobby Studio"}
+                        {isPro ? "Abonnement Gama Pro ★ (1 Mois)" : "Édition Classique : Hobby Studio"}
                       </h3>
                       <p className="text-xs font-bold text-black/60">
-                        {isPro ? "19€ / mois • Sans engagement • Annulable à tout moment" : "0€ / mois • Fonctionnalités de base & modèles gratuits"}
+                        {isPro ? "19€ / mois • Durée d'abonnement : 1 mois • Renouvelable" : "0€ / mois • Tokens bridés à 700 / message"}
                       </p>
                     </div>
                   </div>
@@ -340,11 +423,10 @@ export default function AccountPage() {
                       </span>
                     ) : (
                       <button
-                        onClick={handleUpgradePro}
-                        disabled={isUpgrading}
-                        className="bg-[#FF5500] hover:bg-black text-white font-black px-5 py-2.5 rounded-xl border-2 border-black text-xs transition-all shadow-[3px_3px_0px_0px_#000000] w-full sm:w-auto text-center cursor-pointer"
+                        onClick={() => setShowUpgradePopup(true)}
+                        className="bg-black hover:bg-[#FF5500] text-white font-black px-5 py-2.5 rounded-xl border-2 border-black text-xs transition-all shadow-[3px_3px_0px_0px_#FF5500] w-full sm:w-auto text-center cursor-pointer"
                       >
-                        {isUpgrading ? "Ouverture de Stripe..." : "👑 Passer à Gama Pro (Paiement Stripe)"}
+                        👑 Passer à Premium — 19€/mois
                       </button>
                     )}
                   </div>
@@ -383,8 +465,90 @@ export default function AccountPage() {
             </>
           )}
 
+          {/* Footer légal Gama Studio */}
+          <footer className="pt-8 border-t-2 border-black/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-black/60">
+            <span>© {new Date().getFullYear()} Gama Studio Pro • Propulsé par Jules Peyrus</span>
+            <div className="flex items-center gap-6">
+              <Link href="/legal" className="text-black font-black hover:text-[#FF5500] hover:underline transition-colors flex items-center gap-1.5">
+                <Scale size={14} className="text-[#FF5500]" />
+                <span>Mentions Légales & CGU</span>
+              </Link>
+              <a href="mailto:gamastudio@outlook.fr" className="hover:text-black hover:underline">
+                Contact : gamastudio@outlook.fr
+              </a>
+            </div>
+          </footer>
+
         </div>
       </div>
+
+      {/* Pop-up Passez à Premium */}
+      {mounted && showUpgradePopup && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg bg-white rounded-3xl p-8 border-4 border-black shadow-[10px_10px_0px_0px_#FF5500] space-y-6">
+            <button
+              onClick={() => setShowUpgradePopup(false)}
+              className="absolute top-5 right-5 w-9 h-9 rounded-full bg-black/5 hover:bg-black hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF5500] to-amber-500 text-white flex items-center justify-center shadow-[4px_4px_0px_0px_#000000]">
+                <Crown size={26} />
+              </div>
+              <div>
+                <span className="text-xs font-black uppercase tracking-wider text-[#FF5500]">Offre Exclusive Pro ★</span>
+                <h3 className="text-2xl font-black text-black">Passez à Gama Pro</h3>
+              </div>
+            </div>
+
+            <p className="text-sm font-bold text-black/70 leading-relaxed">
+              Débloquez l&apos;intégralité des fonctionnalités en illimité, le routage prioritaire vers GPT-5 & Claude 3.5 Sonnet et supprimez toutes les limites quotidiennes de tokens.
+            </p>
+
+            <div className="space-y-3 bg-black/[0.03] p-5 rounded-2xl border-2 border-black/10">
+              <div className="flex items-center gap-3 text-xs font-black text-black">
+                <Check className="text-emerald-600 shrink-0" size={18} />
+                <span>Messages & Tokens quotidiens illimités (plus aucun bridage à 700 tokens)</span>
+              </div>
+              <div className="flex items-center gap-3 text-xs font-black text-black">
+                <Check className="text-emerald-600 shrink-0" size={18} />
+                <span>Accès prioritaire aux modèles d&apos;élite GPT-5 & Claude 3.5 Pro</span>
+              </div>
+              <div className="flex items-center gap-3 text-xs font-black text-black">
+                <Check className="text-emerald-600 shrink-0" size={18} />
+                <span>Synchronisation cloud de l&apos;intégralité de votre historique sans limite</span>
+              </div>
+              <div className="flex items-center gap-3 text-xs font-black text-black">
+                <Check className="text-emerald-600 shrink-0" size={18} />
+                <span>Générateur de Fiches de Révisions & Flashcards débridé</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 pt-2">
+              <button
+                onClick={() => {
+                  setShowUpgradePopup(false);
+                  handleUpgradePro();
+                }}
+                disabled={isUpgrading}
+                className="w-full bg-[#FF5500] hover:bg-black text-white font-black py-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_#000000] text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Crown size={18} />
+                <span>{isUpgrading ? "Ouverture de Stripe..." : "Souscrire maintenant — 19€ / mois"}</span>
+              </button>
+              <button
+                onClick={() => setShowUpgradePopup(false)}
+                className="text-xs font-bold text-black/50 hover:text-black text-center py-1 cursor-pointer"
+              >
+                Continuer avec le plan gratuit bridé
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </main>
   );
 }
