@@ -29,6 +29,31 @@ export async function POST(req: Request) {
           if (user.user_metadata?.plan === "pro") {
             userPlan = "pro";
           }
+
+          const todayStr = new Date().toISOString().split("T")[0];
+          const isSameDay = user.user_metadata?.usage_date === todayStr;
+          const currentCount = isSameDay ? (user.user_metadata?.daily_messages_count || 0) : 0;
+          const currentTokens = isSameDay ? (user.user_metadata?.daily_tokens_used || 0) : 0;
+
+          if (userPlan !== "pro" && currentCount >= 10) {
+            return NextResponse.json({
+              role: "assistant",
+              content: `⚠️ **Limite Quotidienne Atteinte (Plan Hobby Gratuit)** : Vous avez utilisé vos 10 messages gratuits d'aujourd'hui.\n\n✨ **Passez au plan Gama Pro** dans l'onglet *Tarifs* ou *Mon Compte* pour débloquer les messages illimités 24h/24, l'accès à GPT-5 et la puissance maximale !`,
+              limitExceeded: true
+            });
+          }
+
+          // Mise à jour de la consommation synchronisée sur Supabase
+          const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+            global: { headers: { Authorization: `Bearer ${token}` } }
+          });
+          await authClient.auth.updateUser({
+            data: {
+              usage_date: todayStr,
+              daily_messages_count: currentCount + 1,
+              daily_tokens_used: currentTokens + 380
+            }
+          });
         }
       } catch (e) {
         console.warn("Erreur de validation token Supabase:", e);
@@ -38,18 +63,18 @@ export async function POST(req: Request) {
     const todayStr = new Date().toISOString().split("T")[0];
     const isPro = userPlan === "pro";
 
-    // 2. Contrôle de quota strict pour les comptes gratuits (Max 50 msgs / jour)
-    if (!isPro) {
+    // Fallback in-memory pour utilisateurs non connectés
+    if (!isPro && userId === "anonymous") {
       const currentUsage = dailyUsageTracker.get(userId) || { count: 0, date: todayStr };
       if (currentUsage.date !== todayStr) {
         currentUsage.count = 0;
         currentUsage.date = todayStr;
       }
 
-      if (currentUsage.count >= 50) {
+      if (currentUsage.count >= 10) {
         return NextResponse.json({
           role: "assistant",
-          content: `⚠️ **Limite Quotidienne Atteinte (Plan Hobby Studio Gratuit)** : Vous avez utilisé vos 50 messages gratuits d'aujourd'hui.\n\n✨ **Passez au plan Gama Pro** dans l'onglet *Tarifs* pour débloquer les messages illimités 24h/24, l'accès à GPT-5 et la puissance maximale !`,
+          content: `⚠️ **Limite Quotidienne Atteinte (Plan Hobby Gratuit)** : Vous avez utilisé vos 10 messages gratuits d'aujourd'hui.\n\n✨ **Passez au plan Gama Pro** dans l'onglet *Tarifs* pour débloquer les messages illimités 24h/24, l'accès à GPT-5 et la puissance maximale !`,
           limitExceeded: true
         });
       }
@@ -88,7 +113,7 @@ export async function POST(req: Request) {
 
     const systemMessage = {
       role: "system",
-      content: "Tu es un assistant IA naturel, chaleureux, perspicace et très fluide. Réponds toujours de manière humaine, claire et directe, sans introduire tes réponses par des formules toutes faites ou robotiques. UNIQUEMENT si l'utilisateur te demande explicitement qui tu es, tu peux répondre simplement que tu es l'assistant de Gama Studio." + (systemPrompt ? `\n\n[CONTEXTE DE L'ESPACE / SKILL ACTIF] :\n${systemPrompt}` : "")
+      content: "Tu es un assistant IA naturel, chaleureux, perspicace et très fluide. RÈGLE LINGUISTIQUE ESSENTIELLE : Réponds TOUJOURS dans la langue exacte utilisée par l'utilisateur dans son message ou adaptée à la langue de sa question (ex: si l'utilisateur écrit en anglais ou espagnol, réponds dans cette langue ; s'il écrit en français, réponds en français). Réponds de manière humaine, claire et directe, sans formules robotiques. UNIQUEMENT si l'utilisateur te demande explicitement qui tu es, tu peux répondre simplement que tu es l'assistant de Gama Studio." + (systemPrompt ? `\n\n[CONTEXTE DE L'ESPACE / SKILL ACTIF] :\n${systemPrompt}` : "")
     };
 
     const formattedMessages = [

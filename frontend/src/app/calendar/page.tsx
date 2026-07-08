@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { Calendar as CalendarIcon, Plus, Sparkles, Clock, Trash2, ChevronLeft, ChevronRight, CheckCircle2, Tag, AlertCircle, X, Check, Copy, CalendarDays } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { AuthModal } from "@/components/AuthModal";
 
 interface Message {
   role: "user" | "assistant";
@@ -44,6 +45,7 @@ export default function CalendarPage() {
   
   // Modal state
   const [showModal, setShowModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newDate, setNewDate] = useState(() => toLocalYYYYMMDD(new Date()));
   const [newTime, setNewTime] = useState("09:00");
@@ -137,6 +139,10 @@ export default function CalendarPage() {
   };
 
   const handleAddEvent = () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     if (!newTitle.trim()) return;
     const colorMap: Record<string, string> = {
       "Études / Devoirs": "bg-blue-500",

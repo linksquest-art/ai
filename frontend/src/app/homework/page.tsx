@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
-import { GraduationCap, Sparkles, ArrowRight, BookOpen, Calculator, PenTool, Globe, CheckCircle2, HelpCircle, FileText, Zap, Brain, Lightbulb } from "lucide-react";
+import { GraduationCap, Sparkles, ArrowRight, BookOpen, Calculator, PenTool, Globe, CheckCircle2, HelpCircle, FileText, Zap, Brain, Lightbulb, Lock, Copy, Check, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FlashcardModal } from "@/components/FlashcardModal";
+import { AuthModal } from "@/components/AuthModal";
+import { supabase } from "@/lib/supabase";
 
 interface Message {
   role: "user" | "assistant";
@@ -26,6 +28,11 @@ export default function HomeworkPage() {
   const [inputLevel, setInputLevel] = useState("Lycée / Bac");
   const [inputContent, setInputContent] = useState("");
   const [showFlashcardsModal, setShowFlashcardsModal] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [aiResult, setAiResult] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [copied, setCopied] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -33,7 +40,19 @@ export default function HomeworkPage() {
     if (savedSessions) {
       try { setSessions(JSON.parse(savedSessions)); } catch (e) {}
     }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const isPro = user?.user_metadata?.plan === "pro";
 
   const tools = [
     {
@@ -76,12 +95,36 @@ export default function HomeworkPage() {
 
   const currentToolObj = tools.find(t => t.id === activeTool) || tools[0];
 
-  const handleLaunchAi = () => {
+  const handleLaunchAi = async () => {
     if (!inputContent.trim()) return;
+    setIsGenerating(true);
+    setAiResult(null);
+
     const fullPrompt = `[Niveau : ${inputLevel}] ${inputSubject ? `[Matière : ${inputSubject}] ` : ""}\n\n${currentToolObj.promptPrefix}${inputContent.trim()}`;
     const systemContext = "Tu es un professeur d'université et pédagogue bienveillant d'élite. Ton but est de faire progresser l'étudiant : tu expliques toujours le 'pourquoi' et le 'comment' avant de donner le résultat final.";
-    
-    router.push(`/?q=${encodeURIComponent(fullPrompt)}&spaceTitle=${encodeURIComponent("Devoirs & Révisions")}&spacePrompt=${encodeURIComponent(systemContext)}`);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: fullPrompt }],
+          model: "gpt-4o-mini",
+          systemPrompt: systemContext
+        })
+      });
+
+      const data = await response.json();
+      if (data.content) {
+        setAiResult(data.content);
+      } else {
+        setAiResult("⚠️ Impossible de générer la résolution. Veuillez réessayer.");
+      }
+    } catch (err) {
+      setAiResult("⚠️ Erreur de connexion au serveur IA.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (

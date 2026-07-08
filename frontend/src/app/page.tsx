@@ -204,9 +204,14 @@ function HomeContent() {
     let targetSessionId = activeSessionId;
 
     const userMessage: Message = { role: "user", content: text };
-    const targetModelId = modelId || activeSession?.modelId || "deepseek/deepseek-chat";
-    const targetModelName = modelName || activeSession?.modelName || "Best ★";
+    const isVisitor = !user;
+    const targetModelId = isVisitor ? "gpt-4o-mini" : (modelId || activeSession?.modelId || "deepseek/deepseek-chat");
+    const targetModelName = isVisitor ? "Best ★" : (modelName || activeSession?.modelName || "Best ★");
     const targetSystemPrompt = skillPrompt !== undefined ? skillPrompt : activeSession?.systemPrompt;
+
+    if (isVisitor && activeSession && activeSession.messages.filter(m => m.role === "user").length >= 2) {
+      setShowAuthModal(true);
+    }
 
     const titleText = typeof text === "string" ? text : (Array.isArray(text) ? (text.find((p: any) => p.type === "text")?.text || "📷 Image analysée") : "Nouvelle discussion");
 

@@ -1049,9 +1049,34 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                           </span>
                         </div>
                         
-                        <div className="text-lg font-medium text-black/90 leading-relaxed whitespace-pre-wrap pt-0.5">
-                          {typeof msg.content === "string" ? msg.content : (Array.isArray(msg.content) ? msg.content.map((p: any) => p.text || "").join("") : String(msg.content))}
-                        </div>
+                        {(!user && index >= 3) ? (
+                          <div className="relative overflow-hidden rounded-2xl pt-0.5">
+                            <div className="text-lg font-medium text-black/90 leading-relaxed whitespace-pre-wrap select-none max-h-[160px] overflow-hidden opacity-85">
+                              {(typeof msg.content === "string" ? msg.content : String(msg.content)).substring(0, 320) + "..."}
+                            </div>
+                            <div className="relative mt-[-50px] pt-16 pb-4 px-4 bg-gradient-to-b from-transparent via-white/95 to-white flex flex-col items-center justify-center text-center">
+                              <div className="bg-black text-white p-4 rounded-2xl shadow-[4px_4px_0px_0px_#FF5500] max-w-sm w-full flex flex-col items-center gap-2.5 border-2 border-black">
+                                <div className="text-xs font-black uppercase tracking-wider text-[#FF5500]">
+                                  🔐 Réponse complète prête
+                                </div>
+                                <p className="text-xs text-white/80 leading-tight">
+                                  Connectez-vous pour lire la suite de cette réponse et continuer votre discussion avec le modèle Best ★.
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowAuthModal(true)}
+                                  className="w-full py-2 rounded-xl bg-white text-black hover:bg-[#FF5500] hover:text-white font-black text-xs transition-all cursor-pointer shadow-[2px_2px_0px_0px_#FF5500]"
+                                >
+                                  Se connecter / Voir la suite
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-lg font-medium text-black/90 leading-relaxed whitespace-pre-wrap pt-0.5">
+                            {typeof msg.content === "string" ? msg.content : (Array.isArray(msg.content) ? msg.content.map((p: any) => p.text || "").join("") : String(msg.content))}
+                          </div>
+                        )}
 
                         <div className="flex flex-wrap items-center gap-2 pt-2">
                           <button onClick={() => alert("Copié dans le presse-papier !")} className="text-xs font-bold text-black/50 hover:text-black flex items-center gap-1 transition-colors bg-black/5 px-2.5 py-1 rounded-lg">
@@ -1059,14 +1084,6 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                           </button>
                           <button className="text-xs font-bold text-black/50 hover:text-black flex items-center gap-1 transition-colors bg-black/5 px-2.5 py-1 rounded-lg">
                             🔄 Régénérer
-                          </button>
-                          <button onClick={() => {
-                            const msgText = typeof msg.content === "string" ? msg.content : (Array.isArray(msg.content) ? msg.content.map((p: any) => p.text || "").join("") : String(msg.content));
-                            setFlashcardInitialText(msgText);
-                            setShowFlashcardModal(true);
-                          }} className="text-xs font-black text-[#FF5500] hover:text-white hover:bg-[#FF5500] flex items-center gap-1.5 transition-all bg-[#FF5500]/10 border border-[#FF5500]/30 px-3 py-1 rounded-lg cursor-pointer">
-                            <span>🃏</span>
-                            <span>Convertir en Flashcards 3D</span>
                           </button>
                           <span className="text-[10px] font-bold text-black/40 ml-auto hidden sm:inline">Généré instantanément via OpenRouter</span>
                         </div>

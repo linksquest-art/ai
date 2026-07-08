@@ -121,22 +121,34 @@ export default function AccountPage() {
 
   const currentPlan = user?.user_metadata?.plan === "pro" ? "pro" : "free";
   const isPro = currentPlan === "pro";
-  const percentage = Math.min(100, Math.round((dailyCount / 50) * 100));
 
-  // Durée d'abonnement / cycle de facturation (30 jours)
-  const subDaysElapsed = isPro ? 12 : 7;
-  const subDaysTotal = 30;
-  const subDaysRemaining = subDaysTotal - subDaysElapsed;
-  const subProgressPercent = Math.round((subDaysElapsed / subDaysTotal) * 100);
+  // Consommation en direct synchronisée avec Supabase ou fallback
+  const todayStr = new Date().toISOString().split("T")[0];
+  const metaDate = user?.user_metadata?.usage_date;
+  const realCount = (metaDate === todayStr && user?.user_metadata?.daily_messages_count !== undefined) 
+    ? user.user_metadata.daily_messages_count 
+    : dailyCount;
+  const maxMessages = isPro ? 500 : 10;
+  const percentage = Math.min(100, Math.round((realCount / maxMessages) * 100));
 
-  // Tokens & Quota Hebdomadaire
-  const dailyTokensUsed = dailyCount * 700;
-  const dailyTokensMax = isPro ? 250000 : 35000;
+  // Cycle mensuel exactement synchronisé sur la date réelle de création du compte (user.created_at)
+  const createdAtDate = user?.created_at ? new Date(user.created_at) : new Date();
+  const creationFormatted = createdAtDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+  const now = new Date();
+  let nextCycleDate = new Date(createdAtDate);
+  while (nextCycleDate <= now) {
+    nextCycleDate.setMonth(nextCycleDate.getMonth() + 1);
+  }
+  const nextCycleFormatted = nextCycleDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+  const subDaysRemaining = Math.max(1, Math.ceil((nextCycleDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+  const subDaysElapsed = Math.max(1, 30 - subDaysRemaining);
+  const subProgressPercent = Math.min(100, Math.round((subDaysElapsed / 30) * 100));
+
+  // Tokens (bridés en plan gratuit à 4 000 max / jour)
+  const metaTokens = user?.user_metadata?.daily_tokens_used;
+  const dailyTokensUsed = (metaDate === todayStr && metaTokens !== undefined) ? metaTokens : realCount * 380;
+  const dailyTokensMax = isPro ? 250000 : 4000;
   const tokenPercentage = Math.min(100, Math.round((dailyTokensUsed / dailyTokensMax) * 100));
-
-  const weeklyMessagesUsed = dailyCount * 3;
-  const weeklyMessagesMax = isPro ? 5000 : 350;
-  const weeklyPercentage = Math.min(100, Math.round((weeklyMessagesUsed / weeklyMessagesMax) * 100));
 
   const handleUpgradePro = async () => {
     if (!user) {
@@ -285,9 +297,9 @@ export default function AccountPage() {
                       <div className="flex items-center justify-between text-xs font-black text-amber-900">
                         <span className="flex items-center gap-1.5">
                           <Clock size={14} className="text-amber-600" />
-                          <span>Durée d&apos;Abonnement — Cycle de 1 mois (30 jours)</span>
+                          <span>Durée d&apos;Abonnement — Cycle mensuel (débuté le {creationFormatted})</span>
                         </span>
-                        <span>Renouvellement dans {subDaysRemaining} jours</span>
+                        <span>Renouvellement le {nextCycleFormatted}</span>
                       </div>
                       <div className="w-full bg-amber-500/20 h-3 rounded-full overflow-hidden border border-amber-500/40">
                         <div 
@@ -311,7 +323,7 @@ export default function AccountPage() {
                           <span className="text-xs font-bold text-black/50">Réinitialisé automatiquement tous les jours à minuit</span>
                         </div>
                         <span className="text-xl font-black text-black bg-black/5 px-3 py-1 rounded-xl border-2 border-black/10">
-                          {dailyCount} <span className="text-xs font-bold text-black/40">/ 50 messages</span>
+                          {realCount} <span className="text-xs font-bold text-black/40">/ {maxMessages} messages</span>
                         </span>
                       </div>
                       <div className="w-full bg-black/10 h-4 rounded-full overflow-hidden border-2 border-black p-[2px]">
@@ -324,12 +336,12 @@ export default function AccountPage() {
                       </div>
                     </div>
 
-                    {/* Progress Bar 2 : Tokens Quotidiens (bridés à 700 / message) */}
+                    {/* Progress Bar 2 : Tokens Quotidiens (bridés à 400 / message) */}
                     <div className="space-y-2 bg-black/[0.03] p-4 rounded-2xl border border-black/10">
                       <div className="flex items-center justify-between">
                         <div>
                           <span className="text-xs font-black uppercase tracking-wider text-black block">Consommation de Tokens (Jour)</span>
-                          <span className="text-[11px] font-bold text-black/60">Bridé à 700 tokens par message en plan gratuit</span>
+                          <span className="text-[11px] font-bold text-black/60">Bridé à 400 tokens par message en plan gratuit</span>
                         </div>
                         <span className="text-xs font-black text-black bg-white px-2.5 py-1 rounded-lg border border-black/10">
                           {dailyTokensUsed.toLocaleString("fr-FR")} / {dailyTokensMax.toLocaleString("fr-FR")} tokens
@@ -347,11 +359,11 @@ export default function AccountPage() {
                     <div className="space-y-2 bg-black/[0.03] p-4 rounded-2xl border border-black/10">
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="text-xs font-black uppercase tracking-wider text-black block">Cycle Mensuel & Découverte (30 jours)</span>
-                          <span className="text-[11px] font-bold text-black/60">Passez à Pro pour débloquer toutes les fonctionnalités tout le mois</span>
+                          <span className="text-xs font-black uppercase tracking-wider text-black block">Cycle Mensuel (Créé le {creationFormatted})</span>
+                          <span className="text-[11px] font-bold text-black/60">Réinitialisation du cycle le {nextCycleFormatted}</span>
                         </div>
                         <span className="text-xs font-black text-black bg-white px-2.5 py-1 rounded-lg border border-black/10">
-                          Jour {subDaysElapsed} / {subDaysTotal}
+                          Renouvellement le {nextCycleFormatted}
                         </span>
                       </div>
                       <div className="w-full bg-black/10 h-3 rounded-full overflow-hidden border border-black/20">
