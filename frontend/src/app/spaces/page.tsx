@@ -61,26 +61,16 @@ export default function SpacesPage() {
       } catch (e) {}
     }
 
-    // Load user spaces
+    // Load user spaces (aucun espace par défaut à la création du compte)
     const savedSpaces = localStorage.getItem("gama_spaces");
     if (savedSpaces) {
       try {
         setSpaces(JSON.parse(savedSpaces));
-      } catch (e) {}
+      } catch (e) {
+        setSpaces([]);
+      }
     } else {
-      // Default sample space
-      const sampleSpace: Space = {
-        id: "sample_saas",
-        title: "Projets & Architecture SaaS",
-        description: "Espace dédié au design technique, au choix des stacks et aux bonnes pratiques de code moderne.",
-        systemPrompt: "Tu es un architecte logiciel senior spécialisé dans les architectures cloud évolutives (Next.js, Supabase, TailwindCSS). Tu analyses en profondeur chaque question et fournis du code propre, commenté et optimisé pour la production.",
-        chatsCount: 1,
-        isPrivate: true,
-        color: "bg-orange-500",
-        createdAt: Date.now()
-      };
-      setSpaces([sampleSpace]);
-      localStorage.setItem("gama_spaces", JSON.stringify([sampleSpace]));
+      setSpaces([]);
     }
 
     // Load custom skills
