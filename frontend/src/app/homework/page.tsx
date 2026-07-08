@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FlashcardModal } from "@/components/FlashcardModal";
 import { AuthModal } from "@/components/AuthModal";
+import { StudyStreakCard } from "@/components/StudyStreakCard";
 import { supabase } from "@/lib/supabase";
 
 interface Message {
@@ -23,7 +24,7 @@ interface ChatSession {
 
 export default function HomeworkPage() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [activeTool, setActiveTool] = useState<"math" | "essay" | "flashcards" | "science">("math");
+  const [activeTool, setActiveTool] = useState<"socratic" | "math" | "essay" | "flashcards" | "science">("socratic");
   const [inputSubject, setInputSubject] = useState("");
   const [inputLevel, setInputLevel] = useState("Lycée / Bac");
   const [inputContent, setInputContent] = useState("");
@@ -55,6 +56,15 @@ export default function HomeworkPage() {
   const isPro = user?.user_metadata?.plan === "pro";
 
   const tools = [
+    {
+      id: "socratic",
+      title: "Professeur IA Interactif (Socratique)",
+      subtitle: "Pose des questions une par une au lieu de donner la réponse d'un coup",
+      icon: GraduationCap,
+      color: "bg-[#FF5500]",
+      placeholder: "Quel concept, exercice ou devoir voulez-vous résoudre guidé étape par étape ?",
+      promptPrefix: "Agis exclusivement comme un Professeur IA Socratique. RÈGLE D'OR : NE DONNE PAS LA RÉPONSE FINALE D'UN COUP. Pose d'abord une première question ciblée pour faire réfléchir l'étudiant et guide-le pas à pas : \n\n"
+    },
     {
       id: "math",
       title: "Résolveur & Logique Mathématique",
@@ -101,7 +111,7 @@ export default function HomeworkPage() {
     setAiResult(null);
 
     const fullPrompt = `[Niveau : ${inputLevel}] ${inputSubject ? `[Matière : ${inputSubject}] ` : ""}\n\n${currentToolObj.promptPrefix}${inputContent.trim()}`;
-    const systemContext = "Tu es un professeur d'université et pédagogue bienveillant d'élite. Ton but est de faire progresser l'étudiant : tu expliques toujours le 'pourquoi' et le 'comment' avant de donner le résultat final.";
+    const systemContext = "Tu es un Professeur IA Socratique d'élite. SUR CETTE PAGE DE DEVOIRS ET RÉVISIONS : tu ne donnes jamais la solution complète immédiatement. Tu poses des questions une par une pour guider l'étudiant dans sa réflexion, en expliquant le 'pourquoi' et le 'comment' avec clarté et gamification encourageante.";
 
     try {
       const response = await fetch("/api/chat", {
@@ -165,8 +175,11 @@ export default function HomeworkPage() {
         {/* Content Area */}
         <div className="max-w-6xl w-full mx-auto px-6 md:px-8 py-8 flex flex-col gap-8">
           
+          {/* Study Streak Gamification Banner */}
+          <StudyStreakCard />
+
           {/* Tool Selector Tabs */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {tools.map((tool) => {
               const Icon = tool.icon;
               const isSelected = activeTool === tool.id;

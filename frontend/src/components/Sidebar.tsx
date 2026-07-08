@@ -18,7 +18,8 @@ import {
   Settings,
   Calendar,
   GraduationCap,
-  FileText
+  FileText,
+  CheckSquare
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AuthModal } from "./AuthModal";
@@ -112,8 +113,10 @@ export function Sidebar({
 
   const navItems = [
     { name: "Découvrir", href: "/discover", icon: Compass },
+    { name: "Historique", href: "/history", icon: History },
     { name: "Espaces & Skills", href: "/spaces", icon: Folder },
     { name: "Devoirs IA", href: "/homework", icon: GraduationCap },
+    { name: "Quiz & QCM IA", href: "/quiz", icon: CheckSquare },
     { name: "Résumés & YouTube", href: "/summary", icon: FileText },
     { name: "Calendrier", href: "/calendar", icon: Calendar },
     { name: "Tarifs", href: "/pricing", icon: Sparkles },
@@ -167,66 +170,8 @@ export function Sidebar({
             })}
           </nav>
 
-          {/* History Section - Only available when logged in */}
-          <div className="flex flex-col gap-1 pt-3 border-t-2 border-black/10 overflow-y-auto flex-1 min-h-0">
-            {!user ? (
-              <div className="px-3 py-5 text-center border-2 border-dashed border-black/20 rounded-2xl my-2 bg-black/[0.02] flex flex-col items-center justify-center gap-2">
-                <span className="text-xs font-black text-black/70 block">Historique synchronisé</span>
-                <span className="text-[10px] font-bold text-black/50 block leading-tight">Connectez-vous pour sauvegarder et retrouver vos discussions.</span>
-                <button
-                  onClick={() => setShowAuthModal(true)}
-                  className="mt-1 w-full py-2 rounded-xl bg-black hover:bg-primary text-white font-extrabold text-xs shadow-[2px_2px_0px_0px_#FF5500] transition-all cursor-pointer"
-                >
-                  S'inscrire / Connexion
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between px-2.5 text-xs font-black text-black/40 uppercase tracking-wider mb-1 sticky top-0 bg-[#FFFFFF] py-1 z-10">
-                  <div className="flex items-center gap-1.5" title={isPro ? "Historique Illimité en Pro" : "5 conversations conservées en Plan Hobby gratuit"}>
-                    <History size={14} />
-                    <span>Historique {isPro ? "" : "(5 max)"}</span>
-                  </div>
-                  <span className="text-[10px] bg-black/5 px-1.5 py-0.5 rounded text-black/60 font-mono">
-                    {sessions.length}{isPro ? "" : "/5"}
-                  </span>
-                </div>
-
-                {(!sessions || sessions.length === 0) ? (
-                  <div className="px-3 py-4 text-center border-2 border-dashed border-black/15 rounded-xl my-2">
-                    <span className="text-xs font-bold text-black/40 block">Aucune discussion lancée</span>
-                    <span className="text-[10px] text-black/30 block mt-0.5">Posez une question pour démarrer !</span>
-                  </div>
-                ) : (
-                  sessions.map((session) => (
-                    <div
-                      key={session.id}
-                      onClick={() => handleSelectChat(session.id)}
-                      className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 ${
-                        activeSessionId === session.id
-                          ? "bg-black text-white border-black shadow-[2px_2px_0px_0px_#000000]"
-                          : "border-transparent text-black hover:bg-black/5 hover:border-black/15"
-                      }`}
-                    >
-                      <span className="truncate max-w-[150px] notranslate" translate="no">{session.title}</span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (onDeleteSession) {
-                            onDeleteSession(session.id);
-                          }
-                        }}
-                        title="Supprimer la conversation"
-                        className="opacity-0 group-hover:opacity-100 hover:text-red-500 text-black/40 p-1.5 transition-opacity shrink-0 mr-1"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                      </button>
-                    </div>
-                  ))
-                )}
-              </>
-            )}
-          </div>
+          {/* Clean spacer for nav items */}
+          <div className="flex-1" />
         </div>
 
         {/* UI/UX PRO MAX - Minimalist Bottom Account Rectangle */}
