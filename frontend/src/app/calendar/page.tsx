@@ -599,6 +599,7 @@ export default function CalendarPage() {
                 Enregistrer
               </button>
             </div>
+          </div>
         </div>
       )}
 
