@@ -1096,7 +1096,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
               {/* Thinking Animation */}
               {isGenerating && (
                 <div className="flex items-center gap-4 py-4 px-2 animate-pulse">
-                  <Sparkles className="animate-spin text-primary shrink-0" size={28} />
+                  <img src="/Arrowai.png" alt="Thinking Gama Studio AI" className="w-8 h-8 object-contain animate-spin shrink-0" />
                   <div className="flex flex-col">
                     <span className="text-sm font-black text-black uppercase tracking-wide">
                       L'IA réfléchit en direct... ({activeSession.modelName || model})
