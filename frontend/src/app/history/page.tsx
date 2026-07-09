@@ -209,21 +209,8 @@ export default function StudentDashboardPage() {
                   Bureau & Dashboard Étudiant
                 </h1>
                 <p className="text-xs md:text-sm font-bold text-black/60">
-                  Votre espace d'hyper-concentration : Chrono Pomodoro, Tâches du jour, Post-its et Suivi d'XP.
+                  Votre espace d'hyper-concentration : Chrono Pomodoro, Tâches du jour et Post-its rapides.
                 </p>
-              </div>
-            </div>
-
-            {/* XP & Level Badge */}
-            <div className="flex items-center gap-3 bg-white border-3 border-black rounded-2xl px-4 py-2.5 shadow-[3px_3px_0px_0px_#000000]">
-              <Award size={22} className="text-[#FF5500]" />
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-wider text-black/50">
-                  Carrière Étudiante
-                </span>
-                <span className="text-xs font-black uppercase">
-                  Niveau 14 • Érudit III (1480 XP)
-                </span>
               </div>
             </div>
           </div>
@@ -300,14 +287,6 @@ export default function StudentDashboardPage() {
                 >
                   <RotateCcw size={18} />
                 </button>
-              </div>
-
-              {/* Sessions Counter Bar */}
-              <div className="mt-6 pt-3 border-t-2 border-black/10 flex items-center justify-between text-xs font-black text-black/70">
-                <span>Sessions complétées aujourd'hui :</span>
-                <span className="bg-black text-white px-3 py-0.5 rounded-full">
-                  {sessionsCompleted} sessions
-                </span>
               </div>
             </div>
 
