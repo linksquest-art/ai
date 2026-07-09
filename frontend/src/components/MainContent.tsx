@@ -737,10 +737,10 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
             </div>
 
             {/* Search Box */}
-            <div className={`w-full bg-[#FFFBF5] dark:bg-[#1A1A1F] ink-border dark:border-white/20 rounded-2xl p-5 flex flex-col gap-4 transition-all relative ${
+            <div className={`w-full bg-[#FFFBF5] ink-border rounded-2xl p-5 flex flex-col gap-4 transition-all relative ${
               isRecording 
-                ? "shadow-[7px_7px_0px_0px_#EF4444] border-red-600 bg-red-50/20 dark:bg-red-950/30" 
-                : "ink-shadow hover:shadow-[7px_7px_0px_0px_#FF5500] dark:shadow-[5px_5px_0px_0px_#FF5500]"
+                ? "shadow-[7px_7px_0px_0px_#EF4444] border-red-600 bg-red-50/20" 
+                : "ink-shadow hover:shadow-[7px_7px_0px_0px_#FF5500]"
             }`}>
               
               {/* Skills Bar */}
@@ -778,14 +778,14 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={isRecording ? "🎤 Parlez maintenant... La transcription s'écrit en direct..." : "Demandez ce que vous voulez... ou utilisez les menus ci-dessous"}
-                className="w-full resize-none outline-none text-xl md:text-2xl font-black bg-transparent placeholder-[#666666] dark:placeholder-white/60 text-[#000000] dark:text-white min-h-[70px] px-2 pt-1 leading-relaxed notranslate"
+                className="w-full resize-none outline-none text-xl md:text-2xl font-black bg-transparent placeholder-[#666666] text-[#000000] min-h-[70px] px-2 pt-1 leading-relaxed notranslate"
                 translate="no"
                 rows={2}
                 autoFocus
               />
 
               {/* Bottom Toolbar inside search box */}
-              <div className="flex items-center justify-between flex-wrap gap-3 pt-3 border-t-2 border-[#000000]/15 dark:border-white/15 relative">
+              <div className="flex items-center justify-between flex-wrap gap-3 pt-3 border-t-2 border-[#000000]/15 relative">
                 
                 {/* Left Side: Plus Menu & Search Mode Dropdown */}
                 <div className="flex items-center gap-2 relative">
@@ -965,10 +965,10 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
 
                   <button 
                     onClick={toggleVoiceRecognition}
-                    className={`p-2 rounded-xl ink-border-sm transition-all shadow-[2px_2px_0px_0px_#000000] dark:shadow-[2px_2px_0px_0px_#FF5500] ${
+                    className={`p-2 rounded-xl ink-border-sm transition-all shadow-[2px_2px_0px_0px_#000000] ${
                       isRecording 
                         ? "bg-red-600 text-white animate-pulse border-red-800 shadow-[2px_2px_0px_0px_#7F1D1D]" 
-                        : "bg-[#FFFFFF] dark:bg-[#2A2A32] text-[#000000] dark:text-white hover:bg-[#000000] hover:text-[#FFFFFF]"
+                        : "bg-[#FFFFFF] text-[#000000] hover:bg-[#000000] hover:text-[#FFFFFF]"
                     }`}
                     title={isRecording ? "Arrêter l'enregistrement vocal" : "Activer la reconnaissance vocale en temps réel (Micro)"}
                   >
@@ -978,10 +978,10 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                   <button 
                     onClick={handleSend}
                     disabled={(!query.trim() && attachedFiles.length === 0) || isGenerating}
-                    className={`py-2 px-5 rounded-xl ink-border-sm font-black shadow-[3px_3px_0px_0px_#000000] dark:shadow-[3px_3px_0px_0px_#FF5500] flex items-center gap-2 transition-all ${
+                    className={`py-2 px-5 rounded-xl ink-border-sm font-black shadow-[3px_3px_0px_0px_#000000] flex items-center gap-2 transition-all ${
                       (query.trim() || attachedFiles.length > 0)
-                        ? "bg-[#FF5500] text-[#FFFFFF] hover:bg-[#000000] dark:hover:bg-white dark:hover:text-black cursor-pointer" 
-                        : "bg-[#000000]/10 dark:bg-white/10 text-[#000000]/40 dark:text-white/50 border-[#000000]/20 dark:border-white/20 shadow-none cursor-not-allowed"
+                        ? "bg-[#FF5500] text-[#FFFFFF] hover:bg-[#000000] cursor-pointer" 
+                        : "bg-[#000000]/10 text-[#000000]/40 border-[#000000]/20 shadow-none cursor-not-allowed"
                     }`}
                   >
                     <span>Envoyer</span>
@@ -1014,7 +1014,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                   {msg.role === "user" ? (
                     /* User Message: Aligned to right as a neat message bubble */
                     <div className="flex justify-end w-full pl-12">
-                      <div className="bg-[#FAFAFA] dark:bg-[#1E1E24] ink-border-sm dark:border-white/20 rounded-2xl px-5 py-3.5 max-w-2xl text-lg font-black text-[#000000] dark:text-white shadow-[3px_3px_0px_0px_#000000] dark:shadow-[3px_3px_0px_0px_#FF5500] whitespace-pre-wrap leading-relaxed">
+                      <div className="bg-[#FAFAFA] ink-border-sm rounded-2xl px-5 py-3.5 max-w-2xl text-lg font-black text-[#000000] shadow-[3px_3px_0px_0px_#000000] whitespace-pre-wrap leading-relaxed">
                         {typeof msg.content === "string" ? (
                           msg.content
                         ) : Array.isArray(msg.content) ? (
@@ -1049,14 +1049,14 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                       />
                       <div className="flex-1 flex flex-col gap-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-black uppercase text-black/80 dark:text-white/90 tracking-wider">
+                          <span className="text-xs font-black uppercase text-black/80 tracking-wider">
                             Gama Studio AI • {activeSession.modelName || model}
                           </span>
                         </div>
                         
                         {(!user && index >= 3) ? (
                           <div className="relative overflow-hidden rounded-2xl pt-0.5">
-                            <div className="text-lg font-medium text-black/90 dark:text-white leading-relaxed whitespace-pre-wrap select-none max-h-[160px] overflow-hidden opacity-85">
+                            <div className="text-lg font-medium text-black/90 leading-relaxed whitespace-pre-wrap select-none max-h-[160px] overflow-hidden opacity-85">
                               {(typeof msg.content === "string" ? msg.content : String(msg.content)).substring(0, 320) + "..."}
                             </div>
                             <div className="relative mt-[-50px] pt-16 pb-4 px-4 bg-gradient-to-b from-transparent via-white/95 to-white flex flex-col items-center justify-center text-center">
@@ -1078,13 +1078,13 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                             </div>
                           </div>
                         ) : (
-                          <div className="text-lg font-medium text-black/90 dark:text-white leading-relaxed whitespace-pre-wrap pt-0.5">
+                          <div className="text-lg font-medium text-black/90 leading-relaxed whitespace-pre-wrap pt-0.5">
                             {typeof msg.content === "string" ? msg.content : (Array.isArray(msg.content) ? msg.content.map((p: any) => p.text || "").join("") : String(msg.content))}
                           </div>
                         )}
 
                         <div className="flex flex-wrap items-center gap-2 pt-2">
-                          <button onClick={() => alert("Copié dans le presse-papier !")} className="text-xs font-bold text-black/60 dark:text-white/70 hover:text-black dark:hover:text-white flex items-center gap-1 transition-colors bg-black/5 dark:bg-white/10 px-2.5 py-1 rounded-lg cursor-pointer">
+                          <button onClick={() => alert("Copié dans le presse-papier !")} className="text-xs font-bold text-black/60 hover:text-black flex items-center gap-1 transition-colors bg-black/5 px-2.5 py-1 rounded-lg cursor-pointer">
                             📋 Copier
                           </button>
                         </div>

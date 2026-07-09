@@ -213,14 +213,14 @@ export default function HomeworkPage() {
               <GraduationCap size={26} strokeWidth={2.5} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-black dark:text-white uppercase tracking-tight">Devoirs IA & Académie Pro</h1>
-              <p className="text-xs font-bold text-black/50 dark:text-white/60">Outils spécialisés pour étudiants : mathématiques, dissertation, sciences et mémorisation</p>
+              <h1 className="text-2xl font-black text-black uppercase tracking-tight">Devoirs IA & Académie Pro</h1>
+              <p className="text-xs font-bold text-black/50">Outils spécialisés pour étudiants : mathématiques, dissertation, sciences et mémorisation</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-xl border border-black/10 dark:border-white/10">
+          <div className="flex items-center gap-2 bg-black/5 px-3 py-1.5 rounded-xl border border-black/10">
             <Sparkles size={16} className="text-primary animate-pulse" />
-            <span className="text-xs font-extrabold text-black/80 dark:text-white/80">Méthode Pédagogique Pas-à-Pas</span>
+            <span className="text-xs font-extrabold text-black/80">Méthode Pédagogique Pas-à-Pas</span>
           </div>
         </header>
 
