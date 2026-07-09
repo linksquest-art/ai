@@ -46,7 +46,7 @@ export default function StudentDashboardPage() {
   // --- To-Do List States ---
   const [todos, setTodos] = useState<TodoItem[]>([
     { id: "t1", text: "Faire fiche de synthèse — Droit Administratif", subject: "Droit", completed: true },
-    { id: "t2", text: "Réviser 15 cartes Anki Constitutionnel", subject: "Anki", completed: false },
+    { id: "t2", text: "Réviser 15 Flashcards Droit Constitutionnel", subject: "Flashcards", completed: false },
     { id: "t3", text: "Résoudre QCM Algèbre Linéaire (Niveau Expert)", subject: "Maths", completed: false }
   ]);
   const [newTodoText, setNewTodoText] = useState<string>("");
@@ -381,7 +381,7 @@ export default function StudentDashboardPage() {
                   <option value="Général">Général</option>
                   <option value="Droit">Droit</option>
                   <option value="Maths">Maths</option>
-                  <option value="Anki">Anki</option>
+                  <option value="Flashcards">Flashcards</option>
                   <option value="Anglais">Anglais</option>
                 </select>
                 <button

@@ -296,10 +296,10 @@ export default function DeckPage() {
               </div>
               <div>
                 <h1 className="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">
-                  Decks Anki & Répétition Espacée
+                  Decks IA & Répétition Espacée
                 </h1>
                 <p className="text-xs md:text-sm font-bold text-black/60">
-                  Révisez selon la courbe de l'oubli avec nos algorithmes Anki et générez vos fiches instantanément par IA.
+                  Révisez selon la courbe de l'oubli avec notre algorithme intelligent et générez vos fiches instantanément par IA.
                 </p>
               </div>
             </div>
@@ -542,7 +542,7 @@ export default function DeckPage() {
                 </h3>
               </div>
               <p className="text-xs font-bold text-black/60">
-                Collez votre cours, vos définitions ou un thème précis pour générer instantanément des Flashcards Anki dans le deck « {activeDeck?.name} ».
+                Collez votre cours, vos définitions ou un thème précis pour générer instantanément des Flashcards de révision dans le deck « {activeDeck?.name} ».
               </p>
 
               <textarea

@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const prompt = `Tu es un professeur d'université et spécialiste en sciences cognitives appliquées à la répétition espacée (Anki / Spaced Repetition).
+    const prompt = `Tu es un professeur d'université et spécialiste en sciences cognitives appliquées à la répétition espacée (Spaced Repetition).
 
 SOURCE OU SUJET DE RÉVISION :
 """
