@@ -21,9 +21,11 @@ import {
   FileText,
   CheckSquare,
   Moon,
-  Sun,
   MessageSquare,
-  Trash2
+  Trash2,
+  LayoutDashboard,
+  Layers,
+  Brain
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AuthModal } from "./AuthModal";
@@ -137,12 +139,13 @@ export function Sidebar({
   }, []);
 
   const navItems = [
-    { name: "Découvrir", href: "/discover", icon: Compass },
-    { name: "Historique", href: "/history", icon: History },
-    { name: "Espaces & Skills", href: "/spaces", icon: Folder },
+    { name: "Bureau Étudiant", href: "/history", icon: LayoutDashboard },
+    { name: "Decks & Flashcards", href: "/deck", icon: Brain },
     { name: "Devoirs IA", href: "/homework", icon: GraduationCap },
     { name: "Quiz & QCM IA", href: "/quiz", icon: CheckSquare },
     { name: "Résumés & YouTube", href: "/summary", icon: FileText },
+    { name: "Espaces & Skills", href: "/spaces", icon: Folder },
+    { name: "Découvrir", href: "/discover", icon: Compass },
     { name: "Calendrier", href: "/calendar", icon: Calendar },
     { name: "Tarifs", href: "/pricing", icon: Sparkles },
   ];

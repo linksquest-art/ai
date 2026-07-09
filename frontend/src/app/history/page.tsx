@@ -2,205 +2,519 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { History, Search, Trash2, MessageSquare, ArrowRight, Calendar, Sparkles } from "lucide-react";
-import { AuthModal } from "@/components/AuthModal";
+import { 
+  LayoutDashboard, 
+  Play, 
+  Pause, 
+  RotateCcw, 
+  CheckSquare, 
+  Plus, 
+  Trash2, 
+  Award, 
+  Sparkles, 
+  BookOpen, 
+  Clock, 
+  FileText,
+  StickyNote
+} from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
-import { supabase } from "@/lib/supabase";
 
-interface Message {
-  role: "user" | "assistant";
-  content: string;
+interface TodoItem {
+  id: string;
+  text: string;
+  subject: string;
+  completed: boolean;
 }
 
-interface ChatSession {
+interface PostItNote {
   id: string;
   title: string;
-  messages: Message[];
-  createdAt: number;
+  content: string;
+  color: "yellow" | "pink" | "mint" | "orange";
+  rotation: string;
 }
 
-export default function HistoryPage() {
+export default function StudentDashboardPage() {
   const router = useRouter();
-  const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [user, setUser] = useState<any>(null);
-  const [showAuthModal, setShowAuthModal] = useState(false);
 
+  // --- Pomodoro Focus States ---
+  const [timerMode, setTimerMode] = useState<"focus" | "break">("focus");
+  const [timeLeft, setTimeLeft] = useState<number>(25 * 60);
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [sessionsCompleted, setSessionsCompleted] = useState<number>(3);
+
+  // --- To-Do List States ---
+  const [todos, setTodos] = useState<TodoItem[]>([
+    { id: "t1", text: "Faire fiche de synthèse — Droit Administratif", subject: "Droit", completed: true },
+    { id: "t2", text: "Réviser 15 cartes Anki Constitutionnel", subject: "Anki", completed: false },
+    { id: "t3", text: "Résoudre QCM Algèbre Linéaire (Niveau Expert)", subject: "Maths", completed: false }
+  ]);
+  const [newTodoText, setNewTodoText] = useState<string>("");
+  const [newTodoSubject, setNewTodoSubject] = useState<string>("Général");
+
+  // --- Post-its / Notes Rapides ---
+  const [notes, setNotes] = useState<PostItNote[]>([
+    {
+      id: "n1",
+      title: "Théorème du Rang",
+      content: "dim(E) = dim(Ker f) + rg(f). Toujours vérifier que E est de dimension finie !",
+      color: "yellow",
+      rotation: "-rotate-1"
+    },
+    {
+      id: "n2",
+      title: "Article 49.3",
+      content: "Engagement responsabilité gouv. Pas de vote sauf motion de censure dans les 24h.",
+      color: "mint",
+      rotation: "rotate-1"
+    },
+    {
+      id: "n3",
+      title: "Rappel Examens",
+      content: "Épreuve écrite le 14 mai. Penser à prendre la calculatrice non programmable.",
+      color: "pink",
+      rotation: "-rotate-2"
+    }
+  ]);
+
+  const [showNewNoteModal, setShowNewNoteModal] = useState<boolean>(false);
+  const [newNoteTitle, setNewNoteTitle] = useState<string>("");
+  const [newNoteContent, setNewNoteContent] = useState<string>("");
+  const [newNoteColor, setNewNoteColor] = useState<"yellow" | "pink" | "mint" | "orange">("yellow");
+
+  // Load persistence
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const saved = localStorage.getItem("gama_sessions");
-    if (saved) {
-      try {
-        setSessions(JSON.parse(saved));
-      } catch (e) {}
+    const savedTodos = localStorage.getItem("gama_student_todos");
+    if (savedTodos) {
+      try { setTodos(JSON.parse(savedTodos)); } catch (e) {}
+    }
+    const savedNotes = localStorage.getItem("gama_student_notes");
+    if (savedNotes) {
+      try { setNotes(JSON.parse(savedNotes)); } catch (e) {}
     }
   }, []);
 
-  const handleDelete = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const updated = sessions.filter((s) => s.id !== id);
-    setSessions(updated);
-    localStorage.setItem("gama_sessions", JSON.stringify(updated));
-    if (localStorage.getItem("gama_active_session") === id) {
-      localStorage.removeItem("gama_active_session");
+  const saveTodos = (nextTodos: TodoItem[]) => {
+    setTodos(nextTodos);
+    localStorage.setItem("gama_student_todos", JSON.stringify(nextTodos));
+  };
+
+  const saveNotes = (nextNotes: PostItNote[]) => {
+    setNotes(nextNotes);
+    localStorage.setItem("gama_student_notes", JSON.stringify(nextNotes));
+  };
+
+  // Pomodoro Interval Effect
+  useEffect(() => {
+    let timer: any = null;
+    if (isRunning) {
+      timer = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            setIsRunning(false);
+            if (timerMode === "focus") {
+              setSessionsCompleted((s) => s + 1);
+              setTimerMode("break");
+              return 5 * 60;
+            } else {
+              setTimerMode("focus");
+              return 25 * 60;
+            }
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [isRunning, timerMode]);
+
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
+  const toggleTodo = (id: string) => {
+    const next = todos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t));
+    saveTodos(next);
+  };
+
+  const handleAddTodo = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTodoText.trim()) return;
+    const next = [
+      ...todos,
+      { id: "todo-" + Date.now(), text: newTodoText.trim(), subject: newTodoSubject, completed: false }
+    ];
+    saveTodos(next);
+    setNewTodoText("");
+  };
+
+  const handleDeleteTodo = (id: string) => {
+    saveTodos(todos.filter((t) => t.id !== id));
+  };
+
+  const handleAddNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNoteTitle.trim() && !newNoteContent.trim()) return;
+    const rotations = ["-rotate-2", "-rotate-1", "rotate-1", "rotate-2"];
+    const randRot = rotations[Math.floor(Math.random() * rotations.length)];
+    const next = [
+      ...notes,
+      {
+        id: "note-" + Date.now(),
+        title: newNoteTitle.trim() || "Note rapide",
+        content: newNoteContent.trim(),
+        color: newNoteColor,
+        rotation: randRot
+      }
+    ];
+    saveNotes(next);
+    setNewNoteTitle("");
+    setNewNoteContent("");
+    setShowNewNoteModal(false);
+  };
+
+  const handleDeleteNote = (id: string) => {
+    saveNotes(notes.filter((n) => n.id !== id));
+  };
+
+  const getPostItClass = (color: string) => {
+    switch (color) {
+      case "pink":
+        return "bg-[#FFE4E6]";
+      case "mint":
+        return "bg-[#D1FAE5]";
+      case "orange":
+        return "bg-[#FFEDD5]";
+      default:
+        return "bg-[#FEF9C3]";
     }
   };
 
-  const handleOpenChat = (id: string) => {
-    localStorage.setItem("gama_active_session", id);
-    router.push("/");
-  };
-
-  const filteredSessions = sessions.filter(
-    (s) =>
-      s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.messages?.some((m) => m.content.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
   return (
     <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black">
-      <Sidebar sessions={sessions} />
+      <Sidebar />
 
       <div className="flex-1 flex flex-col h-screen overflow-y-auto bg-[#FFFBF5]">
-        <div className="p-4 md:p-8 flex flex-col max-w-5xl mx-auto gap-6 w-full">
-          {/* Page Header */}
+        <div className="p-4 md:p-8 flex flex-col max-w-6xl mx-auto gap-8 w-full">
+          {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-[3px] border-black pb-6">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center shadow-[4px_4px_0px_0px_#FF5500]">
-                <History size={26} />
+                <LayoutDashboard size={26} />
               </div>
               <div>
                 <h1 className="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">
-                  Historique des Discussions
+                  Bureau & Dashboard Étudiant
                 </h1>
                 <p className="text-xs md:text-sm font-bold text-black/60">
-                  Retrouvez, filtrez ou reprenez toutes vos conversations enregistrées sur Gama Studio.
+                  Votre espace d'hyper-concentration : Chrono Pomodoro, Tâches du jour, Post-its et Suivi d'XP.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.push("/")}
-                className="bg-white text-black hover:bg-black hover:text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
-              >
-                <span>← Retour au Chat</span>
-              </button>
-              <button
-                onClick={() => {
-                  localStorage.removeItem("gama_active_session");
-                  router.push("/");
-                }}
-                className="bg-[#FF5500] text-white hover:bg-black font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
-              >
-                <span>+ Nouvelle Discussion</span>
-              </button>
+            {/* XP & Level Badge */}
+            <div className="flex items-center gap-3 bg-white border-3 border-black rounded-2xl px-4 py-2.5 shadow-[3px_3px_0px_0px_#000000]">
+              <Award size={22} className="text-[#FF5500]" />
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-wider text-black/50">
+                  Carrière Étudiante
+                </span>
+                <span className="text-xs font-black uppercase">
+                  Niveau 14 • Érudit III (1480 XP)
+                </span>
+              </div>
             </div>
           </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" size={18} />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Rechercher dans le titre ou les messages de votre historique..."
-          className="w-full pl-11 pr-4 py-3 bg-white border-[3px] border-black rounded-2xl font-bold text-sm outline-none focus:shadow-[4px_4px_0px_0px_#FF5500] transition-all"
-        />
-      </div>
-
-      {/* List Sessions */}
-      {filteredSessions.length === 0 ? (
-        <div className="bg-white border-[3px] border-black rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-4 my-6 shadow-[6px_6px_0px_0px_#000000]">
-          <div className="w-16 h-16 rounded-2xl bg-black/5 border-2 border-black/20 flex items-center justify-center text-black/40">
-            <MessageSquare size={32} />
-          </div>
-          <h3 className="text-xl font-black text-black uppercase">
-            {searchQuery ? "Aucun résultat trouvé" : "Votre historique est vide"}
-          </h3>
-          <p className="text-xs font-bold text-black/60 max-w-md">
-            {searchQuery
-              ? "Essayez d'autres mots-clés dans votre recherche."
-              : "Lancez une nouvelle conversation avec Gama Studio pour qu'elle s'enregistre automatiquement ici."}
-          </p>
-          <button
-            onClick={() => {
-              localStorage.removeItem("gama_active_session");
-              router.push("/");
-            }}
-            className="mt-2 bg-black text-white hover:bg-[#FF5500] font-extrabold px-6 py-3 rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_#000000] text-xs flex items-center gap-2 transition-all cursor-pointer"
-          >
-            <span>Démarrer un chat maintenant</span>
-            <ArrowRight size={16} />
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {filteredSessions.map((session) => {
-            const dateStr = new Date(session.createdAt || Date.now()).toLocaleDateString("fr-FR", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit"
-            });
-
-            const lastMsg = session.messages && session.messages.length > 0
-              ? session.messages[session.messages.length - 1].content
-              : "Aucun message en mémoire";
-
-            return (
-              <div
-                key={session.id}
-                onClick={() => handleOpenChat(session.id)}
-                className="bg-white border-[3px] border-black rounded-2xl p-5 shadow-[4px_4px_0px_0px_#000000] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#FF5500] transition-all cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4 group"
-              >
-                <div className="flex flex-col gap-1.5 overflow-hidden flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-black text-base text-black truncate notranslate" translate="no">
-                      {session.title || "Discussion sans titre"}
-                    </span>
-                    <span className="text-[10px] bg-black/5 border border-black/10 font-bold px-2 py-0.5 rounded-full text-black/60 flex items-center gap-1 shrink-0">
-                      <Calendar size={11} />
-                      {dateStr}
-                    </span>
-                  </div>
-                  <p className="text-xs font-bold text-black/60 truncate line-clamp-1">
-                    {lastMsg}
-                  </p>
+          {/* Top Grid: Pomodoro & To-Do List */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* LEFT: Pomodoro Focus Timer Card */}
+            <div className="lg:col-span-5 bg-white border-3 border-black rounded-3xl p-6 flex flex-col justify-between shadow-[6px_6px_0px_0px_#000000]">
+              <div className="flex items-center justify-between border-b-2 border-black/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <Clock size={18} className="text-[#FF5500]" />
+                  <span className="font-black text-sm uppercase tracking-wide">Minuteur Focus Pomodoro</span>
                 </div>
-
-                <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
-                  <span className="text-xs font-black text-black/50 px-2.5 py-1 bg-[#FAFAFA] rounded-xl border border-black/10">
-                    {session.messages?.length || 0} messages
-                  </span>
-
+                <div className="flex items-center gap-1.5">
                   <button
-                    onClick={(e) => handleDelete(session.id, e)}
-                    title="Supprimer définitivement"
-                    className="p-2 rounded-xl border-2 border-black/15 hover:border-black hover:bg-red-500 hover:text-white text-black/40 transition-all cursor-pointer"
+                    onClick={() => {
+                      setIsRunning(false);
+                      setTimerMode("focus");
+                      setTimeLeft(25 * 60);
+                    }}
+                    className={`px-3 py-1 rounded-full text-xs font-black border border-black cursor-pointer ${
+                      timerMode === "focus"
+                        ? "bg-[#FF5500] text-white shadow-[2px_2px_0px_0px_#000000]"
+                        : "bg-white text-black"
+                    }`}
                   >
-                    <Trash2 size={16} />
+                    Focus 25'
                   </button>
-
-                  <div className="px-4 py-2 bg-black group-hover:bg-[#FF5500] text-white font-extrabold text-xs rounded-xl border-2 border-black flex items-center gap-1.5 transition-colors">
-                    <span>Reprendre</span>
-                    <ArrowRight size={14} />
-                  </div>
+                  <button
+                    onClick={() => {
+                      setIsRunning(false);
+                      setTimerMode("break");
+                      setTimeLeft(5 * 60);
+                    }}
+                    className={`px-3 py-1 rounded-full text-xs font-black border border-black cursor-pointer ${
+                      timerMode === "break"
+                        ? "bg-[#10B981] text-white shadow-[2px_2px_0px_0px_#000000]"
+                        : "bg-white text-black"
+                    }`}
+                  >
+                    Pause 5'
+                  </button>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      )}
-        </div>
-      </div>
 
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+              {/* Big Timer Display */}
+              <div className="my-8 flex flex-col items-center justify-center">
+                <span className="text-6xl md:text-7xl font-black tracking-tighter text-black">
+                  {formatTime(timeLeft)}
+                </span>
+                <span className="text-xs font-extrabold uppercase tracking-widest text-black/50 mt-2">
+                  {timerMode === "focus" ? "🔥 Session de concentration" : "☕ Pause récupération"}
+                </span>
+              </div>
+
+              {/* Controls */}
+              <div className="flex items-center justify-center gap-4 pt-2">
+                <button
+                  onClick={() => setIsRunning(!isRunning)}
+                  className={`px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] cursor-pointer transition-all ${
+                    isRunning ? "bg-black text-white" : "bg-[#FF5500] text-white hover:bg-black"
+                  }`}
+                >
+                  {isRunning ? <Pause size={18} /> : <Play size={18} />}
+                  <span>{isRunning ? "Mettre en pause" : "Lancer le chrono"}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setIsRunning(false);
+                    setTimeLeft(timerMode === "focus" ? 25 * 60 : 5 * 60);
+                  }}
+                  className="p-3 bg-white border-2 border-black rounded-2xl hover:bg-black hover:text-white shadow-[3px_3px_0px_0px_#000000] cursor-pointer transition-all"
+                  title="Réinitialiser"
+                >
+                  <RotateCcw size={18} />
+                </button>
+              </div>
+
+              {/* Sessions Counter Bar */}
+              <div className="mt-6 pt-3 border-t-2 border-black/10 flex items-center justify-between text-xs font-black text-black/70">
+                <span>Sessions complétées aujourd'hui :</span>
+                <span className="bg-black text-white px-3 py-0.5 rounded-full">
+                  {sessionsCompleted} sessions
+                </span>
+              </div>
+            </div>
+
+            {/* RIGHT: Interactive To-Do List */}
+            <div className="lg:col-span-7 bg-white border-3 border-black rounded-3xl p-6 flex flex-col justify-between shadow-[6px_6px_0px_0px_#000000]">
+              <div>
+                <div className="flex items-center justify-between border-b-2 border-black/10 pb-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    <CheckSquare size={18} className="text-[#FF5500]" />
+                    <span className="font-black text-sm uppercase tracking-wide">Devoirs & Objectifs du Jour</span>
+                  </div>
+                  <span className="text-xs font-extrabold text-black/60">
+                    {todos.filter((t) => t.completed).length}/{todos.length} accomplis
+                  </span>
+                </div>
+
+                {/* Todo List Items */}
+                <div className="flex flex-col gap-2.5 max-h-[220px] overflow-y-auto pr-1">
+                  {todos.map((todo) => (
+                    <div
+                      key={todo.id}
+                      onClick={() => toggleTodo(todo.id)}
+                      className={`flex items-center justify-between p-3 rounded-xl border-2 border-black cursor-pointer transition-all ${
+                        todo.completed
+                          ? "bg-black/5 opacity-60 line-through text-black/60"
+                          : "bg-[#FAFAFA] hover:bg-white shadow-[2px_2px_0px_0px_#000000]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={todo.completed}
+                          onChange={() => {}}
+                          className="w-4 h-4 accent-[#FF5500] cursor-pointer rounded"
+                        />
+                        <span className="font-extrabold text-xs md:text-sm">{todo.text}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="bg-black text-white text-[10px] font-black px-2 py-0.5 rounded-md uppercase">
+                          {todo.subject}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteTodo(todo.id);
+                          }}
+                          className="text-black/40 hover:text-red-600 p-1"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Add Todo Input */}
+              <form onSubmit={handleAddTodo} className="mt-4 pt-3 border-t-2 border-black/10 flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newTodoText}
+                  onChange={(e) => setNewTodoText(e.target.value)}
+                  placeholder="Ajouter une tâche ou un devoir..."
+                  className="flex-1 p-3 bg-[#FAFAFA] border-2 border-black rounded-xl font-bold text-xs outline-none focus:bg-white"
+                />
+                <select
+                  value={newTodoSubject}
+                  onChange={(e) => setNewTodoSubject(e.target.value)}
+                  className="p-3 bg-white border-2 border-black rounded-xl font-black text-xs outline-none cursor-pointer"
+                >
+                  <option value="Général">Général</option>
+                  <option value="Droit">Droit</option>
+                  <option value="Maths">Maths</option>
+                  <option value="Anki">Anki</option>
+                  <option value="Anglais">Anglais</option>
+                </select>
+                <button
+                  type="submit"
+                  className="bg-[#FF5500] hover:bg-black text-white font-extrabold px-4 py-3 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000000] cursor-pointer shrink-0"
+                >
+                  <Plus size={16} />
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Bottom Section: Post-it Wall ("Cahier de Brouillon & Notes Rapides") */}
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <StickyNote size={20} className="text-[#FF5500]" />
+                <h2 className="text-lg md:text-xl font-black uppercase tracking-tight">
+                  Cahier de Brouillon & Post-its
+                </h2>
+              </div>
+              <button
+                onClick={() => setShowNewNoteModal(true)}
+                className="bg-black text-white hover:bg-[#FF5500] font-extrabold px-4 py-2 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
+              >
+                <Plus size={16} />
+                <span>Coller un Post-it</span>
+              </button>
+            </div>
+
+            {/* Post-it Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+              {notes.map((note) => (
+                <div
+                  key={note.id}
+                  className={`${getPostItClass(
+                    note.color
+                  )} ${note.rotation} border-3 border-black rounded-2xl p-5 shadow-[6px_6px_0px_0px_#000000] flex flex-col justify-between min-h-[160px] transition-transform hover:scale-102 relative`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-black text-sm uppercase tracking-wide text-black">
+                        {note.title}
+                      </span>
+                      <button
+                        onClick={() => handleDeleteNote(note.id)}
+                        className="text-black/40 hover:text-red-600"
+                        title="Détacher ce post-it"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                    <p className="text-xs font-bold leading-relaxed text-black/80 whitespace-pre-wrap">
+                      {note.content}
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-2 border-t border-black/15 flex items-center justify-between text-[10px] font-black uppercase text-black/50">
+                    <span>Gama Studio Note</span>
+                    <span>📌 PING</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Modal: Add Post-it */}
+        {showNewNoteModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white border-4 border-black rounded-3xl p-6 md:p-8 max-w-md w-full shadow-[8px_8px_0px_0px_#FF5500] flex flex-col gap-5">
+              <h3 className="text-xl font-black uppercase">Ajouter un Post-it</h3>
+              <form onSubmit={handleAddNote} className="flex flex-col gap-4">
+                <div>
+                  <label className="text-xs font-black uppercase tracking-wider block mb-1">
+                    Titre du Post-it
+                  </label>
+                  <input
+                    type="text"
+                    value={newNoteTitle}
+                    onChange={(e) => setNewNoteTitle(e.target.value)}
+                    placeholder="ex: Formule Intégrale"
+                    className="w-full p-3 border-2 border-black rounded-xl font-bold text-sm outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-black uppercase tracking-wider block mb-1">
+                    Contenu ou Rappel
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={newNoteContent}
+                    onChange={(e) => setNewNoteContent(e.target.value)}
+                    placeholder="Écrivez ici vos notes rapides ou rappels..."
+                    className="w-full p-3 border-2 border-black rounded-xl font-bold text-sm outline-none resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-black uppercase tracking-wider block mb-2">
+                    Couleur du Post-it
+                  </label>
+                  <div className="flex items-center gap-3">
+                    {(["yellow", "pink", "mint", "orange"] as const).map((col) => (
+                      <button
+                        key={col}
+                        type="button"
+                        onClick={() => setNewNoteColor(col)}
+                        className={`w-9 h-9 rounded-xl border-2 border-black cursor-pointer ${getPostItClass(
+                          col
+                        )} ${newNoteColor === col ? "scale-110 shadow-[3px_3px_0px_0px_#000000]" : "opacity-60"}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowNewNoteModal(false)}
+                    className="px-4 py-2 font-black text-xs hover:underline cursor-pointer"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-[#FF5500] hover:bg-black text-white font-extrabold px-5 py-2.5 rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#000000] cursor-pointer"
+                  >
+                    Coller le Post-it
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
     </main>
   );
 }
