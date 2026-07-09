@@ -77,49 +77,82 @@ export default function StudentDashboardPage() {
   const [newNoteContent, setNewNoteContent] = useState<string>("");
   const [newNoteColor, setNewNoteColor] = useState<"yellow" | "pink" | "mint" | "orange">("yellow");
 
-  // Load persistence with clean keys
+  // Load persistence for Todos, Notes, and Pomodoro
   useEffect(() => {
-    const savedTodos = localStorage.getItem("gama_student_todos_clean");
-    if (savedTodos) {
-      try { setTodos(JSON.parse(savedTodos)); } catch (e) {}
+    // Todos & Notes
+    const savedTodosClean = localStorage.getItem("gama_student_todos_clean") || localStorage.getItem("gama_student_todos");
+    if (savedTodosClean) {
+      try { setTodos(JSON.parse(savedTodosClean)); } catch (e) {}
     }
-    const savedNotes = localStorage.getItem("gama_student_notes_clean");
-    if (savedNotes) {
-      try { setNotes(JSON.parse(savedNotes)); } catch (e) {}
+    const savedNotesClean = localStorage.getItem("gama_student_notes_clean") || localStorage.getItem("gama_student_notes");
+    if (savedNotesClean) {
+      try { setNotes(JSON.parse(savedNotesClean)); } catch (e) {}
+    }
+
+    // Pomodoro Persistence across page navigation / refresh
+    const savedMode = localStorage.getItem("gama_pomo_mode") as "focus" | "break" | null;
+    if (savedMode === "focus" || savedMode === "break") {
+      setTimerMode(savedMode);
+    }
+    const savedRunning = localStorage.getItem("gama_pomo_is_running");
+    if (savedRunning === "true") {
+      const targetTime = Number(localStorage.getItem("gama_pomo_target_time") || 0);
+      const rem = Math.max(0, Math.round((targetTime - Date.now()) / 1000));
+      if (rem > 0) {
+        setIsRunning(true);
+        setTimeLeft(rem);
+      } else {
+        setIsRunning(false);
+        setTimeLeft(savedMode === "break" ? 5 * 60 : 25 * 60);
+        localStorage.setItem("gama_pomo_is_running", "false");
+      }
+    } else {
+      const savedPaused = Number(localStorage.getItem("gama_pomo_paused_time"));
+      if (savedPaused > 0) setTimeLeft(savedPaused);
     }
   }, []);
 
   const saveTodos = (nextTodos: TodoItem[]) => {
     setTodos(nextTodos);
     localStorage.setItem("gama_student_todos_clean", JSON.stringify(nextTodos));
+    localStorage.setItem("gama_student_todos", JSON.stringify(nextTodos));
   };
 
   const saveNotes = (nextNotes: PostItNote[]) => {
     setNotes(nextNotes);
     localStorage.setItem("gama_student_notes_clean", JSON.stringify(nextNotes));
+    localStorage.setItem("gama_student_notes", JSON.stringify(nextNotes));
   };
 
-  // Pomodoro Interval Effect
+  // Pomodoro Interval Effect with timestamp precision
   useEffect(() => {
     let timer: any = null;
     if (isRunning) {
       timer = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
+        const targetTime = Number(localStorage.getItem("gama_pomo_target_time") || 0);
+        if (targetTime > 0) {
+          const rem = Math.max(0, Math.round((targetTime - Date.now()) / 1000));
+          if (rem <= 0) {
             setIsRunning(false);
+            localStorage.setItem("gama_pomo_is_running", "false");
             if (timerMode === "focus") {
               alert("🎯 Session de concentration terminée ! Prenez une pause.");
               setTimerMode("break");
-              return 5 * 60;
+              setTimeLeft(5 * 60);
+              localStorage.setItem("gama_pomo_mode", "break");
+              localStorage.setItem("gama_pomo_paused_time", (5 * 60).toString());
             } else {
               alert("☕ Pause terminée ! Prêt pour un nouveau cycle de concentration ?");
               setTimerMode("focus");
-              return 25 * 60;
+              setTimeLeft(25 * 60);
+              localStorage.setItem("gama_pomo_mode", "focus");
+              localStorage.setItem("gama_pomo_paused_time", (25 * 60).toString());
             }
+          } else {
+            setTimeLeft(rem);
           }
-          return prev - 1;
-        });
-      }, 1000);
+        }
+      }, 500);
     }
     return () => clearInterval(timer);
   }, [isRunning, timerMode]);
@@ -305,6 +338,9 @@ export default function StudentDashboardPage() {
                       setIsRunning(false);
                       setTimerMode("focus");
                       setTimeLeft(25 * 60);
+                      localStorage.setItem("gama_pomo_is_running", "false");
+                      localStorage.setItem("gama_pomo_mode", "focus");
+                      localStorage.setItem("gama_pomo_paused_time", (25 * 60).toString());
                     }}
                     className={`px-3 py-1 rounded-full text-xs font-black border border-black cursor-pointer ${
                       timerMode === "focus"
@@ -319,6 +355,9 @@ export default function StudentDashboardPage() {
                       setIsRunning(false);
                       setTimerMode("break");
                       setTimeLeft(5 * 60);
+                      localStorage.setItem("gama_pomo_is_running", "false");
+                      localStorage.setItem("gama_pomo_mode", "break");
+                      localStorage.setItem("gama_pomo_paused_time", (5 * 60).toString());
                     }}
                     className={`px-3 py-1 rounded-full text-xs font-black border border-black cursor-pointer ${
                       timerMode === "break"
@@ -344,7 +383,19 @@ export default function StudentDashboardPage() {
               {/* Controls */}
               <div className="flex items-center justify-center gap-4 pt-2">
                 <button
-                  onClick={() => requireAuth(() => setIsRunning(!isRunning))}
+                  onClick={() => requireAuth(() => {
+                    const nextRunning = !isRunning;
+                    setIsRunning(nextRunning);
+                    if (nextRunning) {
+                      const targetTime = Date.now() + timeLeft * 1000;
+                      localStorage.setItem("gama_pomo_is_running", "true");
+                      localStorage.setItem("gama_pomo_target_time", targetTime.toString());
+                      localStorage.setItem("gama_pomo_mode", timerMode);
+                    } else {
+                      localStorage.setItem("gama_pomo_is_running", "false");
+                      localStorage.setItem("gama_pomo_paused_time", timeLeft.toString());
+                    }
+                  })}
                   className={`px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] cursor-pointer transition-all ${
                     isRunning ? "bg-black text-white" : "bg-[#FF5500] text-white hover:bg-black"
                   }`}
@@ -354,8 +405,11 @@ export default function StudentDashboardPage() {
                 </button>
                 <button
                   onClick={() => {
+                    const defaultSecs = timerMode === "focus" ? 25 * 60 : 5 * 60;
                     setIsRunning(false);
-                    setTimeLeft(timerMode === "focus" ? 25 * 60 : 5 * 60);
+                    setTimeLeft(defaultSecs);
+                    localStorage.setItem("gama_pomo_is_running", "false");
+                    localStorage.setItem("gama_pomo_paused_time", defaultSecs.toString());
                   }}
                   className="p-3 bg-white border-2 border-black rounded-2xl hover:bg-black hover:text-white shadow-[3px_3px_0px_0px_#000000] cursor-pointer transition-all"
                   title="Réinitialiser"
