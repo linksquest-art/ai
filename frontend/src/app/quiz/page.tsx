@@ -43,6 +43,7 @@ export default function QuizPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [questionCount, setQuestionCount] = useState<number>(5);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -114,7 +115,7 @@ export default function QuizPage() {
           source: sourceInput,
           sourceType: sourceType,
           pdfBase64: pdfBase64,
-          questionCount: isPro ? 10 : 5
+          questionCount: questionCount
         })
       });
 
@@ -317,6 +318,33 @@ export default function QuizPage() {
                     className="w-full p-4 bg-[#FAFAFA] border-2 border-black rounded-xl font-bold text-sm outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#FF5500] transition-all resize-none"
                   />
                 )}
+              </div>
+
+              {/* Jauge du Nombre de Questions (5 à 20) */}
+              <div className="flex flex-col gap-3 bg-[#FAFAFA] border-2 border-black rounded-2xl p-4 shadow-[3px_3px_0px_0px_#000000]">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="quiz-question-count" className="text-xs font-black uppercase tracking-wider text-black/80 flex items-center gap-1.5">
+                    <span>Nombre de questions QCM</span>
+                  </label>
+                  <span className="bg-black text-white px-3 py-1 rounded-full text-xs font-black shadow-[2px_2px_0px_0px_#FF5500]">
+                    {questionCount} questions
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3 pt-1">
+                  <span className="text-xs font-black text-black/50 w-4 text-center">5</span>
+                  <input
+                    id="quiz-question-count"
+                    type="range"
+                    min={5}
+                    max={20}
+                    step={1}
+                    value={questionCount}
+                    onChange={(e) => setQuestionCount(Number(e.target.value))}
+                    className="w-full h-2.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-[#FF5500]"
+                  />
+                  <span className="text-xs font-black text-black/50 w-6 text-center">20</span>
+                </div>
               </div>
 
               <button

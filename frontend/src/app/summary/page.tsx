@@ -124,10 +124,19 @@ export default function SummaryPage() {
       return;
     }
     if (!youtubeUrl.trim()) return;
-    const youtubeCount = savedSummaries.filter(s => s.type === "youtube").length;
-    if (!isPro && youtubeCount >= 2) {
-      setShowUpgradeModal(true);
-      return;
+    if (!isPro) {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const storedDate = localStorage.getItem("gama_free_summary_date");
+      let count = Number(localStorage.getItem("gama_free_summary_count") || 0);
+      if (storedDate !== todayStr) {
+        count = 0;
+        localStorage.setItem("gama_free_summary_date", todayStr);
+      }
+      if (count >= 3) {
+        setShowUpgradeModal(true);
+        return;
+      }
+      localStorage.setItem("gama_free_summary_count", String(count + 1));
     }
     setIsGenerating(true);
     setSummaryResult(null);

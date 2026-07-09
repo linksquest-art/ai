@@ -158,10 +158,11 @@ export default function PricingPage() {
                 <div className="text-5xl font-black mb-8">0€ <span className="text-base text-black/50 font-bold">/mois</span></div>
                 
                 <ul className="flex flex-col gap-3 mb-8 border-t-2 border-black/10 pt-6 text-sm font-extrabold">
-                  <li className="flex items-center gap-3"><Check className="text-black" strokeWidth={3} size={18} /> 10 messages quotidiens (Bridé à 400 tokens)</li>
-                  <li className="flex items-center gap-3"><Check className="text-black" strokeWidth={3} size={18} /> Limite de 5 discussions actives dans l&apos;historique</li>
-                  <li className="flex items-center gap-3"><Check className="text-black" strokeWidth={3} size={18} /> Accès à GPT-4o Mini & modèles gratuits</li>
-                  <li className="flex items-center gap-3 text-black/40"><Check className="text-black/20" strokeWidth={3} size={18} /> Pas d&apos;accès aux modèles Pro (GPT-5 / Claude 3.5 Sonnet)</li>
+                  <li className="flex items-center gap-3"><Check className="text-black shrink-0" strokeWidth={3} size={18} /> 3 Quiz & QCM IA interactifs par jour (puis bloqué)</li>
+                  <li className="flex items-center gap-3"><Check className="text-black shrink-0" strokeWidth={3} size={18} /> 3 Résumés de vidéos YouTube & Cours par jour (puis bloqué)</li>
+                  <li className="flex items-center gap-3"><Check className="text-black shrink-0" strokeWidth={3} size={18} /> 3 Paquets de Flashcards de révision par jour (puis bloqué)</li>
+                  <li className="flex items-center gap-3"><Check className="text-black shrink-0" strokeWidth={3} size={18} /> 10 messages quotidiens sur le Chat IA (modèle standard)</li>
+                  <li className="flex items-center gap-3 text-black/40"><Check className="text-black/20 shrink-0" strokeWidth={3} size={18} /> Pas d&apos;accès aux QCM 10 questions ni aux modèles Pro</li>
                 </ul>
               </div>
               
@@ -181,7 +182,7 @@ export default function PricingPage() {
                   <Zap className="text-primary fill-primary" size={28} />
                   <span>Gama Pro</span>
                 </h3>
-                <p className="text-black/70 font-extrabold mb-4 text-sm">Pour les créateurs et studios qui exigent le maximum d&apos;intelligence.</p>
+                <p className="text-black/70 font-extrabold mb-4 text-sm">Pour les créateurs et étudiants qui exigent l&apos;accès illimité sans blocage.</p>
                 <div className="flex items-baseline gap-3 mb-8">
                   <div className="text-5xl font-black">9€ <span className="text-base text-black/50 font-bold">/mois</span></div>
                   <div className="flex items-center gap-2">
@@ -191,11 +192,11 @@ export default function PricingPage() {
                 </div>
                 
                 <ul className="flex flex-col gap-3 mb-8 border-t-2 border-black/10 pt-6 text-sm font-extrabold">
-                  <li className="flex items-center gap-3"><Check className="text-primary" strokeWidth={3} size={18} /> Messages ILLIMITÉS 24h/24</li>
-                  <li className="flex items-center gap-3"><Check className="text-primary" strokeWidth={3} size={18} /> Quota débridé (2500+ tokens par analyse)</li>
-                  <li className="flex items-center gap-3"><Check className="text-primary" strokeWidth={3} size={18} /> Accès VIP : GPT-5, Claude 3.5 Sonnet, Gemini Pro</li>
-                  <li className="flex items-center gap-3"><Check className="text-primary" strokeWidth={3} size={18} /> Routage prioritaire anti-panne</li>
-                  <li className="flex items-center gap-3"><Shield className="text-primary" strokeWidth={3} size={18} /> Sync cloud en temps réel & chiffrement Supabase</li>
+                  <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Quiz & QCM IA 100% ILLIMITÉS (+ 10 questions / QCM)</li>
+                  <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Résumés de vidéos YouTube & PDF 100% ILLIMITÉS</li>
+                  <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Paquets de Flashcards de révision 100% ILLIMITÉS</li>
+                  <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Messages Chat IA ILLIMITÉS 24h/24</li>
+                  <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Accès VIP : GPT-5, Claude 3.5 Sonnet, Modèle Best ★</li>
                 </ul>
               </div>
               
@@ -212,6 +213,67 @@ export default function PricingPage() {
               </button>
             </div>
 
+          </div>
+
+          {/* Tableau Comparatif Récapitulatif */}
+          <div className="mt-16 w-full max-w-4xl bg-white border-[3px] border-black rounded-2xl p-6 md:p-8 shadow-[6px_6px_0px_0px_#000000]">
+            <h3 className="text-2xl md:text-3xl font-black mb-2 text-center">
+              📊 Comparatif Complet des Droits & Quotas
+            </h3>
+            <p className="text-sm font-extrabold text-black/60 text-center mb-8">
+              Découvrez exactement ce que chaque statut vous permet de générer sur Gama Studio.
+            </p>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b-2 border-black text-xs md:text-sm font-black uppercase">
+                    <th className="py-3 px-4">Fonctionnalité / Outil</th>
+                    <th className="py-3 px-4 text-gray-600">👤 Non Connecté (Invité)</th>
+                    <th className="py-3 px-4 text-black">🧪 Hobby Studio (Gratuit)</th>
+                    <th className="py-3 px-4 text-[#FF5500]">👑 Gama Pro ★ (9€/mois)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y-2 divide-black/10 text-xs md:text-sm font-extrabold">
+                  <tr>
+                    <td className="py-3.5 px-4 font-black">Quiz & QCM IA (`/quiz`)</td>
+                    <td className="py-3.5 px-4 text-gray-600">3 QCM d&apos;essai (5 questions)</td>
+                    <td className="py-3.5 px-4">3 QCM / jour (puis bloqué)</td>
+                    <td className="py-3.5 px-4 text-[#FF5500] font-black">⚡ 100% ILLIMITÉ (10 questions)</td>
+                  </tr>
+                  <tr>
+                    <td className="py-3.5 px-4 font-black">Résumés YouTube & PDF (`/summary`)</td>
+                    <td className="py-3.5 px-4 text-gray-600">3 résumés d&apos;essai</td>
+                    <td className="py-3.5 px-4">3 résumés / jour (puis bloqué)</td>
+                    <td className="py-3.5 px-4 text-[#FF5500] font-black">⚡ 100% ILLIMITÉ</td>
+                  </tr>
+                  <tr>
+                    <td className="py-3.5 px-4 font-black">Flashcards de Révision (`/homework`)</td>
+                    <td className="py-3.5 px-4 text-gray-600">3 decks d&apos;essai</td>
+                    <td className="py-3.5 px-4">3 decks / jour (puis bloqué)</td>
+                    <td className="py-3.5 px-4 text-[#FF5500] font-black">⚡ 100% ILLIMITÉ</td>
+                  </tr>
+                  <tr>
+                    <td className="py-3.5 px-4 font-black">Discussion & Chat IA (`/`)</td>
+                    <td className="py-3.5 px-4 text-gray-600">3 messages (puis connexion requise)</td>
+                    <td className="py-3.5 px-4">10 messages / jour</td>
+                    <td className="py-3.5 px-4 text-[#FF5500] font-black">⚡ 100% ILLIMITÉ 24h/24</td>
+                  </tr>
+                  <tr>
+                    <td className="py-3.5 px-4 font-black">Modèles d&apos;IA Accessibles</td>
+                    <td className="py-3.5 px-4 text-gray-600">GPT-4o Mini Standard</td>
+                    <td className="py-3.5 px-4">GPT-4o Mini & DeepSeek Standard</td>
+                    <td className="py-3.5 px-4 text-[#FF5500] font-black">★ GPT-5, Claude 3.5, Best ★ VIP</td>
+                  </tr>
+                  <tr>
+                    <td className="py-3.5 px-4 font-black">Sauvegarde Cloud & Historique</td>
+                    <td className="py-3.5 px-4 text-gray-600">Non sauvegardé dans le cloud</td>
+                    <td className="py-3.5 px-4">Sauvegarde compte gratuit</td>
+                    <td className="py-3.5 px-4 text-[#FF5500] font-black">🔒 Cloud Supabase Chiffré & Prioritaire</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Guarantee badge */}
