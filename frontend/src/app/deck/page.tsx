@@ -7,14 +7,10 @@ import {
   Plus, 
   Trash2, 
   Sparkles, 
-  RotateCcw, 
-  CheckCircle2, 
   BookOpen, 
   Brain, 
   ArrowRight, 
-  ArrowLeft,
-  Clock,
-  HelpCircle
+  ArrowLeft
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 
@@ -36,85 +32,12 @@ interface Deck {
   cards: Flashcard[];
 }
 
-const DEFAULT_DECKS: Deck[] = [
-  {
-    id: "deck-droit",
-    name: "Droit Constitutionnel — L1",
-    description: "Principes fondateurs, séparation des pouvoirs et jurisprudence constitutionnelle.",
-    color: "#FF5500",
-    cards: [
-      {
-        id: "c1",
-        recto: "Qu'est-ce que le bloc de constitutionnalité ?",
-        verso: "Ensemble des textes et principes à valeur constitutionnelle que les lois doivent respecter (Constitution de 1958, DDHC 1789, Préambule de 1946, Charte de l'environnement de 2004).",
-        category: "Droit Constitutionnel",
-        status: "mastered",
-        intervalDays: 3
-      },
-      {
-        id: "c2",
-        recto: "Quelle est la différence entre souveraineté nationale et souveraineté populaire ?",
-        verso: "La souveraineté nationale appartient à la Nation (entité abstraite exercée par des représentants), tandis que la souveraineté populaire appartient au peuple (chaque citoyen détient une fraction de souveraineté).",
-        category: "Droit Constitutionnel",
-        status: "learning",
-        intervalDays: 1
-      },
-      {
-        id: "c3",
-        recto: "Qu'est-ce que l'article 49.3 de la Constitution de 1958 ?",
-        verso: "Article permettant au Premier ministre d'engager la responsabilité du Gouvernement sur le vote d'un projet de loi de finances ou de financement de la sécurité sociale sans vote parlementaire.",
-        category: "Droit Constitutionnel",
-        status: "new",
-        intervalDays: 0
-      }
-    ]
-  },
-  {
-    id: "deck-maths",
-    name: "Algèbre Linéaire & Matrices",
-    description: "Espaces vectoriels, déterminants, valeurs propres et diagonalisation.",
-    color: "#10B981",
-    cards: [
-      {
-        id: "c4",
-        recto: "Quelle est la condition nécessaire et suffisante pour qu'une matrice soit inversible ?",
-        verso: "Son déterminant doit être non nul (det(A) ≠ 0).",
-        category: "Mathématiques",
-        status: "mastered",
-        intervalDays: 7
-      },
-      {
-        id: "c5",
-        recto: "Qu'est-ce que le théorème du rang ?",
-        verso: "Pour une application linéaire f : E -> F (E de dimension finie) : dim(E) = dim(Ker(f)) + rg(f).",
-        category: "Mathématiques",
-        status: "learning",
-        intervalDays: 1
-      }
-    ]
-  },
-  {
-    id: "deck-anglais",
-    name: "Anglais Universitaire & TOEFL",
-    description: "Vocabulaire académique avancé, connecteurs logiques et nuances idiomatiques.",
-    color: "#3B82F6",
-    cards: [
-      {
-        id: "c6",
-        recto: "Que signifie 'Notwithstanding' dans un essai académique ?",
-        verso: "Néanmoins / Nonobstant / En dépit de.",
-        category: "Anglais",
-        status: "mastered",
-        intervalDays: 5
-      }
-    ]
-  }
-];
+const DEFAULT_DECKS: Deck[] = [];
 
 export default function DeckPage() {
   const router = useRouter();
   const [decks, setDecks] = useState<Deck[]>(DEFAULT_DECKS);
-  const [selectedDeckId, setSelectedDeckId] = useState<string>("deck-droit");
+  const [selectedDeckId, setSelectedDeckId] = useState<string>("");
   const [studyCardIndex, setStudyCardIndex] = useState<number>(0);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
 
@@ -130,7 +53,7 @@ export default function DeckPage() {
   const [newDeckDesc, setNewDeckDesc] = useState<string>("");
 
   useEffect(() => {
-    const saved = localStorage.getItem("gama_student_decks");
+    const saved = localStorage.getItem("gama_student_decks_clean");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -144,13 +67,13 @@ export default function DeckPage() {
 
   const saveDecks = (nextDecks: Deck[]) => {
     setDecks(nextDecks);
-    localStorage.setItem("gama_student_decks", JSON.stringify(nextDecks));
+    localStorage.setItem("gama_student_decks_clean", JSON.stringify(nextDecks));
   };
 
   const activeDeck = decks.find((d) => d.id === selectedDeckId) || decks[0];
   const currentCard = activeDeck?.cards[studyCardIndex];
 
-  // Spaced Repetition Grading (Anki style)
+  // Spaced Repetition Grading
   const handleGrade = (grade: "again" | "hard" | "good" | "easy") => {
     if (!currentCard || !activeDeck) return;
 
@@ -205,7 +128,7 @@ export default function DeckPage() {
     const newDeck: Deck = {
       id: "deck-" + Date.now(),
       name: newDeckName.trim(),
-      description: newDeckDesc.trim() || "Révisions universitaires et fiches d'étude",
+      description: newDeckDesc.trim() || "Fiches d'étude personnelles",
       color: "#FF5500",
       cards: []
     };
@@ -219,14 +142,10 @@ export default function DeckPage() {
 
   const handleDeleteDeck = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (decks.length <= 1) {
-      alert("Vous devez conserver au moins un Deck d'étude.");
-      return;
-    }
     const nextDecks = decks.filter((d) => d.id !== id);
     saveDecks(nextDecks);
     if (selectedDeckId === id) {
-      setSelectedDeckId(nextDecks[0].id);
+      setSelectedDeckId(nextDecks[0]?.id || "");
       setStudyCardIndex(0);
     }
   };
@@ -242,7 +161,7 @@ export default function DeckPage() {
         body: JSON.stringify({
           source: aiSource,
           cardCount: aiCount,
-          category: activeDeck?.name || "Université"
+          category: activeDeck?.name || "Révision IA"
         })
       });
 
@@ -256,25 +175,37 @@ export default function DeckPage() {
         id: "card-" + Date.now() + "-" + idx,
         recto: c.recto || "Concept clé",
         verso: c.verso || "Explication détaillée",
-        category: c.category || activeDeck.name,
+        category: c.category || (activeDeck?.name || "Révision IA"),
         status: "new",
         intervalDays: 0
       }));
 
-      const updatedDecks = decks.map((d) => {
-        if (d.id === activeDeck.id) {
-          return {
-            ...d,
-            cards: [...d.cards, ...generatedCards]
-          };
-        }
-        return d;
-      });
+      let updatedDecks: Deck[];
+      if (!activeDeck) {
+        const autoDeck: Deck = {
+          id: "deck-" + Date.now(),
+          name: "Deck IA — Révision",
+          description: "Généré par intelligence artificielle",
+          color: "#FF5500",
+          cards: generatedCards
+        };
+        updatedDecks = [autoDeck];
+        setSelectedDeckId(autoDeck.id);
+      } else {
+        updatedDecks = decks.map((d) => {
+          if (d.id === activeDeck.id) {
+            return {
+              ...d,
+              cards: [...d.cards, ...generatedCards]
+            };
+          }
+          return d;
+        });
+      }
 
       saveDecks(updatedDecks);
       setAiSource("");
       setShowAiModal(false);
-      alert(`✅ ${generatedCards.length} Flashcards ajoutées avec succès à « ${activeDeck.name} » !`);
     } catch (err: any) {
       alert("⚠️ Erreur lors de la communication avec l'IA.");
     } finally {
@@ -299,7 +230,7 @@ export default function DeckPage() {
                   Decks IA & Répétition Espacée
                 </h1>
                 <p className="text-xs md:text-sm font-bold text-black/60">
-                  Révisez selon la courbe de l'oubli avec notre algorithme intelligent et générez vos fiches instantanément par IA.
+                  Révisez selon la courbe de l'oubli avec notre algorithme intelligent et générez vos fiches par IA.
                 </p>
               </div>
             </div>
@@ -317,38 +248,38 @@ export default function DeckPage() {
                 className="bg-[#FF5500] hover:bg-black text-white font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
               >
                 <Sparkles size={16} />
-                <span>Générer Flashcards par IA</span>
+                <span>Générer par IA</span>
               </button>
             </div>
           </div>
 
           {/* Deck Selector Tabs */}
-          <div className="flex items-center gap-3 overflow-x-auto pb-2">
-            {decks.map((deck) => {
-              const isActive = deck.id === selectedDeckId;
-              const masteredCount = deck.cards.filter((c) => c.status === "mastered").length;
-              return (
-                <div
-                  key={deck.id}
-                  onClick={() => {
-                    setSelectedDeckId(deck.id);
-                    setStudyCardIndex(0);
-                    setIsFlipped(false);
-                  }}
-                  className={`px-4 py-3 rounded-2xl border-2 border-black font-extrabold text-xs flex items-center gap-3 cursor-pointer shrink-0 transition-all ${
-                    isActive
-                      ? "bg-black text-white shadow-[4px_4px_0px_0px_#FF5500]"
-                      : "bg-white text-black hover:bg-black/5 shadow-[2px_2px_0px_0px_#000000]"
-                  }`}
-                >
-                  <BookOpen size={16} className={isActive ? "text-[#FF5500]" : "text-black/60"} />
-                  <div className="flex flex-col">
-                    <span className="font-black text-sm">{deck.name}</span>
-                    <span className="text-[10px] opacity-70">
-                      {deck.cards.length} cartes • {masteredCount} maîtrisées
-                    </span>
-                  </div>
-                  {decks.length > 1 && (
+          {decks.length > 0 && (
+            <div className="flex items-center gap-3 overflow-x-auto pb-2">
+              {decks.map((deck) => {
+                const isActive = deck.id === (activeDeck?.id || "");
+                const masteredCount = deck.cards.filter((c) => c.status === "mastered").length;
+                return (
+                  <div
+                    key={deck.id}
+                    onClick={() => {
+                      setSelectedDeckId(deck.id);
+                      setStudyCardIndex(0);
+                      setIsFlipped(false);
+                    }}
+                    className={`px-4 py-3 rounded-2xl border-2 border-black font-extrabold text-xs flex items-center gap-3 cursor-pointer shrink-0 transition-all ${
+                      isActive
+                        ? "bg-black text-white shadow-[4px_4px_0px_0px_#FF5500]"
+                        : "bg-white text-black hover:bg-black/5 shadow-[2px_2px_0px_0px_#000000]"
+                    }`}
+                  >
+                    <BookOpen size={16} className={isActive ? "text-[#FF5500]" : "text-black/60"} />
+                    <div className="flex flex-col">
+                      <span className="font-black text-sm">{deck.name}</span>
+                      <span className="text-[10px] opacity-70">
+                        {deck.cards.length} cartes • {masteredCount} maîtrisées
+                      </span>
+                    </div>
                     <button
                       onClick={(e) => handleDeleteDeck(deck.id, e)}
                       className="ml-1 text-red-500 hover:text-red-600 p-1"
@@ -356,61 +287,26 @@ export default function DeckPage() {
                     >
                       <Trash2 size={14} />
                     </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Main Flashcard Studio Arena */}
           {activeDeck ? (
             <div className="flex flex-col gap-6">
               {activeDeck.cards.length > 0 ? (
                 <>
-                  {/* Card Counter & Study Bar */}
-                  <div className="flex items-center justify-between bg-white border-2 border-black rounded-2xl p-4 shadow-[3px_3px_0px_0px_#000000]">
-                    <div className="flex items-center gap-3">
-                      <span className="bg-black text-white px-3 py-1 rounded-full text-xs font-black">
-                        Carte {studyCardIndex + 1} / {activeDeck.cards.length}
-                      </span>
-                      <span className="text-xs font-bold text-black/60">
-                        {activeDeck.description}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setIsFlipped(false);
-                          setStudyCardIndex((prev) => (prev > 0 ? prev - 1 : activeDeck.cards.length - 1));
-                        }}
-                        className="p-2 bg-[#FAFAFA] border-2 border-black rounded-xl hover:bg-black hover:text-white transition-all cursor-pointer"
-                        title="Carte précédente"
-                      >
-                        <ArrowLeft size={16} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsFlipped(false);
-                          setStudyCardIndex((prev) => (prev < activeDeck.cards.length - 1 ? prev + 1 : 0));
-                        }}
-                        className="p-2 bg-[#FAFAFA] border-2 border-black rounded-xl hover:bg-black hover:text-white transition-all cursor-pointer"
-                        title="Carte suivante"
-                      >
-                        <ArrowRight size={16} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Interactive Flip Card (Recto / Verso) */}
+                  {/* Interactive Flip Card (Recto / Verso) without top counter box */}
                   <div
                     onClick={() => setIsFlipped(!isFlipped)}
-                    className="min-h-[280px] md:min-h-[320px] bg-white border-4 border-black rounded-3xl p-6 md:p-10 flex flex-col justify-between items-center text-center shadow-[8px_8px_0px_0px_#000000] hover:shadow-[10px_10px_0px_0px_#FF5500] transition-all cursor-pointer select-none relative group"
+                    className="min-h-[300px] md:min-h-[340px] bg-white border-4 border-black rounded-3xl p-6 md:p-10 flex flex-col justify-between items-center text-center shadow-[8px_8px_0px_0px_#000000] hover:shadow-[10px_10px_0px_0px_#FF5500] transition-all cursor-pointer select-none relative group"
                   >
                     <div className="w-full flex items-center justify-between text-xs font-black uppercase tracking-wider text-black/50">
                       <span>{activeDeck.name}</span>
                       <span className="bg-black/10 text-black px-3 py-1 rounded-full">
-                        {isFlipped ? "VERSO — RÉPONSE" : "RECTO — QUESTION (Cliquez pour retourner)"}
+                        {isFlipped ? "VERSO — RÉPONSE" : `RECTO — QUESTION ${studyCardIndex + 1} / ${activeDeck.cards.length}`}
                       </span>
                     </div>
 
@@ -420,12 +316,38 @@ export default function DeckPage() {
                       </p>
                     </div>
 
-                    <div className="w-full flex items-center justify-center text-xs font-extrabold text-black/40 group-hover:text-[#FF5500] transition-colors">
-                      <span>Appuyez ou cliquez pour retourner la carte</span>
+                    <div className="w-full flex items-center justify-between text-xs font-extrabold text-black/40">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsFlipped(false);
+                          setStudyCardIndex((prev) => (prev > 0 ? prev - 1 : activeDeck.cards.length - 1));
+                        }}
+                        className="p-2 bg-[#FAFAFA] border-2 border-black rounded-xl hover:bg-black hover:text-white transition-all cursor-pointer text-black"
+                        title="Carte précédente"
+                      >
+                        <ArrowLeft size={16} />
+                      </button>
+
+                      <span className="group-hover:text-[#FF5500] transition-colors">
+                        Cliquez sur la carte pour {isFlipped ? "voir la question" : "révéler la réponse"}
+                      </span>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsFlipped(false);
+                          setStudyCardIndex((prev) => (prev < activeDeck.cards.length - 1 ? prev + 1 : 0));
+                        }}
+                        className="p-2 bg-[#FAFAFA] border-2 border-black rounded-xl hover:bg-black hover:text-white transition-all cursor-pointer text-black"
+                        title="Carte suivante"
+                      >
+                        <ArrowRight size={16} />
+                      </button>
                     </div>
                   </div>
 
-                  {/* Anki Spaced Repetition Grading Buttons */}
+                  {/* Spaced Repetition Grading Buttons */}
                   {isFlipped && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
                       <button
@@ -467,7 +389,7 @@ export default function DeckPage() {
                   <Layers size={48} className="text-[#FF5500]" />
                   <h3 className="text-xl font-black uppercase">Ce Deck est vide</h3>
                   <p className="text-sm font-bold text-black/60 max-w-md">
-                    Générez automatiquement des fiches de révision à partir de vos cours grâce à notre IA ou créez votre propre sélection.
+                    Générez automatiquement des fiches de révision à partir de vos cours grâce à notre IA.
                   </p>
                   <button
                     onClick={() => setShowAiModal(true)}
@@ -478,7 +400,31 @@ export default function DeckPage() {
                 </div>
               )}
             </div>
-          ) : null}
+          ) : (
+            <div className="bg-white border-3 border-black rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-5 shadow-[8px_8px_0px_0px_#000000]">
+              <div className="w-16 h-16 rounded-2xl bg-black text-white flex items-center justify-center shadow-[4px_4px_0px_0px_#FF5500]">
+                <Layers size={32} />
+              </div>
+              <h3 className="text-2xl font-black uppercase">Aucun Deck créé</h3>
+              <p className="text-sm font-bold text-black/60 max-w-md">
+                Créez votre propre Deck de révision ou laissez notre IA générer vos fiches à partir de vos notes de cours.
+              </p>
+              <div className="flex items-center gap-4 pt-2">
+                <button
+                  onClick={() => setShowNewDeckModal(true)}
+                  className="bg-white text-black hover:bg-black hover:text-white font-extrabold px-6 py-3 rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
+                >
+                  + Créer un Deck
+                </button>
+                <button
+                  onClick={() => setShowAiModal(true)}
+                  className="bg-[#FF5500] text-white hover:bg-black font-extrabold px-6 py-3 rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
+                >
+                  ✨ Générer par IA
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Modal: New Deck */}
@@ -542,7 +488,7 @@ export default function DeckPage() {
                 </h3>
               </div>
               <p className="text-xs font-bold text-black/60">
-                Collez votre cours, vos définitions ou un thème précis pour générer instantanément des Flashcards de révision dans le deck « {activeDeck?.name} ».
+                Collez votre cours, vos définitions ou un thème précis pour générer instantanément des Flashcards de révision.
               </p>
 
               <textarea

@@ -10,11 +10,8 @@ import {
   CheckSquare, 
   Plus, 
   Trash2, 
-  Award, 
   Sparkles, 
-  BookOpen, 
   Clock, 
-  FileText,
   StickyNote
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
@@ -41,54 +38,26 @@ export default function StudentDashboardPage() {
   const [timerMode, setTimerMode] = useState<"focus" | "break">("focus");
   const [timeLeft, setTimeLeft] = useState<number>(25 * 60);
   const [isRunning, setIsRunning] = useState<boolean>(false);
-  const [sessionsCompleted, setSessionsCompleted] = useState<number>(3);
 
-  // --- To-Do List States ---
-  const [todos, setTodos] = useState<TodoItem[]>([
-    { id: "t1", text: "Faire fiche de synthèse — Droit Administratif", subject: "Droit", completed: true },
-    { id: "t2", text: "Réviser 15 Flashcards Droit Constitutionnel", subject: "Flashcards", completed: false },
-    { id: "t3", text: "Résoudre QCM Algèbre Linéaire (Niveau Expert)", subject: "Maths", completed: false }
-  ]);
+  // --- To-Do List States (Start clean without dummy examples) ---
+  const [todos, setTodos] = useState<TodoItem[]>([]);
   const [newTodoText, setNewTodoText] = useState<string>("");
   const [newTodoSubject, setNewTodoSubject] = useState<string>("Général");
 
-  // --- Post-its / Notes Rapides ---
-  const [notes, setNotes] = useState<PostItNote[]>([
-    {
-      id: "n1",
-      title: "Théorème du Rang",
-      content: "dim(E) = dim(Ker f) + rg(f). Toujours vérifier que E est de dimension finie !",
-      color: "yellow",
-      rotation: "-rotate-1"
-    },
-    {
-      id: "n2",
-      title: "Article 49.3",
-      content: "Engagement responsabilité gouv. Pas de vote sauf motion de censure dans les 24h.",
-      color: "mint",
-      rotation: "rotate-1"
-    },
-    {
-      id: "n3",
-      title: "Rappel Examens",
-      content: "Épreuve écrite le 14 mai. Penser à prendre la calculatrice non programmable.",
-      color: "pink",
-      rotation: "-rotate-2"
-    }
-  ]);
-
+  // --- Post-its / Notes Rapides (Start clean without dummy examples) ---
+  const [notes, setNotes] = useState<PostItNote[]>([]);
   const [showNewNoteModal, setShowNewNoteModal] = useState<boolean>(false);
   const [newNoteTitle, setNewNoteTitle] = useState<string>("");
   const [newNoteContent, setNewNoteContent] = useState<string>("");
   const [newNoteColor, setNewNoteColor] = useState<"yellow" | "pink" | "mint" | "orange">("yellow");
 
-  // Load persistence
+  // Load persistence with clean keys
   useEffect(() => {
-    const savedTodos = localStorage.getItem("gama_student_todos");
+    const savedTodos = localStorage.getItem("gama_student_todos_clean");
     if (savedTodos) {
       try { setTodos(JSON.parse(savedTodos)); } catch (e) {}
     }
-    const savedNotes = localStorage.getItem("gama_student_notes");
+    const savedNotes = localStorage.getItem("gama_student_notes_clean");
     if (savedNotes) {
       try { setNotes(JSON.parse(savedNotes)); } catch (e) {}
     }
@@ -96,12 +65,12 @@ export default function StudentDashboardPage() {
 
   const saveTodos = (nextTodos: TodoItem[]) => {
     setTodos(nextTodos);
-    localStorage.setItem("gama_student_todos", JSON.stringify(nextTodos));
+    localStorage.setItem("gama_student_todos_clean", JSON.stringify(nextTodos));
   };
 
   const saveNotes = (nextNotes: PostItNote[]) => {
     setNotes(nextNotes);
-    localStorage.setItem("gama_student_notes", JSON.stringify(nextNotes));
+    localStorage.setItem("gama_student_notes_clean", JSON.stringify(nextNotes));
   };
 
   // Pomodoro Interval Effect
@@ -113,10 +82,11 @@ export default function StudentDashboardPage() {
           if (prev <= 1) {
             setIsRunning(false);
             if (timerMode === "focus") {
-              setSessionsCompleted((s) => s + 1);
+              alert("🎯 Session de concentration terminée ! Prenez une pause.");
               setTimerMode("break");
               return 5 * 60;
             } else {
+              alert("☕ Pause terminée ! Prêt pour un nouveau cycle de concentration ?");
               setTimerMode("focus");
               return 25 * 60;
             }
@@ -128,67 +98,74 @@ export default function StudentDashboardPage() {
     return () => clearInterval(timer);
   }, [isRunning, timerMode]);
 
-  const formatTime = (secs: number) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const toggleTodo = (id: string) => {
-    const next = todos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t));
-    saveTodos(next);
-  };
-
+  // Todo Handlers
   const handleAddTodo = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTodoText.trim()) return;
-    const next = [
-      ...todos,
-      { id: "todo-" + Date.now(), text: newTodoText.trim(), subject: newTodoSubject, completed: false }
-    ];
-    saveTodos(next);
+    const newTodo: TodoItem = {
+      id: "todo-" + Date.now(),
+      text: newTodoText.trim(),
+      subject: newTodoSubject.trim() || "Général",
+      completed: false
+    };
+    saveTodos([newTodo, ...todos]);
     setNewTodoText("");
   };
 
-  const handleDeleteTodo = (id: string) => {
-    saveTodos(todos.filter((t) => t.id !== id));
+  const handleToggleTodo = (id: string) => {
+    const nextTodos = todos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t));
+    saveTodos(nextTodos);
   };
 
+  const handleDeleteTodo = (id: string) => {
+    const nextTodos = todos.filter((t) => t.id !== id);
+    saveTodos(nextTodos);
+  };
+
+  // Post-it Handlers
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNoteTitle.trim() && !newNoteContent.trim()) return;
-    const rotations = ["-rotate-2", "-rotate-1", "rotate-1", "rotate-2"];
-    const randRot = rotations[Math.floor(Math.random() * rotations.length)];
-    const next = [
-      ...notes,
-      {
-        id: "note-" + Date.now(),
-        title: newNoteTitle.trim() || "Note rapide",
-        content: newNoteContent.trim(),
-        color: newNoteColor,
-        rotation: randRot
-      }
-    ];
-    saveNotes(next);
+
+    const rotations = ["rotate-1", "-rotate-1", "rotate-2", "-rotate-2", "rotate-0"];
+    const randomRot = rotations[Math.floor(Math.random() * rotations.length)];
+
+    const newNote: PostItNote = {
+      id: "note-" + Date.now(),
+      title: newNoteTitle.trim() || "Note rapide",
+      content: newNoteContent.trim(),
+      color: newNoteColor,
+      rotation: randomRot
+    };
+
+    saveNotes([newNote, ...notes]);
     setNewNoteTitle("");
     setNewNoteContent("");
     setShowNewNoteModal(false);
   };
 
   const handleDeleteNote = (id: string) => {
-    saveNotes(notes.filter((n) => n.id !== id));
+    const nextNotes = notes.filter((n) => n.id !== id);
+    saveNotes(nextNotes);
   };
 
-  const getPostItClass = (color: string) => {
+  const getPostItClass = (color: PostItNote["color"]) => {
     switch (color) {
       case "pink":
-        return "bg-[#FFE4E6]";
+        return "bg-[#FFD1E8]";
       case "mint":
-        return "bg-[#D1FAE5]";
+        return "bg-[#D1FFE4]";
       case "orange":
-        return "bg-[#FFEDD5]";
+        return "bg-[#FFE1C2]";
+      case "yellow":
       default:
-        return "bg-[#FEF9C3]";
+        return "bg-[#FFF4B8]";
     }
   };
 
@@ -197,8 +174,8 @@ export default function StudentDashboardPage() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col h-screen overflow-y-auto bg-[#FFFBF5]">
-        <div className="p-4 md:p-8 flex flex-col max-w-6xl mx-auto gap-8 w-full">
-          {/* Header */}
+        <div className="p-4 md:p-8 flex flex-col max-w-7xl mx-auto gap-8 w-full">
+          {/* Top Header Banner */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-[3px] border-black pb-6">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center shadow-[4px_4px_0px_0px_#FF5500]">
@@ -209,13 +186,81 @@ export default function StudentDashboardPage() {
                   Bureau & Dashboard Étudiant
                 </h1>
                 <p className="text-xs md:text-sm font-bold text-black/60">
-                  Votre espace d'hyper-concentration : Chrono Pomodoro, Tâches du jour et Post-its rapides.
+                  Votre espace d'hyper-concentration : Cahier de Post-its, Chrono Pomodoro et Tâches du jour.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Top Grid: Pomodoro & To-Do List */}
+          {/* TOP SECTION: Cahier de Brouillon & Post-its (EN HAUT) */}
+          <div className="bg-[#FFFDF9] border-4 border-black rounded-3xl p-6 md:p-8 shadow-[8px_8px_0px_0px_#000000]">
+            <div className="flex items-center justify-between border-b-2 border-black/10 pb-4 mb-6">
+              <div className="flex items-center gap-2.5">
+                <StickyNote size={22} className="text-[#FF5500]" />
+                <h2 className="text-lg md:text-xl font-black uppercase tracking-tight">
+                  Cahier de Brouillon & Post-its
+                </h2>
+              </div>
+              <button
+                onClick={() => setShowNewNoteModal(true)}
+                className="bg-black text-white hover:bg-[#FF5500] font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
+              >
+                <Plus size={16} />
+                <span>Nouveau Post-it</span>
+              </button>
+            </div>
+
+            {notes.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {notes.map((note) => (
+                  <div
+                    key={note.id}
+                    className={`${getPostItClass(
+                      note.color
+                    )} ${note.rotation} border-3 border-black rounded-2xl p-5 shadow-[6px_6px_0px_0px_#000000] flex flex-col justify-between min-h-[160px] transition-transform hover:scale-102 relative`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-black text-sm uppercase tracking-wide text-black">
+                          {note.title}
+                        </span>
+                        <button
+                          onClick={() => handleDeleteNote(note.id)}
+                          className="text-black/40 hover:text-red-600 cursor-pointer"
+                          title="Détacher ce post-it"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                      <p className="text-xs font-bold leading-relaxed text-black/80 whitespace-pre-wrap">
+                        {note.content}
+                      </p>
+                    </div>
+                    <div className="mt-4 pt-2 border-t border-black/15 flex items-center justify-between text-[10px] font-black uppercase text-black/50">
+                      <span>Note Bureau</span>
+                      <span>📌 PING</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white border-2 border-dashed border-black/30 rounded-2xl p-8 text-center flex flex-col items-center justify-center gap-3">
+                <StickyNote size={36} className="text-black/30" />
+                <h3 className="text-sm font-black uppercase text-black/70">Aucun Post-it pour le moment</h3>
+                <p className="text-xs font-bold text-black/50 max-w-sm">
+                  Collez un post-it pour noter vos formules importantes, dates d'examens ou idées éclair.
+                </p>
+                <button
+                  onClick={() => setShowNewNoteModal(true)}
+                  className="mt-2 bg-[#FF5500] text-white hover:bg-black font-extrabold px-4 py-2 rounded-xl text-xs border-2 border-black shadow-[2px_2px_0px_0px_#000000] transition-all cursor-pointer"
+                >
+                  + Ajouter un Post-it
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* BOTTOM SECTION: Grid - Pomodoro Focus Timer & Interactive To-Do List (EN BAS) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* LEFT: Pomodoro Focus Timer Card */}
             <div className="lg:col-span-5 bg-white border-3 border-black rounded-3xl p-6 flex flex-col justify-between shadow-[6px_6px_0px_0px_#000000]">
@@ -298,131 +343,81 @@ export default function StudentDashboardPage() {
                     <CheckSquare size={18} className="text-[#FF5500]" />
                     <span className="font-black text-sm uppercase tracking-wide">Devoirs & Objectifs du Jour</span>
                   </div>
-                  <span className="text-xs font-extrabold text-black/60">
-                    {todos.filter((t) => t.completed).length}/{todos.length} accomplis
+                  <span className="text-xs font-black bg-black/5 px-2.5 py-1 rounded-full">
+                    {todos.filter((t) => t.completed).length} / {todos.length}
                   </span>
                 </div>
 
-                {/* Todo List Items */}
-                <div className="flex flex-col gap-2.5 max-h-[220px] overflow-y-auto pr-1">
-                  {todos.map((todo) => (
-                    <div
-                      key={todo.id}
-                      onClick={() => toggleTodo(todo.id)}
-                      className={`flex items-center justify-between p-3 rounded-xl border-2 border-black cursor-pointer transition-all ${
-                        todo.completed
-                          ? "bg-black/5 opacity-60 line-through text-black/60"
-                          : "bg-[#FAFAFA] hover:bg-white shadow-[2px_2px_0px_0px_#000000]"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={todo.completed}
-                          onChange={() => {}}
-                          className="w-4 h-4 accent-[#FF5500] cursor-pointer rounded"
-                        />
-                        <span className="font-extrabold text-xs md:text-sm">{todo.text}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="bg-black text-white text-[10px] font-black px-2 py-0.5 rounded-md uppercase">
-                          {todo.subject}
-                        </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteTodo(todo.id);
-                          }}
-                          className="text-black/40 hover:text-red-600 p-1"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
+                {/* Add Todo Form */}
+                <form onSubmit={handleAddTodo} className="flex gap-2 mb-4">
+                  <input
+                    type="text"
+                    value={newTodoText}
+                    onChange={(e) => setNewTodoText(e.target.value)}
+                    placeholder="Ajouter un devoir ou objectif à faire..."
+                    className="flex-1 p-3 bg-[#FAFAFA] border-2 border-black rounded-xl font-bold text-sm outline-none focus:bg-white transition-all"
+                  />
+                  <input
+                    type="text"
+                    value={newTodoSubject}
+                    onChange={(e) => setNewTodoSubject(e.target.value)}
+                    placeholder="Matière"
+                    className="w-24 md:w-32 p-3 bg-[#FAFAFA] border-2 border-black rounded-xl font-bold text-xs outline-none focus:bg-white transition-all"
+                  />
+                  <button
+                    type="submit"
+                    className="bg-black text-white hover:bg-[#FF5500] font-extrabold px-4 py-3 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000000] cursor-pointer transition-all"
+                  >
+                    <Plus size={18} />
+                  </button>
+                </form>
+
+                {/* Todos List */}
+                <div className="flex flex-col gap-2.5 max-h-[240px] overflow-y-auto pr-1">
+                  {todos.length === 0 ? (
+                    <div className="py-8 text-center text-black/50 font-bold text-xs">
+                      Aucune tâche dans votre liste. Ajoutez votre premier objectif !
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Add Todo Input */}
-              <form onSubmit={handleAddTodo} className="mt-4 pt-3 border-t-2 border-black/10 flex items-center gap-2">
-                <input
-                  type="text"
-                  value={newTodoText}
-                  onChange={(e) => setNewTodoText(e.target.value)}
-                  placeholder="Ajouter une tâche ou un devoir..."
-                  className="flex-1 p-3 bg-[#FAFAFA] border-2 border-black rounded-xl font-bold text-xs outline-none focus:bg-white"
-                />
-                <select
-                  value={newTodoSubject}
-                  onChange={(e) => setNewTodoSubject(e.target.value)}
-                  className="p-3 bg-white border-2 border-black rounded-xl font-black text-xs outline-none cursor-pointer"
-                >
-                  <option value="Général">Général</option>
-                  <option value="Droit">Droit</option>
-                  <option value="Maths">Maths</option>
-                  <option value="Flashcards">Flashcards</option>
-                  <option value="Anglais">Anglais</option>
-                </select>
-                <button
-                  type="submit"
-                  className="bg-[#FF5500] hover:bg-black text-white font-extrabold px-4 py-3 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000000] cursor-pointer shrink-0"
-                >
-                  <Plus size={16} />
-                </button>
-              </form>
-            </div>
-          </div>
-
-          {/* Bottom Section: Post-it Wall ("Cahier de Brouillon & Notes Rapides") */}
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <StickyNote size={20} className="text-[#FF5500]" />
-                <h2 className="text-lg md:text-xl font-black uppercase tracking-tight">
-                  Cahier de Brouillon & Post-its
-                </h2>
-              </div>
-              <button
-                onClick={() => setShowNewNoteModal(true)}
-                className="bg-black text-white hover:bg-[#FF5500] font-extrabold px-4 py-2 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
-              >
-                <Plus size={16} />
-                <span>Coller un Post-it</span>
-              </button>
-            </div>
-
-            {/* Post-it Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-              {notes.map((note) => (
-                <div
-                  key={note.id}
-                  className={`${getPostItClass(
-                    note.color
-                  )} ${note.rotation} border-3 border-black rounded-2xl p-5 shadow-[6px_6px_0px_0px_#000000] flex flex-col justify-between min-h-[160px] transition-transform hover:scale-102 relative`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-black text-sm uppercase tracking-wide text-black">
-                        {note.title}
-                      </span>
-                      <button
-                        onClick={() => handleDeleteNote(note.id)}
-                        className="text-black/40 hover:text-red-600"
-                        title="Détacher ce post-it"
+                  ) : (
+                    todos.map((todo) => (
+                      <div
+                        key={todo.id}
+                        onClick={() => handleToggleTodo(todo.id)}
+                        className={`flex items-center justify-between p-3.5 rounded-2xl border-2 border-black cursor-pointer transition-all ${
+                          todo.completed
+                            ? "bg-[#FAFAFA] text-black/40 line-through border-black/30"
+                            : "bg-white hover:bg-[#FFFBF5] shadow-[2px_2px_0px_0px_#000000]"
+                        }`}
                       >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                    <p className="text-xs font-bold leading-relaxed text-black/80 whitespace-pre-wrap">
-                      {note.content}
-                    </p>
-                  </div>
-                  <div className="mt-4 pt-2 border-t border-black/15 flex items-center justify-between text-[10px] font-black uppercase text-black/50">
-                    <span>Gama Studio Note</span>
-                    <span>📌 PING</span>
-                  </div>
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-5 h-5 rounded-lg border-2 border-black flex items-center justify-center ${
+                              todo.completed ? "bg-[#FF5500] text-white border-[#FF5500]" : "bg-white"
+                            }`}
+                          >
+                            {todo.completed && <span className="text-xs font-black">✓</span>}
+                          </div>
+                          <span className="font-extrabold text-sm">{todo.text}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black uppercase tracking-wider bg-black/10 px-2.5 py-0.5 rounded-md">
+                            {todo.subject}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteTodo(todo.id);
+                            }}
+                            className="text-black/30 hover:text-red-500 p-1"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </div>
@@ -453,7 +448,7 @@ export default function StudentDashboardPage() {
                     rows={4}
                     value={newNoteContent}
                     onChange={(e) => setNewNoteContent(e.target.value)}
-                    placeholder="Écrivez ici vos notes rapides ou rappels..."
+                    placeholder="Notez votre formule, idée ou rappel rapide ici..."
                     className="w-full p-3 border-2 border-black rounded-xl font-bold text-sm outline-none resize-none"
                   />
                 </div>
@@ -462,14 +457,20 @@ export default function StudentDashboardPage() {
                     Couleur du Post-it
                   </label>
                   <div className="flex items-center gap-3">
-                    {(["yellow", "pink", "mint", "orange"] as const).map((col) => (
+                    {[
+                      { id: "yellow", bg: "bg-[#FFF4B8]", label: "Jaune" },
+                      { id: "pink", bg: "bg-[#FFD1E8]", label: "Rose" },
+                      { id: "mint", bg: "bg-[#D1FFE4]", label: "Menthe" },
+                      { id: "orange", bg: "bg-[#FFE1C2]", label: "Orange" }
+                    ].map((col) => (
                       <button
-                        key={col}
                         type="button"
-                        onClick={() => setNewNoteColor(col)}
-                        className={`w-9 h-9 rounded-xl border-2 border-black cursor-pointer ${getPostItClass(
-                          col
-                        )} ${newNoteColor === col ? "scale-110 shadow-[3px_3px_0px_0px_#000000]" : "opacity-60"}`}
+                        key={col.id}
+                        onClick={() => setNewNoteColor(col.id as any)}
+                        className={`w-10 h-10 rounded-xl border-2 border-black ${col.bg} ${
+                          newNoteColor === col.id ? "ring-4 ring-black shadow-[2px_2px_0px_0px_#000000]" : ""
+                        }`}
+                        title={col.label}
                       />
                     ))}
                   </div>
