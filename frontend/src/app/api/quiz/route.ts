@@ -7,6 +7,8 @@ if (typeof global !== "undefined") {
   if (!(global as any).Path2D) (global as any).Path2D = class Path2D {};
 }
 
+import { YoutubeTranscript } from 'youtube-transcript';
+
 // Helper pour extraire l'ID vidéo YouTube
 function extractVideoId(url: string): string | null {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -14,90 +16,29 @@ function extractVideoId(url: string): string | null {
   return (match && match[2].length === 11) ? match[2] : null;
 }
 
-// Extraction du contenu YouTube (Titre, Auteur, Description & Sous-titres)
+// Extraction du contenu YouTube via youtube-transcript
 async function extractYoutubeContent(url: string): Promise<string> {
   const videoId = extractVideoId(url);
   if (!videoId) {
     throw new Error("Lien YouTube invalide. Impossible d'extraire l'identifiant de la vidéo.");
   }
 
-  let videoTitle = "";
-  let videoAuthor = "";
-  let videoDescription = "";
-  let transcriptText = "";
-
-  // 1. oEmbed pour Titre et Chaîne
   try {
-    const oembedRes = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
-    if (oembedRes.ok) {
-      const oembed = await oembedRes.json();
-      videoTitle = oembed.title || "";
-      videoAuthor = oembed.author_name || "";
+    const transcript = await YoutubeTranscript.fetchTranscript(videoId);
+    if (!transcript || transcript.length === 0) {
+      throw new Error("La transcription est vide.");
     }
-  } catch (e) {}
-
-  // 2. Watch page pour description et sous-titres
-  try {
-    const watchRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7"
-      }
-    });
-
-    if (watchRes.ok) {
-      const html = await watchRes.text();
-
-      const matchPlayer = html.match(/ytInitialPlayerResponse\s*=\s*({.+?})\s*;\s*(?:var\s+meta|<\/script>)/s) ||
-                          html.match(/ytInitialPlayerResponse\s*=\s*({.+?})\s*;/s);
-
-      if (matchPlayer && matchPlayer[1]) {
-        const playerRes = JSON.parse(matchPlayer[1]);
-        const details = playerRes?.videoDetails;
-        if (details) {
-          if (!videoTitle) videoTitle = details.title || "";
-          if (!videoAuthor) videoAuthor = details.author || "";
-          videoDescription = details.shortDescription || "";
-        }
-
-        const tracks = playerRes?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
-        if (tracks && Array.isArray(tracks) && tracks.length > 0) {
-          const track = tracks.find((t: any) => t.languageCode?.startsWith("fr")) ||
-                        tracks.find((t: any) => t.languageCode?.startsWith("en")) ||
-                        tracks[0];
-          if (track?.baseUrl) {
-            const subRes = await fetch(track.baseUrl);
-            if (subRes.ok) {
-              const xml = await subRes.text();
-              const texts = xml.match(/<text[^>]*>([^<]+)<\/text>/g);
-              if (texts) {
-                transcriptText = texts
-                  .map(t => t.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"'))
-                  .join(" ");
-              }
-            }
-          }
-        }
-      }
-    }
-  } catch (e) {}
-
-  const combined = [
-    transcriptText ? `[TRANSCRIPTION DU CONTENU PAROLE PAR PAROLE] :\n${transcriptText.substring(0, 18000)}` : "",
-    videoDescription ? `[EXPLICATIONS ET COURS DÉTAILLÉ DU CONFÉRENCIER] :\n${videoDescription}` : "",
-    (!transcriptText && !videoDescription && videoTitle) ? `Thème technique à analyser en profondeur universitaire : ${videoTitle}` : ""
-  ].filter(Boolean).join("\n\n");
-
-  if (!combined.trim()) {
-    throw new Error("Impossible d'extraire le contenu ou les sous-titres de cette vidéo YouTube.");
+    const transcriptText = transcript.map(t => t.text).join(" ");
+    
+    return `[TRANSCRIPTION DU CONTENU PAROLE PAR PAROLE] :\n${transcriptText.substring(0, 18000)}`;
+  } catch (e: any) {
+    throw new Error("Impossible d'extraire les sous-titres de cette vidéo YouTube. Assurez-vous que la vidéo possède des sous-titres publics. Erreur: " + e.message);
   }
-
-  return combined;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { source, sourceType, pdfBase64, questionCount = 5 } = await req.json();
+    const { source, sourceType, pdfBase64, questionCount = 5, difficulty = "Moyen" } = await req.json();
 
     let extractedText = "";
 
@@ -142,6 +83,17 @@ export async function POST(req: NextRequest) {
     const isYoutubeSource = sourceType === "youtube" || (typeof source === "string" && (source.includes("youtube.com") || source.includes("youtu.be")));
     const isShortTheme = !isYoutubeSource && sourceType !== "pdf" && extractedText.trim().length <= 350;
 
+    let difficultyInstruction = "";
+    if (difficulty === "Facile") {
+      difficultyInstruction = "NIVEAU DE DIFFICULTÉ : Facile. Les questions doivent être directes, axées sur les concepts de base et la mémorisation simple.";
+    } else if (difficulty === "Difficile") {
+      difficultyInstruction = "NIVEAU DE DIFFICULTÉ : Difficile. Les questions doivent nécessiter de la réflexion, l'application de concepts, et proposer des pièges subtils.";
+    } else if (difficulty === "Expert") {
+      difficultyInstruction = "NIVEAU DE DIFFICULTÉ : Expert (Niveau Universitaire/Recherche). Les questions doivent être extrêmement pointues, analyser des cas complexes, et inclure des pièges hautement sophistiqués.";
+    } else {
+      difficultyInstruction = "NIVEAU DE DIFFICULTÉ : Moyen. Les questions doivent être équilibrées, testant la compréhension générale avec quelques questions demandant plus de réflexion.";
+    }
+
     let instructionsSpecifiques = "";
     if (isYoutubeSource) {
       instructionsSpecifiques = `RÈGLES STRICTES POUR VIDÉO YOUTUBE :
@@ -165,6 +117,8 @@ SOURCE ÉTUDIÉE :
 """
 ${extractedText.substring(0, 20000)}
 """
+
+${difficultyInstruction}
 
 ${instructionsSpecifiques}
 

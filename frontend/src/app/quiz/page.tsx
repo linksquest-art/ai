@@ -44,6 +44,8 @@ export default function QuizPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [questionCount, setQuestionCount] = useState<number>(5);
+  const [difficulty, setDifficulty] = useState<"Facile" | "Moyen" | "Difficile" | "Expert">("Moyen");
+  const difficultyLevels = ["Facile", "Moyen", "Difficile", "Expert"];
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -115,7 +117,8 @@ export default function QuizPage() {
           source: sourceInput,
           sourceType: sourceType,
           pdfBase64: pdfBase64,
-          questionCount: questionCount
+          questionCount: questionCount,
+          difficulty: difficulty
         })
       });
 
@@ -344,6 +347,38 @@ export default function QuizPage() {
                     className="w-full h-2.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-[#FF5500]"
                   />
                   <span className="text-xs font-black text-black/50 w-6 text-center">20</span>
+                </div>
+              </div>
+
+              {/* Jauge de Difficulté */}
+              <div className="flex flex-col gap-3 bg-[#FAFAFA] border-2 border-black rounded-2xl p-4 shadow-[3px_3px_0px_0px_#000000]">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="quiz-difficulty" className="text-xs font-black uppercase tracking-wider text-black/80 flex items-center gap-1.5">
+                    <span>Niveau de difficulté</span>
+                  </label>
+                  <span className={`px-3 py-1 rounded-full text-xs font-black border border-black shadow-[2px_2px_0px_0px_#000000] ${
+                    difficulty === "Facile" ? "bg-emerald-400 text-black" : 
+                    difficulty === "Moyen" ? "bg-amber-400 text-black" : 
+                    difficulty === "Difficile" ? "bg-[#FF5500] text-white" : 
+                    "bg-black text-white"
+                  }`}>
+                    {difficulty}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3 pt-1">
+                  <span className="text-[10px] font-black text-black/50 w-10 text-center">Facile</span>
+                  <input
+                    id="quiz-difficulty"
+                    type="range"
+                    min={0}
+                    max={3}
+                    step={1}
+                    value={difficultyLevels.indexOf(difficulty)}
+                    onChange={(e) => setDifficulty(difficultyLevels[Number(e.target.value)] as any)}
+                    className="w-full h-2.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-[#FF5500]"
+                  />
+                  <span className="text-[10px] font-black text-black/50 w-10 text-center">Expert</span>
                 </div>
               </div>
 
