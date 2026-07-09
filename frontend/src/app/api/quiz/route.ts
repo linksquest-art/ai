@@ -83,10 +83,10 @@ async function extractYoutubeContent(url: string): Promise<string> {
   } catch (e) {}
 
   const combined = [
-    videoTitle ? `Titre vidéo : ${videoTitle}` : "",
-    videoAuthor ? `Chaîne : ${videoAuthor}` : "",
-    videoDescription ? `Description :\n${videoDescription}` : "",
-    transcriptText ? `Transcription complète :\n${transcriptText.substring(0, 18000)}` : ""
+    videoTitle ? `[MÉTADONNÉES INTERDITES POUR LES QUESTIONS] Titre vidéo : ${videoTitle}` : "",
+    videoAuthor ? `[MÉTADONNÉES INTERDITES POUR LES QUESTIONS] Chaîne : ${videoAuthor}` : "",
+    videoDescription ? `[CONTENU ET THÈMES ABORDÉS DANS LA VIDÉO] :\n${videoDescription}` : "",
+    transcriptText ? `[TRANSCRIPTION COMPLÈTE DU CONTENU ET DES EXPLICATONS] :\n${transcriptText.substring(0, 18000)}` : ""
   ].filter(Boolean).join("\n\n");
 
   if (!combined.trim()) {
@@ -132,32 +132,54 @@ export async function POST(req: NextRequest) {
       }
     } else {
       extractedText = typeof source === "string" ? source : "";
-      if (!extractedText.trim() || extractedText.trim().length < 30) {
+      if (!extractedText.trim() || extractedText.trim().length < 3) {
         return NextResponse.json(
-          { error: "Le texte source fourni est trop court pour générer un QCM fiable. Veuillez fournir un contenu plus complet." },
+          { error: "Veuillez fournir un sujet, un thème ou un cours pour générer le QCM." },
           { status: 400 }
         );
       }
     }
 
-    const prompt = `Tu es un professeur d'université expert.
-Voici le CONTENU RÉEL ET VÉRIFIÉ de la source étudiée :
+    const isYoutubeSource = sourceType === "youtube" || (typeof source === "string" && (source.includes("youtube.com") || source.includes("youtu.be")));
+    const isShortTheme = !isYoutubeSource && sourceType !== "pdf" && extractedText.trim().length <= 350;
+
+    let instructionsSpecifiques = "";
+    if (isYoutubeSource) {
+      instructionsSpecifiques = `RÈGLES STRICTES POUR VIDÉO YOUTUBE :
+1. INTERDICTION FORMELLE ET ABSOLUE de poser la moindre question sur le titre de la vidéo, le nom du créateur/de la chaîne, la date ou les métadonnées de publication.
+2. Tes questions doivent porter EXCLUSIVEMENT ET EN PROFONDEUR sur le CONTENU PÉDAGOGIQUE, SCIENTIFIQUE, HISTORIQUE OU TECHNIQUE abordé dans la vidéo.
+3. Si la transcription complète est fournie, teste précisément les concepts, explications et arguments abordés par le conférencier. Si seule une synthèse ou le sujet de la vidéo est disponible, agis en professeur universitaire expert pour poser des questions académiques pointues et techniques sur ce sujet précis.`;
+    } else if (isShortTheme) {
+      instructionsSpecifiques = `RÈGLES STRICTES POUR UN THÈME / SUJET D'ÉTUDE :
+1. L'utilisateur a fourni un THÈME ou SUJET D'ÉTUDE : « ${extractedText.trim()} ».
+2. Tu dois agir en tant que professeur d'université expert de cette discipline et concevoir un examen QCM de niveau académique supérieur sur ce thème précis.
+3. INTERDICTION DE POSER DES QUESTIONS VAGUES, BANALES OU TROP LARGES/SUPERFICIELLES. Pose des questions techniques, pointues, rigoureuses et approfondies (mécanismes, concepts clés, dates fondamentales, théorèmes ou analyses) pour évaluer une vraie maîtrise spécialisée du sujet.`;
+    } else {
+      instructionsSpecifiques = `RÈGLES STRICTES POUR COURS / DOCUMENT COMPLET :
+1. L'utilisateur a fourni un cours complet ou document détaillé.
+2. Tes questions doivent porter EXCLUSIVEMENT ET PRÉCISÉMENT sur les informations concrètes, faits, concepts, formules et arguments enseignés dans ce texte. N'invente pas d'informations hors du cours.`;
+    }
+
+    const prompt = `Tu es un professeur d'université expert dans l'évaluation académique.
+
+SOURCE ÉTUDIÉE :
 """
 ${extractedText.substring(0, 20000)}
 """
 
-Génère STRICTEMENT un tableau JSON valide de ${questionCount} questions QCM basées EXCLUSIVEMENT ET PRÉCISÉMENT sur les informations concrètes (faits, dates, concepts, arguments) présentes dans ce texte.
+${instructionsSpecifiques}
+
+Génère STRICTEMENT un tableau JSON valide de ${questionCount} questions QCM.
 RÈGLES IMPÉRATIVES :
-1. N'INVENTE AUCUNE INFORMATION. N'ajoute pas de concepts hors du texte.
-2. Renvoie UNIQUEMENT un tableau JSON valide (sans balises markdown ni texte autour).
-3. Format exact exigé :
+1. Renvoie UNIQUEMENT un tableau JSON valide (sans balises markdown ni texte autour).
+2. Format exact exigé :
 [
   {
     "id": 1,
-    "question": "Question précise tirée directement des faits ou concepts de la source...",
-    "options": ["Choix A exact", "Choix B erroné", "Choix C erroné", "Choix D erroné"],
+    "question": "Question précise, technique et pertinente...",
+    "options": ["Choix A exact et complet", "Choix B plausible mais faux", "Choix C erroné", "Choix D erroné"],
     "correctIndex": 0,
-    "explanation": "Explication pédagogique citant le passage du texte qui justifie la réponse."
+    "explanation": "Explication pédagogique détaillée justifiant la bonne réponse."
   }
 ]`;
 
