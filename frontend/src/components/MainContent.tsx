@@ -720,19 +720,6 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                 <span className="text-xs font-bold text-black/60 bg-black/5 px-3 py-1 rounded-xl border border-black/10">
                   ⚡ {isPro ? "Quotas Débridés & VIP" : "Multi-Modèle & Veille Web"}
                 </span>
-                <button
-                  type="button"
-                  onClick={onToggleIncognito}
-                  className={`px-3.5 py-1 rounded-xl font-black text-xs border-2 flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0px_0px_#000000] ${
-                    isIncognito
-                      ? "bg-black text-white border-black animate-pulse"
-                      : "bg-white text-black border-black/20 hover:border-black hover:bg-black/5"
-                  }`}
-                  title="Mode Incognito : Les discussions ne sont jamais enregistrées ni dans le navigateur ni dans le cloud"
-                >
-                  {isIncognito ? <Shield size={14} className="text-[#FF5500]" /> : <EyeOff size={14} className="text-black/60" />}
-                  <span>{isIncognito ? "🕶️ Incognito Actif" : "🕶️ Incognito"}</span>
-                </button>
               </div>
             </div>
 

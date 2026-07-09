@@ -13,6 +13,8 @@ import {
   ArrowLeft
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
+import { AuthModal } from "@/components/AuthModal";
+import { supabase } from "@/lib/supabase";
 
 interface Flashcard {
   id: string;
@@ -40,6 +42,30 @@ export default function DeckPage() {
   const [selectedDeckId, setSelectedDeckId] = useState<string>("");
   const [studyCardIndex, setStudyCardIndex] = useState<number>(0);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
+
+  // --- Auth State ---
+  const [user, setUser] = useState<any>(null);
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const requireAuth = (callback: () => void) => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+    callback();
+  };
 
   // AI Generation States
   const [showAiModal, setShowAiModal] = useState<boolean>(false);
@@ -237,14 +263,14 @@ export default function DeckPage() {
 
             <div className="flex items-center gap-3 flex-wrap">
               <button
-                onClick={() => setShowNewDeckModal(true)}
+                onClick={() => requireAuth(() => setShowNewDeckModal(true))}
                 className="bg-white text-black hover:bg-black hover:text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
               >
                 <Plus size={16} />
                 <span>Nouveau Deck</span>
               </button>
               <button
-                onClick={() => setShowAiModal(true)}
+                onClick={() => requireAuth(() => setShowAiModal(true))}
                 className="bg-[#FF5500] hover:bg-black text-white font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
               >
                 <Sparkles size={16} />
@@ -411,13 +437,13 @@ export default function DeckPage() {
               </p>
               <div className="flex items-center gap-4 pt-2">
                 <button
-                  onClick={() => setShowNewDeckModal(true)}
+                  onClick={() => requireAuth(() => setShowNewDeckModal(true))}
                   className="bg-white text-black hover:bg-black hover:text-white font-extrabold px-6 py-3 rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
                 >
                   + Créer un Deck
                 </button>
                 <button
-                  onClick={() => setShowAiModal(true)}
+                  onClick={() => requireAuth(() => setShowAiModal(true))}
                   className="bg-[#FF5500] text-white hover:bg-black font-extrabold px-6 py-3 rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
                 >
                   ✨ Générer par IA
@@ -532,6 +558,8 @@ export default function DeckPage() {
           </div>
         )}
       </div>
+
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </main>
   );
 }

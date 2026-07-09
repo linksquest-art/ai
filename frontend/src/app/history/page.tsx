@@ -15,6 +15,8 @@ import {
   StickyNote
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
+import { AuthModal } from "@/components/AuthModal";
+import { supabase } from "@/lib/supabase";
 
 interface TodoItem {
   id: string;
@@ -33,6 +35,30 @@ interface PostItNote {
 
 export default function StudentDashboardPage() {
   const router = useRouter();
+
+  // --- Auth State ---
+  const [user, setUser] = useState<any>(null);
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const requireAuth = (callback: () => void) => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+    callback();
+  };
 
   // --- Pomodoro Focus States ---
   const [timerMode, setTimerMode] = useState<"focus" | "break">("focus");
@@ -107,6 +133,10 @@ export default function StudentDashboardPage() {
   // Todo Handlers
   const handleAddTodo = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     if (!newTodoText.trim()) return;
     const newTodo: TodoItem = {
       id: "todo-" + Date.now(),
@@ -202,7 +232,7 @@ export default function StudentDashboardPage() {
                 </h2>
               </div>
               <button
-                onClick={() => setShowNewNoteModal(true)}
+                onClick={() => requireAuth(() => setShowNewNoteModal(true))}
                 className="bg-black text-white hover:bg-[#FF5500] font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
               >
                 <Plus size={16} />
@@ -251,7 +281,7 @@ export default function StudentDashboardPage() {
                   Collez un post-it pour noter vos formules importantes, dates d'examens ou idées éclair.
                 </p>
                 <button
-                  onClick={() => setShowNewNoteModal(true)}
+                  onClick={() => requireAuth(() => setShowNewNoteModal(true))}
                   className="mt-2 bg-[#FF5500] text-white hover:bg-black font-extrabold px-4 py-2 rounded-xl text-xs border-2 border-black shadow-[2px_2px_0px_0px_#000000] transition-all cursor-pointer"
                 >
                   + Ajouter un Post-it
@@ -314,7 +344,7 @@ export default function StudentDashboardPage() {
               {/* Controls */}
               <div className="flex items-center justify-center gap-4 pt-2">
                 <button
-                  onClick={() => setIsRunning(!isRunning)}
+                  onClick={() => requireAuth(() => setIsRunning(!isRunning))}
                   className={`px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] cursor-pointer transition-all ${
                     isRunning ? "bg-black text-white" : "bg-[#FF5500] text-white hover:bg-black"
                   }`}
@@ -495,6 +525,8 @@ export default function StudentDashboardPage() {
           </div>
         )}
       </div>
+
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </main>
   );
 }
