@@ -64,7 +64,6 @@ export default function AccountPage() {
     const observer = new MutationObserver(syncTheme);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
 
-    // Also listen to storage events from other tabs
     const handleStorage = (e: StorageEvent) => {
       if (e.key === "gama_theme") syncTheme();
     };
@@ -227,18 +226,18 @@ export default function AccountPage() {
   };
 
   return (
-    <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] dark:bg-[#101014] text-black dark:text-white select-none">
+    <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black select-none">
       <Sidebar sessions={sessions} />
       
       <div className="flex-1 flex flex-col h-screen overflow-y-auto">
         {/* Top Header */}
-        <header className="w-full flex items-center justify-between px-8 py-5 border-b-2 border-black/10 dark:border-white/10 bg-[#FFFFFF] dark:bg-[#101014] sticky top-0 z-10 shadow-sm">
+        <header className="w-full flex items-center justify-between px-8 py-5 border-b-2 border-black/10 bg-[#FFFFFF] sticky top-0 z-10 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-black dark:bg-[#2A2A35] text-white rounded-xl shadow-[3px_3px_0px_0px_#FF5500]">
+            <div className="p-2.5 bg-black text-white rounded-xl shadow-[3px_3px_0px_0px_#FF5500]">
               <Settings size={22} className="animate-spin-slow" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-black dark:text-white flex items-center gap-2.5">
+              <h1 className="text-2xl font-black text-black flex items-center gap-2.5">
                 <span>Mon Compte & Paramètres</span>
                 {user && (
                   <span className={`text-xs px-2.5 py-0.5 rounded-full border-2 font-black uppercase tracking-wider ${
@@ -250,11 +249,11 @@ export default function AccountPage() {
                   </span>
                 )}
               </h1>
-              <p className="text-xs font-bold text-black/50 dark:text-white/50">Gérez votre profil Supabase, vos quotas de tokens et votre abonnement</p>
+              <p className="text-xs font-bold text-black/50">Gérez votre profil Supabase, vos quotas de tokens et votre abonnement</p>
             </div>
           </div>
           
-          <Link href="/" className="ink-btn bg-black dark:bg-[#2A2A35] text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black dark:border-white/20 shadow-[3px_3px_0px_0px_#FF5500] hover:translate-x-0.5 hover:translate-y-0.5 transition-all">
+          <Link href="/" className="ink-btn bg-black text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#FF5500] hover:translate-x-0.5 hover:translate-y-0.5 transition-all">
             <span>Retour au Chat</span>
             <ArrowRight size={14} />
           </Link>
@@ -264,21 +263,21 @@ export default function AccountPage() {
         <div className="max-w-4xl w-full mx-auto px-8 py-10 flex flex-col gap-8 pb-20">
           
           {!user ? (
-            <div className="bg-amber-50 border-[3px] border-black dark:border-white/20 rounded-2xl p-8 text-center shadow-[6px_6px_0px_0px_#000000] dark:shadow-[6px_6px_0px_0px_#FF5500] flex flex-col items-center gap-4">
+            <div className="bg-amber-50 border-[3px] border-black rounded-2xl p-8 text-center shadow-[6px_6px_0px_0px_#000000] flex flex-col items-center gap-4">
               <AlertCircle size={48} className="text-amber-600" />
               <h2 className="text-2xl font-black">Aucun compte connecté</h2>
-              <p className="text-sm font-bold text-black/70 dark:text-white/70 max-w-md">
+              <p className="text-sm font-bold text-black/70 max-w-md">
                 Veuillez vous connecter ou vous inscrire depuis le menu de gauche pour accéder à vos informations de compte, vos quotas chiffrés et vos sauvegardes Supabase.
               </p>
-              <Link href="/" className="bg-[#FF4500] text-white font-black px-6 py-3 rounded-xl border-2 border-black dark:border-white/20 shadow-[3px_3px_0px_0px_#000000] dark:shadow-[3px_3px_0px_0px_#FF5500] text-sm">
+              <Link href="/" className="bg-[#FF4500] text-white font-black px-6 py-3 rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#000000] text-sm">
                 Se connecter / S'inscrire
               </Link>
             </div>
           ) : (
             <>
               {/* SECTION 1: PROFIL & IDENTIFIANT SUPABASE */}
-              <div className="bg-white dark:bg-[#1C1C22] border-[3px] border-black dark:border-white/20 rounded-2xl p-6 shadow-[5px_5px_0px_0px_#000000] dark:shadow-[5px_5px_0px_0px_#FF5500] flex flex-col gap-6">
-                <div className="flex items-center justify-between border-b-2 border-black/10 dark:border-white/10 pb-4">
+              <div className="bg-white border-[3px] border-black rounded-2xl p-6 shadow-[5px_5px_0px_0px_#000000] flex flex-col gap-6">
+                <div className="flex items-center justify-between border-b-2 border-black/10 pb-4">
                   <div className="flex items-center gap-3">
                     <UserIcon className="text-primary" size={24} />
                     <h2 className="text-lg font-black uppercase tracking-tight">Profil Utilisateur Supabase</h2>
@@ -289,10 +288,10 @@ export default function AccountPage() {
                   </span>
                 </div>
 
-                <div className="bg-black/5 dark:bg-white/5 p-5 rounded-xl border border-black/10 dark:border-white/10 flex items-center justify-between">
+                <div className="bg-black/5 p-5 rounded-xl border border-black/10 flex items-center justify-between">
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-black uppercase text-black/40 dark:text-white/40">Adresse E-mail du Compte</span>
-                    <span className="text-base font-black text-black dark:text-white">{user.email}</span>
+                    <span className="text-[10px] font-black uppercase text-black/40">Adresse E-mail du Compte</span>
+                    <span className="text-base font-black text-black">{user.email}</span>
                   </div>
                   <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-300 flex items-center gap-1.5 shadow-sm">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -312,13 +311,13 @@ export default function AccountPage() {
               </div>
 
               {/* SECTION 2: QUOTAS & CONSOMMATION EN DIRECT (UI/UX PRO MAX) */}
-              <div className="bg-white dark:bg-[#1C1C22] border-[3px] border-black dark:border-white/20 rounded-2xl p-6 shadow-[5px_5px_0px_0px_#FF5500] flex flex-col gap-6 relative overflow-hidden">
-                <div className="flex items-center justify-between border-b-2 border-black/10 dark:border-white/10 pb-4">
+              <div className="bg-white border-[3px] border-black rounded-2xl p-6 shadow-[5px_5px_0px_0px_#FF5500] flex flex-col gap-6 relative overflow-hidden">
+                <div className="flex items-center justify-between border-b-2 border-black/10 pb-4">
                   <div className="flex items-center gap-3">
                     <Zap className="text-primary fill-primary" size={24} />
                     <h2 className="text-lg font-black uppercase tracking-tight">Consommation & Quota de Tokens</h2>
                   </div>
-                  <span className="text-xs font-black text-black/60 dark:text-white/60 bg-black/5 dark:bg-white/5 px-3 py-1 rounded-lg border border-black/10 dark:border-white/10">
+                  <span className="text-xs font-black text-black/60 bg-black/5 px-3 py-1 rounded-lg border border-black/10">
                     Mise à jour en temps réel
                   </span>
                 </div>
@@ -417,14 +416,14 @@ export default function AccountPage() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="text-sm font-black text-black dark:text-white block">Messages Quotidiens Utilisés</span>
-                          <span className="text-xs font-bold text-black/50 dark:text-white/50">Réinitialisé automatiquement tous les jours à minuit</span>
+                          <span className="text-sm font-black text-black block">Messages Quotidiens Utilisés</span>
+                          <span className="text-xs font-bold text-black/50">Réinitialisé automatiquement tous les jours à minuit</span>
                         </div>
-                        <span className="text-xl font-black text-black dark:text-white bg-black/5 dark:bg-white/5 px-3 py-1 rounded-xl border-2 border-black/10 dark:border-white/10">
-                          {realCount} <span className="text-xs font-bold text-black/40 dark:text-white/40">/ {maxMessages} messages</span>
+                        <span className="text-xl font-black text-black bg-black/5 px-3 py-1 rounded-xl border-2 border-black/10">
+                          {realCount} <span className="text-xs font-bold text-black/40">/ {maxMessages} messages</span>
                         </span>
                       </div>
-                      <div className="w-full bg-black/10 dark:bg-white/10 h-4 rounded-full overflow-hidden border-2 border-black dark:border-white/20 p-[2px]">
+                      <div className="w-full bg-black/10 h-4 rounded-full overflow-hidden border-2 border-black p-[2px]">
                         <div 
                           className={`h-full rounded-full transition-all duration-500 ${
                             percentage > 85 ? "bg-red-500" : percentage > 60 ? "bg-amber-500" : "bg-emerald-500"
@@ -435,17 +434,17 @@ export default function AccountPage() {
                     </div>
 
                     {/* Progress Bar 2 : Tokens Quotidiens (bridés à 400 / message) */}
-                    <div className="space-y-2 bg-black/[0.03] p-4 rounded-2xl border border-black/10 dark:border-white/10">
+                    <div className="space-y-2 bg-black/[0.03] p-4 rounded-2xl border border-black/10">
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="text-xs font-black uppercase tracking-wider text-black dark:text-white block">Consommation de Tokens (Jour)</span>
-                          <span className="text-[11px] font-bold text-black/60 dark:text-white/60">Bridé à 400 tokens par message en plan gratuit</span>
+                          <span className="text-xs font-black uppercase tracking-wider text-black block">Consommation de Tokens (Jour)</span>
+                          <span className="text-[11px] font-bold text-black/60">Bridé à 400 tokens par message en plan gratuit</span>
                         </div>
-                        <span className="text-xs font-black text-black dark:text-white bg-white dark:bg-[#1C1C22] px-2.5 py-1 rounded-lg border border-black/10 dark:border-white/10">
+                        <span className="text-xs font-black text-black bg-white px-2.5 py-1 rounded-lg border border-black/10">
                           {dailyTokensUsed.toLocaleString("fr-FR")} / {dailyTokensMax.toLocaleString("fr-FR")} tokens
                         </span>
                       </div>
-                      <div className="w-full bg-black/10 dark:bg-white/10 h-3 rounded-full overflow-hidden border border-black/20 dark:border-white/20">
+                      <div className="w-full bg-black/10 h-3 rounded-full overflow-hidden border border-black/20">
                         <div 
                           className="bg-[#FF5500] h-full rounded-full transition-all duration-500"
                           style={{ width: `${Math.max(3, tokenPercentage)}%` }}
@@ -454,17 +453,17 @@ export default function AccountPage() {
                     </div>
 
                     {/* Progress Bar 3 : Tokens Hebdomadaires */}
-                    <div className="space-y-2 bg-black/[0.03] p-4 rounded-2xl border border-black/10 dark:border-white/10">
+                    <div className="space-y-2 bg-black/[0.03] p-4 rounded-2xl border border-black/10">
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="text-xs font-black uppercase tracking-wider text-black dark:text-white block">Consommation de Tokens (Semaine)</span>
-                          <span className="text-[11px] font-bold text-black/60 dark:text-white/60">Cumul hebdomadaire synchronisé sur Supabase</span>
+                          <span className="text-xs font-black uppercase tracking-wider text-black block">Consommation de Tokens (Semaine)</span>
+                          <span className="text-[11px] font-bold text-black/60">Cumul hebdomadaire synchronisé sur Supabase</span>
                         </div>
-                        <span className="text-xs font-black text-black dark:text-white bg-white dark:bg-[#1C1C22] px-2.5 py-1 rounded-lg border border-black/10 dark:border-white/10">
+                        <span className="text-xs font-black text-black bg-white px-2.5 py-1 rounded-lg border border-black/10">
                           {weeklyTokensUsed.toLocaleString("fr-FR")} / {weeklyTokensMax.toLocaleString("fr-FR")} tokens
                         </span>
                       </div>
-                      <div className="w-full bg-black/10 dark:bg-white/10 h-3 rounded-full overflow-hidden border border-black/20 dark:border-white/20">
+                      <div className="w-full bg-black/10 h-3 rounded-full overflow-hidden border border-black/20">
                         <div 
                           className="bg-purple-600 h-full rounded-full transition-all duration-500"
                           style={{ width: `${Math.max(3, weeklyTokenPercentage)}%` }}
@@ -473,17 +472,17 @@ export default function AccountPage() {
                     </div>
 
                     {/* Progress Bar 4 : Temps avant renouvellement */}
-                    <div className="space-y-2 bg-black/[0.03] p-4 rounded-2xl border border-black/10 dark:border-white/10">
+                    <div className="space-y-2 bg-black/[0.03] p-4 rounded-2xl border border-black/10">
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="text-xs font-black uppercase tracking-wider text-black dark:text-white block">Cycle Mensuel (Créé le {creationFormatted})</span>
-                          <span className="text-[11px] font-bold text-black/60 dark:text-white/60">Réinitialisation du cycle le {nextCycleFormatted}</span>
+                          <span className="text-xs font-black uppercase tracking-wider text-black block">Cycle Mensuel (Créé le {creationFormatted})</span>
+                          <span className="text-[11px] font-bold text-black/60">Réinitialisation du cycle le {nextCycleFormatted}</span>
                         </div>
-                        <span className="text-xs font-black text-black dark:text-white bg-white dark:bg-[#1C1C22] px-2.5 py-1 rounded-lg border border-black/10 dark:border-white/10">
+                        <span className="text-xs font-black text-black bg-white px-2.5 py-1 rounded-lg border border-black/10">
                           Renouvellement le {nextCycleFormatted}
                         </span>
                       </div>
-                      <div className="w-full bg-black/10 dark:bg-white/10 h-3 rounded-full overflow-hidden border border-black/20 dark:border-white/20">
+                      <div className="w-full bg-black/10 h-3 rounded-full overflow-hidden border border-black/20">
                         <div 
                           className="bg-blue-600 h-full rounded-full transition-all duration-500"
                           style={{ width: `${subProgressPercent}%` }}
@@ -492,12 +491,12 @@ export default function AccountPage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="bg-black/5 dark:bg-white/5 p-3.5 rounded-xl border border-black/10 dark:border-white/10 flex flex-col gap-1">
-                        <span className="text-[10px] font-black uppercase text-black/40 dark:text-white/40">Discussions Actives</span>
-                        <span className="text-xs font-black text-black dark:text-white">5 conversations max (Popup d&apos;avertissement au-delà)</span>
+                      <div className="bg-black/5 p-3.5 rounded-xl border border-black/10 flex flex-col gap-1">
+                        <span className="text-[10px] font-black uppercase text-black/40">Discussions Actives</span>
+                        <span className="text-xs font-black text-black">5 conversations max (Popup d&apos;avertissement au-delà)</span>
                       </div>
-                      <div className="bg-black/5 dark:bg-white/5 p-3.5 rounded-xl border border-black/10 dark:border-white/10 flex flex-col gap-1">
-                        <span className="text-[10px] font-black uppercase text-black/40 dark:text-white/40">Offre Spéciale — Réduction</span>
+                      <div className="bg-black/5 p-3.5 rounded-xl border border-black/10 flex flex-col gap-1">
+                        <span className="text-[10px] font-black uppercase text-black/40">Offre Spéciale — Réduction</span>
                         <span className="text-xs font-black text-[#FF5500]">9€/mois au lieu de 13€ (-30% de remise) ★</span>
                       </div>
                     </div>
@@ -506,13 +505,13 @@ export default function AccountPage() {
                       <div className="flex items-center gap-3">
                         <Crown className="text-[#FF5500] shrink-0" size={26} />
                         <div>
-                          <h4 className="text-sm font-black text-black dark:text-white">Offre Spéciale — 9€/mois au lieu de 13€</h4>
-                          <p className="text-xs font-bold text-black/70 dark:text-white/70">Profitez de -30% de réduction pour débloquer l&apos;illimité.</p>
+                          <h4 className="text-sm font-black text-black">Offre Spéciale — 9€/mois au lieu de 13€</h4>
+                          <p className="text-xs font-bold text-black/70">Profitez de -30% de réduction pour débloquer l&apos;illimité.</p>
                         </div>
                       </div>
                       <button
                         onClick={() => setShowUpgradePopup(true)}
-                        className="bg-[#FF5500] hover:bg-black dark:bg-[#2A2A35] text-white font-black px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all shadow-[3px_3px_0px_0px_#000000] dark:shadow-[3px_3px_0px_0px_#FF5500] shrink-0 cursor-pointer"
+                        className="bg-[#FF5500] hover:bg-black text-white font-black px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all shadow-[3px_3px_0px_0px_#000000] shrink-0 cursor-pointer"
                       >
                         👑 Passer à Pro — 9€/mois
                       </button>
@@ -522,24 +521,24 @@ export default function AccountPage() {
               </div>
 
               {/* SECTION 3: ABONNEMENT & FACTURATION */}
-              <div className="bg-white dark:bg-[#1C1C22] border-[3px] border-black dark:border-white/20 rounded-2xl p-6 shadow-[5px_5px_0px_0px_#000000] dark:shadow-[5px_5px_0px_0px_#FF5500] flex flex-col gap-6">
-                <div className="flex items-center justify-between border-b-2 border-black/10 dark:border-white/10 pb-4">
+              <div className="bg-white border-[3px] border-black rounded-2xl p-6 shadow-[5px_5px_0px_0px_#000000] flex flex-col gap-6">
+                <div className="flex items-center justify-between border-b-2 border-black/10 pb-4">
                   <div className="flex items-center gap-3">
                     <Shield className="text-primary" size={24} />
                     <h2 className="text-lg font-black uppercase tracking-tight">Gestion de l&apos;Abonnement (Stripe / Supabase)</h2>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-black/5 dark:bg-white/5 p-5 rounded-2xl border-2 border-black/10 dark:border-white/10">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-black/5 p-5 rounded-2xl border-2 border-black/10">
                   <div className="flex items-center gap-4">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-md ${isPro ? "bg-gradient-to-br from-amber-500 to-yellow-600" : "bg-black"}`}>
                       {isPro ? "★" : "H"}
                     </div>
                     <div>
-                      <h3 className="text-base font-black text-black dark:text-white">
+                      <h3 className="text-base font-black text-black">
                         {isPro ? "Abonnement Gama Pro ★ (1 Mois)" : "Édition Classique : Hobby Studio"}
                       </h3>
-                      <p className="text-xs font-bold text-black/60 dark:text-white/60">
+                      <p className="text-xs font-bold text-black/60">
                         {isPro ? "9€ / mois • Durée d'abonnement : 1 mois • Renouvelable" : "0€ / mois • Tokens bridés à 700 / message"}
                       </p>
                     </div>
@@ -547,13 +546,13 @@ export default function AccountPage() {
 
                   <div className="flex items-center gap-3 w-full sm:w-auto">
                     {isPro ? (
-                      <span className="bg-emerald-500 text-white font-black px-4 py-2.5 rounded-xl border-2 border-black dark:border-white/20 text-xs shadow-[2px_2px_0px_0px_#000000] dark:shadow-[2px_2px_0px_0px_#FF5500]">
+                      <span className="bg-emerald-500 text-white font-black px-4 py-2.5 rounded-xl border-2 border-black text-xs shadow-[2px_2px_0px_0px_#000000]">
                         ★ Abonnement Actif
                       </span>
                     ) : (
                       <button
                         onClick={() => setShowUpgradePopup(true)}
-                        className="bg-black dark:bg-[#2A2A35] hover:bg-[#FF5500] text-white font-black px-5 py-2.5 rounded-xl border-2 border-black dark:border-white/20 text-xs transition-all shadow-[3px_3px_0px_0px_#FF5500] w-full sm:w-auto text-center cursor-pointer"
+                        className="bg-black hover:bg-[#FF5500] text-white font-black px-5 py-2.5 rounded-xl border-2 border-black text-xs transition-all shadow-[3px_3px_0px_0px_#FF5500] w-full sm:w-auto text-center cursor-pointer"
                       >
                         👑 Passer à Premium — 9€/mois
                       </button>
@@ -563,8 +562,8 @@ export default function AccountPage() {
               </div>
 
               {/* SECTION 3.5: PRÉFÉRENCES D'AFFICHAGE & THÈMES (MODE CLAIR / SOMBRE) */}
-              <div className="bg-white dark:bg-[#1C1C22] border-[3px] border-black dark:border-white/20 rounded-2xl p-6 shadow-[5px_5px_0px_0px_#000000] dark:shadow-[5px_5px_0px_0px_#FF5500] flex flex-col gap-6">
-                <div className="flex items-center justify-between border-b-2 border-black/10 dark:border-white/10 pb-4">
+              <div className="bg-white border-[3px] border-black rounded-2xl p-6 shadow-[5px_5px_0px_0px_#000000] flex flex-col gap-6">
+                <div className="flex items-center justify-between border-b-2 border-black/10 pb-4">
                   <div className="flex items-center gap-3">
                     <Moon className="text-[#FF5500]" size={24} />
                     <h2 className="text-lg font-black uppercase tracking-tight">Préférences d'Affichage & Thème</h2>
@@ -577,23 +576,23 @@ export default function AccountPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <button
                     onClick={() => handleToggleTheme("light")}
-                    className={`p-5 rounded-2xl border-[2.5px] border-black dark:border-white/20 text-left flex items-start justify-between gap-3 transition-all cursor-pointer ${
+                    className={`p-5 rounded-2xl border-[2.5px] border-black text-left flex items-start justify-between gap-3 transition-all cursor-pointer ${
                       theme === "light"
-                        ? "bg-[#FFFBF5] dark:bg-[#1C1C22] shadow-[4px_4px_0px_0px_#FF5500] scale-[1.01] border-black dark:border-white"
-                        : "bg-white dark:bg-[#1A1A22] hover:bg-black/5 dark:hover:bg-white/5 opacity-60 dark:opacity-50"
+                        ? "bg-[#FFFBF5] shadow-[4px_4px_0px_0px_#FF5500] scale-[1.01]"
+                        : "bg-white hover:bg-black/5 opacity-70"
                     }`}
                   >
                     <div className="flex flex-col gap-1.5">
                       <div className="flex items-center gap-2">
                         <Sun size={20} className="text-amber-500" />
-                        <span className="text-sm font-black uppercase tracking-tight text-black dark:text-white">Mode Clair</span>
+                        <span className="text-sm font-black uppercase tracking-tight text-black">Mode Clair</span>
                       </div>
-                      <p className="text-xs font-bold text-black/60 dark:text-white/60 leading-relaxed">
+                      <p className="text-xs font-bold text-black/60 leading-relaxed">
                         Interface néo-brutaliste haute visibilité sur fond blanc texturé.
                       </p>
                     </div>
                     {theme === "light" && (
-                      <div className="w-6 h-6 rounded-full bg-[#FF5500] text-white flex items-center justify-center shrink-0 border border-black dark:border-[#FF5500]">
+                      <div className="w-6 h-6 rounded-full bg-[#FF5500] text-white flex items-center justify-center shrink-0 border border-black">
                         <Check size={14} strokeWidth={3} />
                       </div>
                     )}
@@ -601,10 +600,10 @@ export default function AccountPage() {
 
                   <button
                     onClick={() => handleToggleTheme("dark")}
-                    className={`p-5 rounded-2xl border-[2.5px] border-black dark:border-white/20 text-left flex items-start justify-between gap-3 transition-all cursor-pointer ${
+                    className={`p-5 rounded-2xl border-[2.5px] border-black text-left flex items-start justify-between gap-3 transition-all cursor-pointer ${
                       theme === "dark"
-                        ? "bg-[#1F1F25] dark:bg-[#141418] text-white shadow-[4px_4px_0px_0px_#FF5500] scale-[1.01] border-black dark:border-white"
-                        : "bg-white dark:bg-[#1A1A22] hover:bg-black/5 dark:hover:bg-white/5 opacity-60 dark:opacity-50 text-black dark:text-white"
+                        ? "bg-[#1F1F25] text-white shadow-[4px_4px_0px_0px_#FF5500] scale-[1.01]"
+                        : "bg-white hover:bg-black/5 opacity-70"
                     }`}
                   >
                     <div className="flex flex-col gap-1.5">
@@ -612,12 +611,12 @@ export default function AccountPage() {
                         <Moon size={20} className="text-[#FF5500]" />
                         <span className="text-sm font-black uppercase tracking-tight">Mode Sombre</span>
                       </div>
-                      <p className="text-xs font-bold leading-relaxed text-black/60 dark:text-white/60">
+                      <p className="text-xs font-bold leading-relaxed opacity-80">
                         Obsidian Studio optimisé pour la nuit et le confort visuel.
                       </p>
                     </div>
                     {theme === "dark" && (
-                      <div className="w-6 h-6 rounded-full bg-[#FF5500] text-white flex items-center justify-center shrink-0 border border-black dark:border-[#FF5500]">
+                      <div className="w-6 h-6 rounded-full bg-[#FF5500] text-white flex items-center justify-center shrink-0 border border-black">
                         <Check size={14} strokeWidth={3} />
                       </div>
                     )}
@@ -626,8 +625,8 @@ export default function AccountPage() {
               </div>
 
               {/* SECTION 4: SAUVEGARDE CLOUD & HISTORIQUE */}
-              <div className="bg-white dark:bg-[#1C1C22] border-[3px] border-black dark:border-white/20 rounded-2xl p-6 shadow-[5px_5px_0px_0px_#000000] dark:shadow-[5px_5px_0px_0px_#FF5500] flex flex-col gap-6">
-                <div className="flex items-center justify-between border-b-2 border-black/10 dark:border-white/10 pb-4">
+              <div className="bg-white border-[3px] border-black rounded-2xl p-6 shadow-[5px_5px_0px_0px_#000000] flex flex-col gap-6">
+                <div className="flex items-center justify-between border-b-2 border-black/10 pb-4">
                   <div className="flex items-center gap-3">
                     <Cloud className="text-blue-600" size={24} />
                     <h2 className="text-lg font-black uppercase tracking-tight">Sauvegarde Cloud Supabase</h2>
@@ -641,15 +640,15 @@ export default function AccountPage() {
                   <div className="flex items-center gap-3">
                     <History className="text-blue-600" size={20} />
                     <div>
-                      <h4 className="text-xs font-black text-black dark:text-white">Historique des conversations cloud</h4>
-                      <p className="text-[11px] font-bold text-black/60 dark:text-white/60">
+                      <h4 className="text-xs font-black text-black">Historique des conversations cloud</h4>
+                      <p className="text-[11px] font-bold text-black/60">
                         {isPro 
                           ? "Vos discussions sont synchronisées en temps réel et sans limite dans le cloud." 
                           : "En plan Hobby gratuit, vos 5 discussions les plus récentes sont conservées automatiquement."}
                       </p>
                     </div>
                   </div>
-                  <span className="text-lg font-black text-blue-900 bg-white dark:bg-[#1C1C22] px-3 py-1 rounded-lg border border-blue-300 shadow-sm shrink-0 ml-2">
+                  <span className="text-lg font-black text-blue-900 bg-white px-3 py-1 rounded-lg border border-blue-300 shadow-sm shrink-0 ml-2">
                     {sessions.length} {isPro ? "session(s)" : "/ 5 max"}
                   </span>
                 </div>
@@ -658,14 +657,14 @@ export default function AccountPage() {
           )}
 
           {/* Footer légal Gama Studio */}
-          <footer className="pt-8 border-t-2 border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-black/60 dark:text-white/60">
+          <footer className="pt-8 border-t-2 border-black/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-black/60">
             <span>© {new Date().getFullYear()} Gama Studio Pro • Propulsé par Jules Peyrus</span>
             <div className="flex items-center gap-6">
-              <Link href="/legal" className="text-black dark:text-white font-black hover:text-[#FF5500] hover:underline transition-colors flex items-center gap-1.5">
+              <Link href="/legal" className="text-black font-black hover:text-[#FF5500] hover:underline transition-colors flex items-center gap-1.5">
                 <Scale size={14} className="text-[#FF5500]" />
                 <span>Mentions Légales & CGU</span>
               </Link>
-              <a href="mailto:gamastudio@outlook.fr" className="hover:text-black dark:text-white hover:underline">
+              <a href="mailto:gamastudio@outlook.fr" className="hover:text-black hover:underline">
                 Contact : gamastudio@outlook.fr
               </a>
             </div>
@@ -676,43 +675,43 @@ export default function AccountPage() {
 
       {/* Pop-up Passez à Premium */}
       {mounted && showUpgradePopup && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 dark:bg-white/70 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg bg-white dark:bg-[#1C1C22] rounded-3xl p-8 border-4 border-black dark:border-white/20 shadow-[10px_10px_0px_0px_#FF5500] space-y-6">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg bg-white rounded-3xl p-8 border-4 border-black shadow-[10px_10px_0px_0px_#FF5500] space-y-6">
             <button
               onClick={() => setShowUpgradePopup(false)}
-              className="absolute top-5 right-5 w-9 h-9 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black dark:bg-[#2A2A35] hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+              className="absolute top-5 right-5 w-9 h-9 rounded-full bg-black/5 hover:bg-black hover:text-white flex items-center justify-center transition-colors cursor-pointer"
             >
               <X size={18} />
             </button>
 
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF5500] to-amber-500 text-white flex items-center justify-center shadow-[4px_4px_0px_0px_#000000] dark:shadow-[4px_4px_0px_0px_#FF5500]">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF5500] to-amber-500 text-white flex items-center justify-center shadow-[4px_4px_0px_0px_#000000]">
                 <Crown size={26} />
               </div>
               <div>
                 <span className="text-xs font-black uppercase tracking-wider text-[#FF5500]">Offre Exclusive Pro ★</span>
-                <h3 className="text-2xl font-black text-black dark:text-white">Passez à Gama Pro</h3>
+                <h3 className="text-2xl font-black text-black">Passez à Gama Pro</h3>
               </div>
             </div>
 
-            <p className="text-sm font-bold text-black/70 dark:text-white/70 leading-relaxed">
+            <p className="text-sm font-bold text-black/70 leading-relaxed">
               Débloquez l&apos;intégralité des fonctionnalités en illimité, le routage prioritaire vers GPT-5 & Claude 3.5 Sonnet et supprimez toutes les limites quotidiennes de tokens.
             </p>
 
-            <div className="space-y-3 bg-black/[0.03] p-5 rounded-2xl border-2 border-black/10 dark:border-white/10">
-              <div className="flex items-center gap-3 text-xs font-black text-black dark:text-white">
+            <div className="space-y-3 bg-black/[0.03] p-5 rounded-2xl border-2 border-black/10">
+              <div className="flex items-center gap-3 text-xs font-black text-black">
                 <Check className="text-emerald-600 shrink-0" size={18} />
                 <span>Messages & Tokens quotidiens illimités (plus aucun bridage à 700 tokens)</span>
               </div>
-              <div className="flex items-center gap-3 text-xs font-black text-black dark:text-white">
+              <div className="flex items-center gap-3 text-xs font-black text-black">
                 <Check className="text-emerald-600 shrink-0" size={18} />
                 <span>Accès prioritaire aux modèles d&apos;élite GPT-5 & Claude 3.5 Pro</span>
               </div>
-              <div className="flex items-center gap-3 text-xs font-black text-black dark:text-white">
+              <div className="flex items-center gap-3 text-xs font-black text-black">
                 <Check className="text-emerald-600 shrink-0" size={18} />
                 <span>Synchronisation cloud de l&apos;intégralité de votre historique sans limite</span>
               </div>
-              <div className="flex items-center gap-3 text-xs font-black text-black dark:text-white">
+              <div className="flex items-center gap-3 text-xs font-black text-black">
                 <Check className="text-emerald-600 shrink-0" size={18} />
                 <span>Générateur de Fiches de Révisions & Flashcards débridé</span>
               </div>
@@ -725,14 +724,14 @@ export default function AccountPage() {
                   handleUpgradePro();
                 }}
                 disabled={isUpgrading}
-                className="w-full bg-[#FF5500] hover:bg-black dark:bg-[#2A2A35] text-white font-black py-4 rounded-2xl border-2 border-black dark:border-white/20 shadow-[4px_4px_0px_0px_#000000] dark:shadow-[4px_4px_0px_0px_#FF5500] text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full bg-[#FF5500] hover:bg-black text-white font-black py-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_#000000] text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Crown size={18} />
                 <span>{isUpgrading ? "Ouverture de Stripe..." : "Souscrire maintenant — 9€ / mois"}</span>
               </button>
               <button
                 onClick={() => setShowUpgradePopup(false)}
-                className="text-xs font-bold text-black/50 dark:text-white/50 hover:text-black dark:text-white text-center py-1 cursor-pointer"
+                className="text-xs font-bold text-black/50 hover:text-black text-center py-1 cursor-pointer"
               >
                 Continuer avec le plan gratuit bridé
               </button>
