@@ -7,8 +7,6 @@ if (typeof global !== "undefined") {
   if (!(global as any).Path2D) (global as any).Path2D = class Path2D {};
 }
 
-import { YoutubeTranscript } from 'youtube-transcript';
-
 // Helper pour extraire l'ID vidéo YouTube
 function extractVideoId(url: string): string | null {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -16,7 +14,7 @@ function extractVideoId(url: string): string | null {
   return (match && match[2].length === 11) ? match[2] : null;
 }
 
-// Extraction du contenu YouTube via youtube-transcript
+// Extraction du contenu YouTube (Robuste avec bypass Consent)
 async function extractYoutubeContent(url: string): Promise<string> {
   const videoId = extractVideoId(url);
   if (!videoId) {
@@ -24,15 +22,68 @@ async function extractYoutubeContent(url: string): Promise<string> {
   }
 
   try {
-    const transcript = await YoutubeTranscript.fetchTranscript(videoId);
-    if (!transcript || transcript.length === 0) {
-      throw new Error("La transcription est vide.");
+    // 1. Fetch de la page watch avec le cookie CONSENT pour bypasser le mur de consentement européen
+    const watchRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+      cache: "no-store",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9,fr;q=0.8",
+        "Cookie": "CONSENT=YES+cb; SOCS=CAESNQgDEitib3FfaWRlbnRpdHlmcm9udGVuZHVpc2VydmVyXzIwMjMwODI5LjA3X3AwGgJlbiACGgYIgK-qpwY;"
+      }
+    });
+
+    if (!watchRes.ok) {
+      throw new Error(`Erreur réseau (${watchRes.status}) lors de l'accès à YouTube.`);
     }
-    const transcriptText = transcript.map(t => t.text).join(" ");
+
+    const html = await watchRes.text();
+
+    // 2. Extraction du JSON ytInitialPlayerResponse
+    const matchPlayer = html.match(/ytInitialPlayerResponse\s*=\s*({.+?})\s*;\s*(?:var\s+meta|<\/script>)/s) ||
+                        html.match(/ytInitialPlayerResponse\s*=\s*({.+?})\s*;/s);
+
+    if (!matchPlayer || !matchPlayer[1]) {
+      throw new Error("Impossible d'analyser la page YouTube. La structure a peut-être changé ou la vidéo est bloquée.");
+    }
+
+    const playerRes = JSON.parse(matchPlayer[1]);
+    const tracks = playerRes?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+
+    if (!tracks || !Array.isArray(tracks) || tracks.length === 0) {
+      throw new Error("La vidéo ne possède pas de sous-titres (captions) publics.");
+    }
+
+    // 3. Choix de la langue (français en priorité, sinon anglais, sinon le premier dispo)
+    const track = tracks.find((t: any) => t.languageCode?.startsWith("fr")) ||
+                  tracks.find((t: any) => t.languageCode?.startsWith("en")) ||
+                  tracks[0];
+
+    if (!track?.baseUrl) {
+      throw new Error("Impossible de trouver l'URL des sous-titres.");
+    }
+
+    // 4. Fetch du fichier XML des sous-titres
+    const subRes = await fetch(track.baseUrl, { cache: "no-store" });
+    if (!subRes.ok) {
+      throw new Error("Erreur lors du téléchargement des sous-titres.");
+    }
+
+    const xml = await subRes.text();
     
+    // 5. Parsing basique du XML pour extraire le texte
+    const texts = xml.match(/<text[^>]*>([^<]+)<\/text>/g);
+    if (!texts || texts.length === 0) {
+      throw new Error("La transcription est vide ou illisible.");
+    }
+
+    const transcriptText = texts
+      .map(t => t.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"'))
+      .join(" ");
+
     return `[TRANSCRIPTION DU CONTENU PAROLE PAR PAROLE] :\n${transcriptText.substring(0, 18000)}`;
+
   } catch (e: any) {
-    throw new Error("Impossible d'extraire les sous-titres de cette vidéo YouTube. Assurez-vous que la vidéo possède des sous-titres publics. Erreur: " + e.message);
+    throw new Error(`Impossible d'extraire les sous-titres de cette vidéo YouTube. ${e.message}`);
   }
 }
 
