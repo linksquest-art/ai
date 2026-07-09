@@ -83,10 +83,9 @@ async function extractYoutubeContent(url: string): Promise<string> {
   } catch (e) {}
 
   const combined = [
-    videoTitle ? `[MÉTADONNÉES INTERDITES POUR LES QUESTIONS] Titre vidéo : ${videoTitle}` : "",
-    videoAuthor ? `[MÉTADONNÉES INTERDITES POUR LES QUESTIONS] Chaîne : ${videoAuthor}` : "",
-    videoDescription ? `[CONTENU ET THÈMES ABORDÉS DANS LA VIDÉO] :\n${videoDescription}` : "",
-    transcriptText ? `[TRANSCRIPTION COMPLÈTE DU CONTENU ET DES EXPLICATONS] :\n${transcriptText.substring(0, 18000)}` : ""
+    transcriptText ? `[TRANSCRIPTION DU CONTENU PAROLE PAR PAROLE] :\n${transcriptText.substring(0, 18000)}` : "",
+    videoDescription ? `[EXPLICATIONS ET COURS DÉTAILLÉ DU CONFÉRENCIER] :\n${videoDescription}` : "",
+    (!transcriptText && !videoDescription && videoTitle) ? `Thème technique à analyser en profondeur universitaire : ${videoTitle}` : ""
   ].filter(Boolean).join("\n\n");
 
   if (!combined.trim()) {

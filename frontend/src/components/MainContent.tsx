@@ -34,6 +34,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import { FlashcardModal } from "@/components/FlashcardModal";
 import { AuthModal } from "./AuthModal";
+import { UpgradeModal } from "./UpgradeModal";
 
 export interface SkillItem {
   id: string;
@@ -156,6 +157,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -261,13 +263,13 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
 
   // OpenAI & OpenRouter Paid Models
   const availableModels = [
-    { name: "Best ★", id: "deepseek/deepseek-chat", desc: "Modèle d'excellence", icon: Sparkles, color: "text-amber-500" },
-    { name: "GPT-4o Mini (OpenAI)", id: "gpt-4o-mini", desc: "Rapide & économique (Gratuit)", icon: Zap, color: "text-emerald-500" },
-    { name: "GPT-5 (OpenAI)", id: "gpt-4o", desc: "Intelligence maximale", icon: Sparkles, color: "text-purple-500" },
-    { name: "Gemini 2.5 Pro (Google)", id: "google/gemini-2.5-pro", desc: "Raisonnement & analyse logique approfondie", icon: Globe, color: "text-blue-500" },
-    { name: "Claude 3.5 Sonnet (Anthropic)", id: "anthropic/claude-3-5-haiku", desc: "Analyse avancée & Créativité", icon: Cpu, color: "text-indigo-500" },
-    { name: "Nemotron 3 Ultra (NVIDIA)", id: "nvidia/nemotron-3-ultra-550b-a55b", desc: "Puissance 550B paramètres", icon: Zap, color: "text-emerald-600" },
-    { name: "Grok 3 (xAI)", id: "x-ai/grok-2-1212", desc: "Expert Maths & Actualité", icon: Zap, color: "text-[#FF5500]" },
+    { name: "Best ★", id: "deepseek/deepseek-chat", desc: "Modèle d'excellence", icon: Sparkles, color: "text-amber-500", proOnly: false },
+    { name: "GPT-4o Mini (OpenAI)", id: "gpt-4o-mini", desc: "Rapide & économique (Gratuit)", icon: Zap, color: "text-emerald-500", proOnly: false },
+    { name: "GPT-5 (OpenAI)", id: "gpt-4o", desc: "Intelligence maximale", icon: Sparkles, color: "text-purple-500", proOnly: true },
+    { name: "Gemini 2.5 Pro (Google)", id: "google/gemini-2.5-pro", desc: "Raisonnement & analyse logique approfondie", icon: Globe, color: "text-blue-500", proOnly: true },
+    { name: "Claude 3.5 Sonnet (Anthropic)", id: "anthropic/claude-3-5-haiku", desc: "Analyse avancée & Créativité", icon: Cpu, color: "text-indigo-500", proOnly: true },
+    { name: "Nemotron 3 Ultra (NVIDIA)", id: "nvidia/nemotron-3-ultra-550b-a55b", desc: "Puissance 550B paramètres", icon: Zap, color: "text-emerald-600", proOnly: true },
+    { name: "Grok 3 (xAI)", id: "x-ai/grok-2-1212", desc: "Expert Maths & Actualité", icon: Zap, color: "text-[#FF5500]", proOnly: true },
   ];
 
   const availableSearchModes = [
@@ -278,11 +280,16 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
   ];
 
   const handleSend = () => {
-    if (!user) {
-      setShowAuthModal(true);
-      return;
-    }
     if ((!query.trim() && attachedFiles.length === 0) || isGenerating) return;
+
+    if (!user) {
+      const guestCount = Number(localStorage.getItem("gama_guest_chat_count") || 0);
+      if (guestCount >= 2) {
+        setShowAuthModal(true);
+        return;
+      }
+      localStorage.setItem("gama_guest_chat_count", String(guestCount + 1));
+    }
     
     if (isRecording && recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
@@ -313,10 +320,14 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
       }
     }
 
-    const selectedModelObj = availableModels.find(m => m.name === model) || availableModels[0];
+    const selectedModelObj = user
+      ? (availableModels.find(m => m.name === model) || availableModels[0])
+      : availableModels.find(m => m.id === "gpt-4o-mini")!;
+    const modelNameToDisplay = user ? model : "GPT-4o Mini (OpenAI)";
+
     const promptToSend = selectedSkill.id !== "none" ? selectedSkill.prompt : undefined;
 
-    onSendMessage(finalContent, selectedModelObj.id, model, promptToSend);
+    onSendMessage(finalContent, selectedModelObj.id, modelNameToDisplay, promptToSend);
     setQuery("");
     setAttachedFiles([]);
     closeAllMenus();
@@ -628,7 +639,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
   );
 
   return (
-    <div className="flex-1 flex flex-col h-screen overflow-hidden relative bg-[#FFFFFF]">
+    <div className="flex-1 flex flex-col h-screen overflow-hidden relative bg-[#FFFFFF] dark:bg-[#101014] text-black dark:text-white">
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       <FlashcardModal
         isOpen={showFlashcardModal}
@@ -911,12 +922,23 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                       {availableModels.map((item) => {
                         const Icon = item.icon;
                         const isSelected = model === item.name;
+                        const isProUser = user?.user_metadata?.plan === "pro";
                         return (
                           <button
                             key={item.name}
                             type="button"
                             onMouseDown={(e) => {
                               e.preventDefault();
+                              if (!user && item.proOnly) {
+                                closeAllMenus();
+                                setShowAuthModal(true);
+                                return;
+                              }
+                              if (user && !isProUser && item.proOnly) {
+                                closeAllMenus();
+                                setShowUpgradeModal(true);
+                                return;
+                              }
                               setModel(item.name);
                               closeAllMenus();
                             }}
@@ -928,6 +950,11 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                             <div className="flex flex-col">
                               <span className="font-black text-xs flex items-center gap-1.5">
                                 <span className="notranslate" translate="no">{item.name}</span>
+                                {item.proOnly && (
+                                  <span className="bg-[#FF5500]/15 text-[#FF5500] px-1.5 py-0.5 rounded text-[9px] font-black tracking-wide">
+                                    ★ PRO
+                                  </span>
+                                )}
                                 {isSelected && <Check size={12} className="text-primary" />}
                               </span>
                               <span className={`text-[10px] font-bold ${isSelected ? "text-white/70" : "text-black/50"}`}>
@@ -1263,26 +1290,42 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                         </div>
                         {availableModels.map((item) => {
                           const Icon = item.icon;
-                          const isSelected = model === item.name;
-                          return (
-                            <button
-                              key={item.name}
-                              type="button"
-                              onMouseDown={(e) => {
-                                e.preventDefault();
-                                setModel(item.name);
+                        const isSelected = model === item.name;
+                        const isProUser = user?.user_metadata?.plan === "pro";
+                        return (
+                          <button
+                            key={item.name}
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              if (!user && item.proOnly) {
                                 closeAllMenus();
-                              }}
-                              className={`flex items-start gap-3 w-full px-3 py-2 rounded-xl transition-colors text-left min-h-[44px] ${
-                                isSelected ? "bg-black text-white" : "hover:bg-black/5 text-black"
-                              }`}
-                            >
-                              <Icon size={15} className={`${item.color} shrink-0 mt-0.5`} />
-                              <div className="flex flex-col">
-                                <span className="font-black text-xs flex items-center gap-1.5">
-                                  <span className="notranslate" translate="no">{item.name}</span>
-                                  {isSelected && <Check size={12} className="text-primary" />}
-                                </span>
+                                setShowAuthModal(true);
+                                return;
+                              }
+                              if (user && !isProUser && item.proOnly) {
+                                closeAllMenus();
+                                setShowUpgradeModal(true);
+                                return;
+                              }
+                              setModel(item.name);
+                              closeAllMenus();
+                            }}
+                            className={`flex items-start gap-3 w-full px-3 py-2 rounded-xl transition-colors text-left min-h-[44px] ${
+                              isSelected ? "bg-black text-white" : "hover:bg-black/5 text-black"
+                            }`}
+                          >
+                            <Icon size={15} className={`${item.color} shrink-0 mt-0.5`} />
+                            <div className="flex flex-col">
+                              <span className="font-black text-xs flex items-center gap-1.5">
+                                <span className="notranslate" translate="no">{item.name}</span>
+                                {item.proOnly && (
+                                  <span className="bg-[#FF5500]/15 text-[#FF5500] px-1.5 py-0.5 rounded text-[9px] font-black tracking-wide">
+                                    ★ PRO
+                                  </span>
+                                )}
+                                {isSelected && <Check size={12} className="text-primary" />}
+                              </span>
                                 <span className={`text-[10px] font-bold ${isSelected ? "text-white/70" : "text-black/50"}`}>
                                   {item.desc}
                                 </span>
@@ -1342,6 +1385,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
 
       {renderSkillModal()}
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} user={user} />
     </div>
   );
 }

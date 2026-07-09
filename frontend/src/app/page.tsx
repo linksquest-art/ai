@@ -211,6 +211,23 @@ function HomeContent() {
 
     if (isVisitor && activeSession && activeSession.messages.filter(m => m.role === "user").length >= 2) {
       setShowAuthModal(true);
+      return;
+    }
+
+    const isProPlan = user?.user_metadata?.plan === "pro";
+    if (user && !isProPlan) {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const storedDate = localStorage.getItem("gama_hobby_chat_date");
+      let count = Number(localStorage.getItem("gama_hobby_chat_count") || 0);
+      if (storedDate !== todayStr) {
+        count = 0;
+        localStorage.setItem("gama_hobby_chat_date", todayStr);
+      }
+      if (count >= 20) {
+        setShowUpgradeModal(true);
+        return;
+      }
+      localStorage.setItem("gama_hobby_chat_count", String(count + 1));
     }
 
     const titleText = typeof text === "string" ? text : (Array.isArray(text) ? (text.find((p: any) => p.type === "text")?.text || "📷 Image analysée") : "Nouvelle discussion");

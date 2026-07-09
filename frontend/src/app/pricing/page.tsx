@@ -237,37 +237,43 @@ export default function PricingPage() {
                 <tbody className="divide-y-2 divide-black/10 text-xs md:text-sm font-extrabold">
                   <tr>
                     <td className="py-3.5 px-4 font-black">Quiz & QCM IA (`/quiz`)</td>
-                    <td className="py-3.5 px-4 text-gray-600">3 QCM d&apos;essai (5 questions)</td>
+                    <td className="py-3.5 px-4 text-gray-500 font-bold">🔒 Connexion requise</td>
                     <td className="py-3.5 px-4">3 QCM / jour (puis bloqué)</td>
                     <td className="py-3.5 px-4 text-[#FF5500] font-black">⚡ 100% ILLIMITÉ (10 questions)</td>
                   </tr>
                   <tr>
                     <td className="py-3.5 px-4 font-black">Résumés YouTube & PDF (`/summary`)</td>
-                    <td className="py-3.5 px-4 text-gray-600">3 résumés d&apos;essai</td>
+                    <td className="py-3.5 px-4 text-gray-500 font-bold">🔒 Connexion requise</td>
                     <td className="py-3.5 px-4">3 résumés / jour (puis bloqué)</td>
                     <td className="py-3.5 px-4 text-[#FF5500] font-black">⚡ 100% ILLIMITÉ</td>
                   </tr>
                   <tr>
                     <td className="py-3.5 px-4 font-black">Flashcards de Révision (`/homework`)</td>
-                    <td className="py-3.5 px-4 text-gray-600">3 decks d&apos;essai</td>
+                    <td className="py-3.5 px-4 text-gray-500 font-bold">🔒 Connexion requise</td>
                     <td className="py-3.5 px-4">3 decks / jour (puis bloqué)</td>
                     <td className="py-3.5 px-4 text-[#FF5500] font-black">⚡ 100% ILLIMITÉ</td>
                   </tr>
                   <tr>
+                    <td className="py-3.5 px-4 font-black">Calendrier & Organisation (`/calendar`)</td>
+                    <td className="py-3.5 px-4 text-gray-500 font-bold">🔒 Connexion requise</td>
+                    <td className="py-3.5 px-4">Accès standard synchronisé</td>
+                    <td className="py-3.5 px-4 text-[#FF5500] font-black">⚡ Prioritaire & Cloud Supabase</td>
+                  </tr>
+                  <tr>
                     <td className="py-3.5 px-4 font-black">Discussion & Chat IA (`/`)</td>
-                    <td className="py-3.5 px-4 text-gray-600">3 messages (puis connexion requise)</td>
-                    <td className="py-3.5 px-4">10 messages / jour</td>
+                    <td className="py-3.5 px-4 text-gray-600">2 messages d&apos;essai (puis connexion requise)</td>
+                    <td className="py-3.5 px-4">20 messages / jour (puis pop-up Gama Pro)</td>
                     <td className="py-3.5 px-4 text-[#FF5500] font-black">⚡ 100% ILLIMITÉ 24h/24</td>
                   </tr>
                   <tr>
                     <td className="py-3.5 px-4 font-black">Modèles d&apos;IA Accessibles</td>
-                    <td className="py-3.5 px-4 text-gray-600">GPT-4o Mini Standard</td>
+                    <td className="py-3.5 px-4 text-gray-600">GPT-4o Mini uniquement</td>
                     <td className="py-3.5 px-4">GPT-4o Mini & DeepSeek Standard</td>
-                    <td className="py-3.5 px-4 text-[#FF5500] font-black">★ GPT-5, Claude 3.5, Best ★ VIP</td>
+                    <td className="py-3.5 px-4 text-[#FF5500] font-black">★ GPT-5, Claude 3.5, Best ★ VIP (Tous les modèles)</td>
                   </tr>
                   <tr>
                     <td className="py-3.5 px-4 font-black">Sauvegarde Cloud & Historique</td>
-                    <td className="py-3.5 px-4 text-gray-600">Non sauvegardé dans le cloud</td>
+                    <td className="py-3.5 px-4 text-gray-500 font-bold">🔒 Connexion requise</td>
                     <td className="py-3.5 px-4">Sauvegarde compte gratuit</td>
                     <td className="py-3.5 px-4 text-[#FF5500] font-black">🔒 Cloud Supabase Chiffré & Prioritaire</td>
                   </tr>

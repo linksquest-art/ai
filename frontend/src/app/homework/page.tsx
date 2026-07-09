@@ -110,6 +110,10 @@ export default function HomeworkPage() {
   const currentToolObj = tools.find(t => t.id === activeTool) || tools[0];
 
   const handleLaunchAi = async () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     if (!inputContent.trim()) return;
     setIsGenerating(true);
     setAiResult(null);

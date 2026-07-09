@@ -61,10 +61,12 @@ export function Sidebar({
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("gama_theme") as "light" | "dark" | null;
-    if (savedTheme === "dark") {
+    if (savedTheme === "dark" || document.documentElement.classList.contains("dark")) {
       setTheme("dark");
+      document.documentElement.classList.add("dark");
     } else {
       setTheme("light");
+      document.documentElement.classList.remove("dark");
     }
   }, []);
 
@@ -151,13 +153,13 @@ export function Sidebar({
 
   return (
     <>
-      <aside className="w-[260px] bg-[#FFFFFF] border-r-[3px] border-black flex flex-col h-screen shrink-0 p-3 select-none justify-between z-20 shadow-[2px_0px_0px_0px_rgba(0,0,0,0.05)]">
+      <aside className="w-[260px] bg-[#FFFFFF] dark:bg-[#141418] border-r-[3px] border-black dark:border-white/15 flex flex-col h-screen shrink-0 p-3 select-none justify-between z-20 shadow-[2px_0px_0px_0px_rgba(0,0,0,0.05)] text-black dark:text-white">
         <div className="flex flex-col gap-4 overflow-hidden flex-1 min-h-0">
-          {/* Top Header Logo */}
-          <div className="flex items-center justify-between px-2 pt-1 shrink-0">
-            <Link href="/" onClick={handleNewChatClick} className="flex items-center gap-3 group text-left">
+          {/* Brand Logo & Studio Name */}
+          <div className="px-2 pt-2 pb-1 flex items-center justify-between">
+            <Link href="/" onClick={handleNewChatClick} className="flex items-center gap-2.5 group">
               <img src="/7.png" alt="Gama Studio Logo" className="w-8 h-8 object-contain group-hover:scale-110 transition-transform" />
-              <span className="font-black text-xl tracking-tight text-black group-hover:text-primary transition-colors">
+              <span className="font-black text-xl tracking-tight text-black dark:text-white group-hover:text-primary transition-colors">
                 Gama Studio
               </span>
             </Link>
@@ -167,14 +169,14 @@ export function Sidebar({
           <Link
             href="/"
             onClick={handleNewChatClick}
-            className="ink-btn bg-[#FFFFFF] hover:bg-primary hover:text-white text-black font-extrabold py-2.5 px-3 rounded-xl flex items-center gap-2.5 w-full text-sm shrink-0 border-[2.5px] border-black shadow-[3px_3px_0px_0px_#000000]"
+            className="ink-btn bg-[#FFFFFF] dark:bg-[#1E1E24] hover:bg-primary hover:text-white dark:hover:bg-primary text-black dark:text-white font-extrabold py-2.5 px-3 rounded-xl flex items-center gap-2.5 w-full text-sm shrink-0 border-[2.5px] border-black dark:border-white/20 shadow-[3px_3px_0px_0px_#000000] dark:shadow-[3px_3px_0px_0px_#FF5500]"
           >
             <Plus size={18} strokeWidth={3} />
             <span>Nouveau Chat</span>
           </Link>
 
           {/* Primary Navigation */}
-          <nav className="flex flex-col gap-1 text-xs md:text-sm font-bold text-black/80 pt-1 overflow-y-auto flex-1 min-h-0 pr-1">
+          <nav className="flex flex-col gap-1 text-xs md:text-sm font-bold text-black/80 dark:text-white/80 pt-1 overflow-y-auto flex-1 min-h-0 pr-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -184,11 +186,11 @@ export function Sidebar({
                   href={item.href}
                   className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all border-2 shrink-0 ${
                     isActive
-                      ? "bg-black text-white border-black shadow-[2px_2px_0px_0px_#FF5500]"
-                      : "border-transparent text-black hover:bg-black/5 hover:border-black/20"
+                      ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white shadow-[2px_2px_0px_0px_#FF5500]"
+                      : "border-transparent text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/10"
                   }`}
                 >
-                  <Icon size={17} className={isActive ? "text-primary" : "text-black/70"} />
+                  <Icon size={17} className={isActive ? "text-primary dark:text-[#FF5500]" : "text-black/70 dark:text-white/70"} />
                   <span>{item.name}</span>
                 </Link>
               );
@@ -261,14 +263,14 @@ export function Sidebar({
           )}
 
           {/* Subtle Operational Status + Theme Toggle */}
-          <div className="flex items-center justify-between px-1 pt-0.5 text-[10px] font-black uppercase text-black/50 select-none">
+          <div className="flex items-center justify-between px-1 pt-0.5 text-[10px] font-black uppercase text-black/50 dark:text-white/60 select-none">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
               <span>IA Opérationnelle</span>
             </span>
             <button
               onClick={toggleTheme}
-              className="flex items-center gap-1 bg-black/5 hover:bg-[#FF5500] hover:text-white px-2 py-0.5 rounded-md border border-black/20 transition-all cursor-pointer"
+              className="flex items-center gap-1 bg-black/5 dark:bg-white/10 hover:bg-[#FF5500] dark:hover:bg-[#FF5500] hover:text-white dark:hover:text-white px-2.5 py-1 rounded-md border border-black/20 dark:border-white/20 transition-all cursor-pointer font-bold text-black dark:text-white"
               title="Basculer Mode Clair / Sombre"
             >
               {theme === "dark" ? <Sun size={12} className="text-amber-400" /> : <Moon size={12} className="text-[#FF5500]" />}
