@@ -110,11 +110,11 @@ export default function AccountPage() {
       if (params.get("success") === "true") {
         supabase.auth.updateUser({ data: { plan: "pro" } }).then(({ data }) => {
           if (data.user) setUser(data.user);
-          alert("🎉 PAIEMENT STRIPE VALIDÉ ! Bienvenue dans Gama Pro ★ ! Vous avez maintenant un accès illimité à GPT-5 et aux tokens !");
+          alert("🎉 PAIEMENT VALIDÉ ! Bienvenue dans Gama Pro ★ ! Vous avez maintenant un accès illimité à tous nos outils et modèles !");
           window.history.replaceState({}, document.title, window.location.pathname);
         });
       } else if (params.get("canceled") === "true") {
-        alert("ℹ️ Paiement Stripe annulé. Vous êtes toujours sur le Plan Hobby gratuit.");
+        alert("ℹ️ Paiement annulé. Vous êtes toujours sur le Plan Hobby gratuit.");
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
@@ -213,14 +213,14 @@ export default function AccountPage() {
 
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || "Impossible d'initialiser Stripe.");
+        throw new Error(result.error || "Impossible d'initialiser le paiement sécurisé.");
       }
 
       if (result.url) {
         window.location.href = result.url;
       }
     } catch (err: any) {
-      alert("Erreur Stripe : " + (err.message || "Erreur inconnue"));
+      alert("Erreur de paiement : " + (err.message || "Erreur inconnue"));
       setIsUpgrading(false);
     }
   };
@@ -525,7 +525,7 @@ export default function AccountPage() {
                 <div className="flex items-center justify-between border-b-2 border-black/10 pb-4">
                   <div className="flex items-center gap-3">
                     <Shield className="text-primary" size={24} />
-                    <h2 className="text-lg font-black uppercase tracking-tight">Gestion de l&apos;Abonnement (Stripe / Supabase)</h2>
+                    <h2 className="text-lg font-black uppercase tracking-tight">Gestion de l&apos;Abonnement & Cloud</h2>
                   </div>
                 </div>
 

@@ -37,14 +37,14 @@ export function UpgradeModal({ isOpen, onClose, user }: UpgradeModalProps) {
 
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || "Erreur lors de la communication avec Stripe");
+        throw new Error(result.error || "Erreur lors de l'initialisation du paiement sécurisé");
       }
 
       if (result.url) {
         window.location.href = result.url;
       }
     } catch (err: any) {
-      alert("Erreur lors de la redirection Stripe : " + (err.message || "Erreur inconnue"));
+      alert("Erreur de paiement : " + (err.message || "Erreur inconnue"));
       setLoading(false);
     }
   };
@@ -94,7 +94,7 @@ export function UpgradeModal({ isOpen, onClose, user }: UpgradeModalProps) {
             </div>
             <div>
               <h4 className="text-xs font-black text-black uppercase">Discussions & Historique Illimités ∞</h4>
-              <p className="text-[11px] font-bold text-black/65">Conservez 100% de vos conversations et archives dans le cloud Supabase sans aucune suppression.</p>
+              <p className="text-[11px] font-bold text-black/65">Conservez 100% de vos conversations et archives dans le cloud sans aucune suppression.</p>
             </div>
           </div>
 

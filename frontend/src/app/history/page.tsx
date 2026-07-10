@@ -40,13 +40,42 @@ export default function StudentDashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
 
+  const syncStudentDataFromUser = (u: any) => {
+    if (u) {
+      if (u.user_metadata?.student_todos && Array.isArray(u.user_metadata.student_todos)) {
+        setTodos(u.user_metadata.student_todos);
+      } else {
+        const savedTodosClean = localStorage.getItem("gama_student_todos_clean") || localStorage.getItem("gama_student_todos");
+        if (savedTodosClean) {
+          try { setTodos(JSON.parse(savedTodosClean)); } catch (e) {}
+        }
+      }
+      if (u.user_metadata?.student_notes && Array.isArray(u.user_metadata.student_notes)) {
+        setNotes(u.user_metadata.student_notes);
+      } else {
+        const savedNotesClean = localStorage.getItem("gama_student_notes_clean") || localStorage.getItem("gama_student_notes");
+        if (savedNotesClean) {
+          try { setNotes(JSON.parse(savedNotesClean)); } catch (e) {}
+        }
+      }
+    } else {
+      // Logged out -> leave clean blank session
+      setTodos([]);
+      setNotes([]);
+    }
+  };
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      const u = session?.user ?? null;
+      setUser(u);
+      syncStudentDataFromUser(u);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const u = session?.user ?? null;
+      setUser(u);
+      syncStudentDataFromUser(u);
     });
 
     return () => subscription.unsubscribe();
@@ -116,12 +145,28 @@ export default function StudentDashboardPage() {
     setTodos(nextTodos);
     localStorage.setItem("gama_student_todos_clean", JSON.stringify(nextTodos));
     localStorage.setItem("gama_student_todos", JSON.stringify(nextTodos));
+    if (user) {
+      supabase.auth.updateUser({
+        data: {
+          ...user.user_metadata,
+          student_todos: nextTodos
+        }
+      }).catch(() => {});
+    }
   };
 
   const saveNotes = (nextNotes: PostItNote[]) => {
     setNotes(nextNotes);
     localStorage.setItem("gama_student_notes_clean", JSON.stringify(nextNotes));
     localStorage.setItem("gama_student_notes", JSON.stringify(nextNotes));
+    if (user) {
+      supabase.auth.updateUser({
+        data: {
+          ...user.user_metadata,
+          student_notes: nextNotes
+        }
+      }).catch(() => {});
+    }
   };
 
   // Pomodoro Interval Effect with timestamp precision

@@ -212,9 +212,9 @@ export function Sidebar({
                   });
                   const data = await res.json();
                   if (data.url) window.location.href = data.url;
-                  else alert("Erreur Stripe : " + (data.error || "Impossible d'ouvrir le paiement"));
+                  else alert("Erreur de paiement : " + (data.error || "Impossible d'ouvrir le paiement"));
                 } catch (e: any) {
-                  alert("Erreur Stripe : " + e.message);
+                  alert("Erreur de paiement : " + e.message);
                 }
               }}
               className="w-full bg-gradient-to-r from-[#FF5500] to-[#FF8800] hover:from-black hover:to-black text-white font-black py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs border-2 border-black shadow-[2px_2px_0px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer animate-pulse"

@@ -47,13 +47,42 @@ export default function DeckPage() {
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
 
+  const syncDecksFromUser = (u: any) => {
+    if (u && u.user_metadata?.student_decks && Array.isArray(u.user_metadata.student_decks)) {
+      setDecks(u.user_metadata.student_decks);
+      if (u.user_metadata.student_decks.length > 0) {
+        setSelectedDeckId(u.user_metadata.student_decks[0].id);
+      }
+    } else if (u) {
+      // Logged in but no cloud decks yet -> check localStorage
+      const saved = localStorage.getItem("gama_student_decks_clean");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setDecks(parsed);
+            setSelectedDeckId(parsed[0].id);
+          }
+        } catch (e) {}
+      }
+    } else {
+      // Logged out -> clean blank session
+      setDecks([]);
+      setSelectedDeckId("");
+    }
+  };
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      const u = session?.user ?? null;
+      setUser(u);
+      syncDecksFromUser(u);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const u = session?.user ?? null;
+      setUser(u);
+      syncDecksFromUser(u);
     });
 
     return () => subscription.unsubscribe();
@@ -78,22 +107,17 @@ export default function DeckPage() {
   const [newDeckName, setNewDeckName] = useState<string>("");
   const [newDeckDesc, setNewDeckDesc] = useState<string>("");
 
-  useEffect(() => {
-    const saved = localStorage.getItem("gama_student_decks_clean");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setDecks(parsed);
-          setSelectedDeckId(parsed[0].id);
-        }
-      } catch (e) {}
-    }
-  }, []);
-
   const saveDecks = (nextDecks: Deck[]) => {
     setDecks(nextDecks);
     localStorage.setItem("gama_student_decks_clean", JSON.stringify(nextDecks));
+    if (user) {
+      supabase.auth.updateUser({
+        data: {
+          ...user.user_metadata,
+          student_decks: nextDecks
+        }
+      }).catch(() => {});
+    }
   };
 
   const activeDeck = decks.find((d) => d.id === selectedDeckId) || decks[0];

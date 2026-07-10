@@ -706,9 +706,9 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                         });
                         const data = await res.json();
                         if (data.url) window.location.href = data.url;
-                        else alert("Erreur Stripe : " + (data.error || "Impossible d'ouvrir le paiement"));
+                        else alert("Erreur de paiement : " + (data.error || "Impossible d'ouvrir le paiement"));
                       } catch (e: any) {
-                        alert("Erreur Stripe : " + e.message);
+                        alert("Erreur de paiement : " + e.message);
                       }
                     }}
                     className="text-xs md:text-sm font-black tracking-widest uppercase px-4 py-1.5 rounded-xl transition-all shadow-[3px_3px_0px_0px_#000000] flex items-center gap-1.5 bg-[#FF5500] hover:bg-black text-white hover:scale-105 cursor-pointer animate-pulse"

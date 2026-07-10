@@ -48,11 +48,11 @@ export default function PricingPage() {
       if (params.get("success") === "true") {
         supabase.auth.updateUser({ data: { plan: "pro" } }).then(({ data }) => {
           if (data.user) setUser(data.user);
-          alert("🎉 PAIEMENT STRIPE VALIDÉ ! Bienvenue dans Gama Pro ★ ! Vous avez maintenant un accès illimité à GPT-5 et aux tokens !");
+          alert("🎉 PAIEMENT VALIDÉ ! Bienvenue dans Gama Pro ★ ! Vous avez maintenant un accès illimité à tous nos outils et modèles !");
           window.history.replaceState({}, document.title, window.location.pathname);
         });
       } else if (params.get("canceled") === "true") {
-        alert("ℹ️ Paiement Stripe annulé. Vous êtes toujours sur le Plan Hobby gratuit.");
+        alert("ℹ️ Paiement annulé. Vous êtes toujours sur le Plan Hobby gratuit.");
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
@@ -85,14 +85,14 @@ export default function PricingPage() {
 
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || "Impossible d'initialiser Stripe.");
+        throw new Error(result.error || "Impossible d'initialiser le paiement sécurisé.");
       }
 
       if (result.url) {
         window.location.href = result.url;
       }
     } catch (err: any) {
-      alert("Erreur Stripe : " + (err.message || "Erreur inconnue"));
+      alert("Erreur de paiement : " + (err.message || "Erreur inconnue"));
       setIsUpgrading(false);
     }
   };
@@ -197,7 +197,7 @@ export default function PricingPage() {
                   <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Résumés de vidéos YouTube & PDF 100% ILLIMITÉS</li>
                   <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Decks & Répétition Espacée IA 100% ILLIMITÉS</li>
                   <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Bureau Étudiant & Chrono Pomodoro ILLIMITÉS</li>
-                  <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Sauvegarde Cloud Supabase prioritaire & chiffrée</li>
+                  <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Sauvegarde Cloud sécurisée & chiffrée</li>
                   <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Accès VIP à tous nos modèles d&apos;IA : GPT-5, Claude 3.5 Sonnet, Gemini Pro, DeepSeek R1, Mistral Large & Modèle Best ★</li>
                 </ul>
               </div>
