@@ -160,8 +160,9 @@ export default function PricingPage() {
                 <ul className="flex flex-col gap-3 mb-8 border-t-2 border-black/10 pt-6 text-sm font-extrabold">
                   <li className="flex items-center gap-3"><Check className="text-black shrink-0" strokeWidth={3} size={18} /> 3 Quiz & QCM IA interactifs par jour (puis bloqué)</li>
                   <li className="flex items-center gap-3"><Check className="text-black shrink-0" strokeWidth={3} size={18} /> 3 Résumés de vidéos YouTube & Cours par jour (puis bloqué)</li>
-                  <li className="flex items-center gap-3"><Check className="text-black shrink-0" strokeWidth={3} size={18} /> 3 Paquets de Flashcards de révision par jour (puis bloqué)</li>
-                  <li className="flex items-center gap-3"><Check className="text-black shrink-0" strokeWidth={3} size={18} /> 10 messages quotidiens sur le Chat IA (modèle standard)</li>
+                  <li className="flex items-center gap-3"><Check className="text-black shrink-0" strokeWidth={3} size={18} /> 1 à 2 Decks de Flashcards de révision IA par jour (puis bloqué)</li>
+                  <li className="flex items-center gap-3"><Check className="text-black shrink-0" strokeWidth={3} size={18} /> Bureau Étudiant : Chrono Pomodoro & Post-its basiques</li>
+                  <li className="flex items-center gap-3"><Check className="text-black shrink-0" strokeWidth={3} size={18} /> 10 messages quotidiens sur le Chat IA (modèles standards)</li>
                   <li className="flex items-center gap-3 text-black/40"><Check className="text-black/20 shrink-0" strokeWidth={3} size={18} /> Pas d&apos;accès aux QCM 10 questions ni aux modèles Pro</li>
                 </ul>
               </div>
@@ -194,9 +195,10 @@ export default function PricingPage() {
                 <ul className="flex flex-col gap-3 mb-8 border-t-2 border-black/10 pt-6 text-sm font-extrabold">
                   <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Quiz & QCM IA 100% ILLIMITÉS (+ 10 questions / QCM)</li>
                   <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Résumés de vidéos YouTube & PDF 100% ILLIMITÉS</li>
-                  <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Paquets de Flashcards de révision 100% ILLIMITÉS</li>
-                  <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Messages Chat IA ILLIMITÉS 24h/24</li>
-                  <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Accès VIP : GPT-5, Claude 3.5 Sonnet, Modèle Best ★</li>
+                  <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Decks & Répétition Espacée IA 100% ILLIMITÉS</li>
+                  <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Bureau Étudiant & Chrono Pomodoro ILLIMITÉS</li>
+                  <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Sauvegarde Cloud Supabase prioritaire & chiffrée</li>
+                  <li className="flex items-center gap-3"><Check className="text-primary shrink-0" strokeWidth={3} size={18} /> Accès VIP à tous nos modèles d&apos;IA : GPT-5, Claude 3.5 Sonnet, Gemini Pro, DeepSeek R1, Mistral Large & Modèle Best ★</li>
                 </ul>
               </div>
               
