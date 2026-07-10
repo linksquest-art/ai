@@ -190,7 +190,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
     shuffleSuggestions();
     const interval = setInterval(() => {
       shuffleSuggestions();
-    }, 15000);
+    }, 8000);
     return () => clearInterval(interval);
   }, []);
 
@@ -1029,14 +1029,6 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                   </button>
                 ))}
               </div>
-              <button
-                onClick={shuffleSuggestions}
-                className="text-[11px] font-bold text-black/50 hover:text-[#FF5500] flex items-center gap-1.5 transition-colors py-1 cursor-pointer select-none"
-                title="Découvrir d'autres sujets de révision"
-              >
-                <RefreshCw size={13} />
-                <span>Changer les idées d&apos;examen</span>
-              </button>
             </div>
           </div>
         ) : (
