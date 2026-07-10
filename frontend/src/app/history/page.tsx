@@ -557,6 +557,7 @@ export default function StudentDashboardPage() {
                   )}
                 </div>
               </div>
+            </div>
           </div>
 
           {/* SECTION SOUNDBOARD : Ambiance Sonore & Lofi Focus ("Focus Soundboard") — PRO EXCLUSIVE */}
