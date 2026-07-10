@@ -17,6 +17,7 @@ import {
 import { Sidebar } from "@/components/Sidebar";
 import { AuthModal } from "@/components/AuthModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { FocusSoundboard } from "@/components/FocusSoundboard";
 import { supabase } from "@/lib/supabase";
 
 interface TodoItem {
@@ -556,8 +557,13 @@ export default function StudentDashboardPage() {
                   )}
                 </div>
               </div>
-            </div>
           </div>
+
+          {/* SECTION SOUNDBOARD : Ambiance Sonore & Lofi Focus ("Focus Soundboard") — PRO EXCLUSIVE */}
+          <FocusSoundboard
+            isPro={isPro}
+            onRequirePro={() => setShowUpgradeModal(true)}
+          />
         </div>
 
         {/* Modal: Add Post-it */}
