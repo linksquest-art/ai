@@ -43,7 +43,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className="h-full antialiased">
       <head>
-        {/* Purge automatique des cookies obsolètes et initialisation instantanée du thème sombre */}
+        {/* Initialisation instantanée du thème sombre */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -53,13 +53,6 @@ export default function RootLayout({
                 } else {
                   document.documentElement.classList.remove("dark");
                 }
-                document.cookie.split(";").forEach(function(c) {
-                  var name = c.trim().split("=")[0];
-                  if (name && (name.indexOf("sb-") === 0 || name.indexOf("supabase") === 0)) {
-                    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname;
-                    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-                  }
-                });
               } catch(e) {}
             `
           }}
