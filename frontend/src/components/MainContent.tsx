@@ -29,11 +29,34 @@ import {
   Wand2,
   Trash2,
   Download,
-  BookOpen
+  BookOpen,
+  RefreshCw
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { FlashcardModal } from "@/components/FlashcardModal";
 import { AuthModal } from "./AuthModal";
+
+const STUDENT_PROMPT_IDEAS = [
+  { label: "🎓 Plan Dissertation Philosophie", query: "Propose un plan de dissertation universitaire détaillé en 3 parties et 3 sous-parties sur le sujet : 'L'État est-il l'ennemi de la liberté ?'" },
+  { label: "⚖️ Hiérarchie des Normes (Droit)", query: "Explique clairement la hiérarchie des normes de Kelsen en Droit constitutionnel avec un schéma concret et des exemples." },
+  { label: "🧬 Mémoriser le Cycle de Krebs", query: "Synthétise le cycle de Krebs en 5 étapes faciles à mémoriser pour réussir un partiel de biochimie / médecine." },
+  { label: "📐 Algèbre Linéaire & Matrices", query: "Fais un résumé clair des théorèmes fondamentaux de l'algèbre linéaire : valeurs propres, vecteurs propres et diagonalisation." },
+  { label: "🏛️ Démocratie Athénienne vs Moderne", query: "Analyse comparative structurée entre la démocratie directe athénienne et les régimes représentatifs contemporains." },
+  { label: "🧠 Flashcards d'Économie", query: "Génère 10 questions-réponses clés d'entraînement (format flashcard) sur les théories keynésiennes et néo-classiques." },
+  { label: "📝 Intro parfaite : La Guerre Froide", query: "Rédige une introduction académique parfaite avec accroche, problématique et annonce de plan sur les origines de la Guerre Froide." },
+  { label: "💡 Théorème de Bayes expliqué", query: "Explique intuitivement le théorème de Bayes en probabilités avec un exemple concret en diagnostic médical." },
+  { label: "🔬 Synthèse : Système Immunitaire", query: "Fiche de révision claire comparant l'immunité innée et l'immunité adaptative (lymphocytes B, T, anticorps)." },
+  { label: "📚 Méthode Commentaire d'Arrêt", query: "Explique pas à pas la méthode juridique du commentaire d'arrêt (fiche d'arrêt, problématique, plan en deux parties)." },
+  { label: "⚡ Architecture OS & RAM", query: "Explique clairement la différence de fonctionnement entre mémoire vive (RAM), mémoire cache (L1/L2/L3) et stockage SSD." },
+  { label: "🎯 Planning Révisions 14 Jours", query: "Crée un planning d'entraînement intensif et équilibré sur 14 jours pour préparer mes examens universitaires de fin de semestre." },
+  { label: "🗣️ Améliorer mon Style Universitaire", query: "Donne-moi 10 conseils et formulations précises pour rendre mes dissertations et mémoires universitaires plus élégants et rigoureux." },
+  { label: "📜 Kant & l'Impératif Catégorique", query: "Synthétise clairement la philosophie morale de Kant (l'impératif catégorique et le respect de la personne humaine) avec un exemple." },
+  { label: "🧪 Principe de la PCR (Biologie)", query: "Explique pas à pas le principe scientifique de la réaction en chaîne par polymérase (PCR) en biologie moléculaire." },
+  { label: "📊 Régression Linéaire vs Logistique", query: "Explique de manière pédagogique la différence entre une régression linéaire et une régression logistique en statistiques et data science." },
+  { label: "🌍 Crises Économiques du XXe siècle", query: "Fiche de synthèse comparant les causes et conséquences des trois grandes crises : 1929, le choc pétrolier de 1973 et 2008." },
+  { label: "💊 Pharmacologie des AINS", query: "Explique le mécanisme d'action et les principales indications des anti-inflammatoires non stéroïdiens (AINS) en pharmacologie." }
+];
+
 
 export interface SkillItem {
   id: string;
@@ -156,6 +179,21 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [currentSuggestions, setCurrentSuggestions] = useState<typeof STUDENT_PROMPT_IDEAS>([]);
+
+  const shuffleSuggestions = () => {
+    const shuffled = [...STUDENT_PROMPT_IDEAS].sort(() => 0.5 - Math.random());
+    setCurrentSuggestions(shuffled.slice(0, 3));
+  };
+
+  useEffect(() => {
+    shuffleSuggestions();
+    const interval = setInterval(() => {
+      shuffleSuggestions();
+    }, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -978,16 +1016,26 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
               </div>
             </div>
 
-            {/* Quick Suggestion Pills */}
-            <div className="mt-8 flex flex-wrap justify-center gap-3 max-w-2xl">
-              <button onClick={() => setQuery("Explique l'informatique quantique à un enfant de 10 ans")} className="text-xs font-black bg-[#FAFAFA] hover:bg-[#000000] hover:text-[#FFFFFF] px-4 py-2 rounded-xl ink-border-sm transition-all text-[#000000] shadow-[2px_2px_0px_0px_#000000]">
-                💡 Expliquer l'informatique quantique
-              </button>
-              <button onClick={() => setQuery("Crée un composant React pour un panier e-commerce")} className="text-xs font-black bg-[#FAFAFA] hover:bg-[#000000] hover:text-[#FFFFFF] px-4 py-2 rounded-xl ink-border-sm transition-all text-[#000000] shadow-[2px_2px_0px_0px_#000000]">
-                ⚛️ Créer un panier React
-              </button>
-              <button onClick={() => setQuery("Rédige un e-mail de prospection percutant pour mon SaaS")} className="text-xs font-black bg-[#FAFAFA] hover:bg-[#000000] hover:text-[#FFFFFF] px-4 py-2 rounded-xl ink-border-sm transition-all text-[#000000] shadow-[2px_2px_0px_0px_#000000]">
-                ✉️ E-mail de prospection
+            {/* Dynamic Student Suggestion Pills */}
+            <div className="mt-8 flex flex-col items-center gap-3 max-w-3xl">
+              <div className="flex flex-wrap justify-center gap-2.5">
+                {currentSuggestions.map((item, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setQuery(item.query)}
+                    className="text-xs font-black bg-[#FAFAFA] hover:bg-[#000000] hover:text-[#FFFFFF] px-4 py-2.5 rounded-xl ink-border-sm transition-all text-[#000000] shadow-[2px_2px_0px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer flex items-center gap-2"
+                  >
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={shuffleSuggestions}
+                className="text-[11px] font-bold text-black/50 hover:text-[#FF5500] flex items-center gap-1.5 transition-colors py-1 cursor-pointer select-none"
+                title="Découvrir d'autres sujets de révision"
+              >
+                <RefreshCw size={13} />
+                <span>Changer les idées d&apos;examen</span>
               </button>
             </div>
           </div>
