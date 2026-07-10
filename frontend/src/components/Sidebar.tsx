@@ -21,6 +21,7 @@ import {
   FileText,
   CheckSquare,
   Moon,
+  Sun,
   MessageSquare,
   Trash2,
   LayoutDashboard,
