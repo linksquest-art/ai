@@ -14,7 +14,7 @@ function extractVideoId(url: string): string | null {
   return (match && match[2].length === 11) ? match[2] : null;
 }
 
-// Extraction du contenu YouTube (Robuste avec fallback métadonnées et sans erreur si sous-titres absents)
+// Extraction du contenu YouTube (Innertube API + Watch Page pour transcription intégrale)
 async function extractYoutubeContent(url: string): Promise<string> {
   const videoId = extractVideoId(url);
   if (!videoId) {
@@ -36,60 +36,122 @@ async function extractYoutubeContent(url: string): Promise<string> {
     }
   } catch (e) {}
 
-  // 2. Watch page HTML pour description et sous-titres éventuels
-  try {
-    const watchRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-      cache: "no-store",
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Cookie": "CONSENT=YES+cb; SOCS=CAESNQgDEitib3FfaWRlbnRpdHlmcm9udGVuZHVpc2VydmVyXzIwMjMwODI5LjA3X3AwGgJlbiACGgYIgK-qpwY;"
-      }
-    });
+  // 2. YouTube Innertube API (ANDROID & WEB clients contournent les restrictions serveurs)
+  const clients = [
+    { clientName: "ANDROID", clientVersion: "18.40.34" },
+    { clientName: "WEB", clientVersion: "2.20231214.00.00" }
+  ];
 
-    if (watchRes.ok) {
-      const html = await watchRes.text();
-      const matchPlayer = html.match(/ytInitialPlayerResponse\s*=\s*({.+?})\s*;\s*(?:var\s+meta|<\/script>)/s) ||
-                          html.match(/ytInitialPlayerResponse\s*=\s*({.+?})\s*;/s);
+  for (const client of clients) {
+    if (transcriptText) break;
+    try {
+      const playerRes = await fetch("https://www.youtube.com/youtubei/v1/player", {
+        method: "POST",
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        },
+        body: JSON.stringify({
+          context: {
+            client: {
+              clientName: client.clientName,
+              clientVersion: client.clientVersion,
+              hl: "fr",
+              gl: "FR"
+            }
+          },
+          videoId: videoId
+        })
+      });
 
-      if (matchPlayer && matchPlayer[1]) {
-        try {
-          const playerRes = JSON.parse(matchPlayer[1]);
-          const details = playerRes?.videoDetails;
-          if (details) {
-            if (!videoTitle) videoTitle = details.title || "";
-            if (!videoAuthor) videoAuthor = details.author || "";
-            videoDescription = details.shortDescription || "";
-          }
+      if (playerRes.ok) {
+        const data = await playerRes.json();
+        const details = data?.videoDetails;
+        if (details) {
+          if (!videoTitle) videoTitle = details.title || "";
+          if (!videoAuthor) videoAuthor = details.author || "";
+          if (!videoDescription) videoDescription = details.shortDescription || "";
+        }
 
-          const tracks = playerRes?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
-          if (tracks && Array.isArray(tracks) && tracks.length > 0) {
-            const track = tracks.find((t: any) => t.languageCode?.startsWith("fr")) ||
-                          tracks.find((t: any) => t.languageCode?.startsWith("en")) ||
-                          tracks[0];
-            if (track?.baseUrl) {
-              const subRes = await fetch(track.baseUrl, { cache: "no-store" });
-              if (subRes.ok) {
-                const xml = await subRes.text();
-                const texts = xml.match(/<text[^>]*>([^<]+)<\/text>/g);
-                if (texts) {
-                  transcriptText = texts
-                    .map(t => t.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"'))
-                    .join(" ");
-                }
+        const tracks = data?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+        if (tracks && Array.isArray(tracks) && tracks.length > 0) {
+          const track = tracks.find((t: any) => t.languageCode?.startsWith("fr")) ||
+                        tracks.find((t: any) => t.languageCode?.startsWith("en")) ||
+                        tracks[0];
+          if (track?.baseUrl) {
+            const subRes = await fetch(track.baseUrl, { cache: "no-store" });
+            if (subRes.ok) {
+              const xml = await subRes.text();
+              const texts = xml.match(/<text[^>]*>([^<]+)<\/text>/g);
+              if (texts) {
+                transcriptText = texts
+                  .map(t => t.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"'))
+                  .join(" ");
               }
             }
           }
-        } catch (e) {}
+        }
       }
-    }
-  } catch (e) {}
+    } catch (e) {}
+  }
+
+  // 3. Watch page HTML fallback pour description et sous-titres
+  if (!transcriptText) {
+    try {
+      const watchRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+        cache: "no-store",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
+          "Cookie": "CONSENT=YES+cb; SOCS=CAESNQgDEitib3FfaWRlbnRpdHlmcm9udGVuZHVpc2VydmVyXzIwMjMwODI5LjA3X3AwGgJlbiACGgYIgK-qpwY;"
+        }
+      });
+
+      if (watchRes.ok) {
+        const html = await watchRes.text();
+        const matchPlayer = html.match(/ytInitialPlayerResponse\s*=\s*({.+?})\s*;\s*(?:var\s+meta|<\/script>)/s) ||
+                            html.match(/ytInitialPlayerResponse\s*=\s*({.+?})\s*;/s);
+
+        if (matchPlayer && matchPlayer[1]) {
+          try {
+            const playerRes = JSON.parse(matchPlayer[1]);
+            const details = playerRes?.videoDetails;
+            if (details) {
+              if (!videoTitle) videoTitle = details.title || "";
+              if (!videoAuthor) videoAuthor = details.author || "";
+              videoDescription = details.shortDescription || "";
+            }
+
+            const tracks = playerRes?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+            if (tracks && Array.isArray(tracks) && tracks.length > 0) {
+              const track = tracks.find((t: any) => t.languageCode?.startsWith("fr")) ||
+                            tracks.find((t: any) => t.languageCode?.startsWith("en")) ||
+                            tracks[0];
+              if (track?.baseUrl) {
+                const subRes = await fetch(track.baseUrl, { cache: "no-store" });
+                if (subRes.ok) {
+                  const xml = await subRes.text();
+                  const texts = xml.match(/<text[^>]*>([^<]+)<\/text>/g);
+                  if (texts) {
+                    transcriptText = texts
+                      .map(t => t.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"'))
+                      .join(" ");
+                  }
+                }
+              }
+            }
+          } catch (e) {}
+        }
+      }
+    } catch (e) {}
+  }
 
   const parts = [
     videoTitle ? `TITRE DE LA VIDÉO YOUTUBE : "${videoTitle}"` : "",
     videoAuthor ? `CHAÎNE YOUTUBE : "${videoAuthor}"` : "",
     videoDescription ? `DESCRIPTION & CHAPITRES : \n${videoDescription}` : "",
-    transcriptText ? `TRANSCRIPTION DU CONTENU PAROLE PAR PAROLE : \n${transcriptText.substring(0, 18000)}` : ""
+    transcriptText ? `=== TRANSCRIPTION VERBATIM INTÉGRALE PAROLE PAR PAROLE DE LA VIDÉO ===\n${transcriptText.substring(0, 25000)}` : ""
   ].filter(Boolean);
 
   if (parts.length === 0) {
@@ -159,10 +221,10 @@ export async function POST(req: NextRequest) {
 
     let instructionsSpecifiques = "";
     if (isYoutubeSource) {
-      instructionsSpecifiques = `RÈGLES STRICTES POUR VIDÉO YOUTUBE :
-1. INTERDICTION FORMELLE ET ABSOLUE de poser la moindre question sur le titre de la vidéo, le nom du créateur/de la chaîne, la date ou les métadonnées de publication.
-2. Tes questions doivent porter EXCLUSIVEMENT ET EN PROFONDEUR sur le CONTENU PÉDAGOGIQUE, SCIENTIFIQUE, HISTORIQUE OU TECHNIQUE abordé dans la vidéo.
-3. Si la transcription complète est fournie, teste précisément les concepts, explications et arguments abordés par le conférencier. Si seule une synthèse ou le sujet de la vidéo est disponible, agis en professeur universitaire expert pour poser des questions académiques pointues et techniques sur ce sujet précis.`;
+      instructionsSpecifiques = `RÈGLES STRICTES ET IMPÉRATIVES POUR VIDÉO YOUTUBE :
+1. INTERDICTION FORMELLE ET ABSOLUE de poser la moindre question sur le titre de la vidéo, le nom de la chaîne, la date ou les métadonnées.
+2. Tu DOIS générer les questions EXCLUSIVEMENT ET EN PROFONDEUR à partir des paroles, faits, chiffres, explications concrètes et arguments présents dans la TRANSCRIPTION INTÉGRALE de la vidéo fournie ci-dessus.
+3. Chaque question du QCM doit tester un point technique, un concept précis ou une explication prononcée dans la vidéo par l'intervenant.`;
     } else if (isShortTheme) {
       instructionsSpecifiques = `RÈGLES STRICTES POUR UN THÈME / SUJET D'ÉTUDE :
 1. L'utilisateur a fourni un THÈME ou SUJET D'ÉTUDE : « ${extractedText.trim()} ».
