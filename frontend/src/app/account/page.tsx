@@ -557,11 +557,12 @@ export default function AccountPage() {
                         ★ Abonnement Actif
                       </span>
                     ) : (
-                      <UpgradeModal
-                        isOpen={showUpgradePopup}
-                        onClose={() => setShowUpgradePopup(false)}
-                        user={user}
-                      />
+                      <button
+                        onClick={() => setShowUpgradePopup(true)}
+                        className="bg-black hover:bg-[#FF5500] text-white font-black px-5 py-2.5 rounded-xl border-2 border-black text-xs transition-all shadow-[3px_3px_0px_0px_#FF5500] w-full sm:w-auto text-center cursor-pointer"
+                      >
+                        👑 Passer à Premium — 9€/mois
+                      </button>
                     )}
                     
                     {/* Modal de Bienvenue Gama Pro */}
