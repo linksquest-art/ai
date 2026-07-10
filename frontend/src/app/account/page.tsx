@@ -144,9 +144,16 @@ export default function AccountPage() {
   }, []);
 
   const handleSignOut = async () => {
+    const isProUser = user?.user_metadata?.plan === "pro" || user?.user_metadata?.is_pro === true;
     await supabase.auth.signOut();
-    localStorage.removeItem("gama_sessions");
-    localStorage.removeItem("gama_active_session");
+    if (isProUser) {
+      localStorage.removeItem("gama_sessions");
+      localStorage.removeItem("gama_active_session");
+      localStorage.removeItem("gama_student_notes_clean");
+      localStorage.removeItem("gama_student_todos_clean");
+      localStorage.removeItem("gama_student_decks_clean");
+      localStorage.removeItem("gama_calendar_events_clean");
+    }
     setUser(null);
     router.push("/");
   };
