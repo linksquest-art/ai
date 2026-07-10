@@ -48,6 +48,7 @@ export default function AccountPage() {
   const [dailyTokensState, setDailyTokensState] = useState<number>(0);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
+  const [showWelcomeProModal, setShowWelcomeProModal] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const router = useRouter();
@@ -110,11 +111,10 @@ export default function AccountPage() {
       if (params.get("success") === "true") {
         supabase.auth.updateUser({ data: { plan: "pro" } }).then(({ data }) => {
           if (data.user) setUser(data.user);
-          alert("🎉 PAIEMENT VALIDÉ ! Bienvenue dans Gama Pro ★ ! Vous avez maintenant un accès illimité à tous nos outils et modèles !");
+          setShowWelcomeProModal(true);
           window.history.replaceState({}, document.title, window.location.pathname);
         });
       } else if (params.get("canceled") === "true") {
-        alert("ℹ️ Paiement annulé. Vous êtes toujours sur le Plan Hobby gratuit.");
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
@@ -550,12 +550,41 @@ export default function AccountPage() {
                         ★ Abonnement Actif
                       </span>
                     ) : (
-                      <button
-                        onClick={() => setShowUpgradePopup(true)}
-                        className="bg-black hover:bg-[#FF5500] text-white font-black px-5 py-2.5 rounded-xl border-2 border-black text-xs transition-all shadow-[3px_3px_0px_0px_#FF5500] w-full sm:w-auto text-center cursor-pointer"
-                      >
-                        👑 Passer à Premium — 9€/mois
-                      </button>
+                      <UpgradeModal
+                        isOpen={showUpgradePopup}
+                        onClose={() => setShowUpgradePopup(false)}
+                        user={user}
+                      />
+                    )}
+                    
+                    {/* Modal de Bienvenue Gama Pro */}
+                    {showWelcomeProModal && (
+                      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                        <div className="bg-white border-[3px] border-black rounded-3xl p-8 max-w-md w-full shadow-[8px_8px_0px_0px_#000000] flex flex-col items-center text-center gap-4 relative animate-in zoom-in-95 duration-200">
+                          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center text-white shadow-[4px_4px_0px_0px_#000000] border-2 border-black">
+                            <Crown size={36} />
+                          </div>
+
+                          <div>
+                            <span className="text-xs font-black uppercase tracking-widest bg-amber-100 text-amber-900 border border-amber-400 px-3 py-1 rounded-full mb-2 inline-block">
+                              ★ STATUT PRO ACTIF ★
+                            </span>
+                            <h2 className="text-2xl md:text-3xl font-black text-black tracking-tight mt-1">
+                              Bienvenue dans Gama Pro !
+                            </h2>
+                            <p className="text-sm font-bold text-black/75 mt-2 leading-relaxed">
+                              Votre abonnement est validé. Vous disposez désormais d&apos;un accès <span className="font-black text-[#FF5500]">100% illimité</span> à tous les modèles d&apos;IA, aux résumés YouTube, aux QCM et à tous les espaces du studio !
+                            </p>
+                          </div>
+
+                          <button
+                            onClick={() => setShowWelcomeProModal(false)}
+                            className="w-full bg-[#FF5500] hover:bg-black text-white font-black py-3.5 px-6 rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5 transition-all text-sm cursor-pointer mt-2"
+                          >
+                            Explorer mon Studio Illimité
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -621,36 +650,6 @@ export default function AccountPage() {
                       </div>
                     )}
                   </button>
-                </div>
-              </div>
-
-              {/* SECTION 4: SAUVEGARDE CLOUD & HISTORIQUE */}
-              <div className="bg-white border-[3px] border-black rounded-2xl p-6 shadow-[5px_5px_0px_0px_#000000] flex flex-col gap-6">
-                <div className="flex items-center justify-between border-b-2 border-black/10 pb-4">
-                  <div className="flex items-center gap-3">
-                    <Cloud className="text-blue-600" size={24} />
-                    <h2 className="text-lg font-black uppercase tracking-tight">Sauvegarde Cloud Supabase</h2>
-                  </div>
-                  <span className="text-xs font-black bg-blue-100 text-blue-800 border border-blue-400 px-3 py-1 rounded-full">
-                    Synchronisé
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between bg-blue-50/50 p-4 rounded-xl border border-blue-200">
-                  <div className="flex items-center gap-3">
-                    <History className="text-blue-600" size={20} />
-                    <div>
-                      <h4 className="text-xs font-black text-black">Historique des conversations cloud</h4>
-                      <p className="text-[11px] font-bold text-black/60">
-                        {isPro 
-                          ? "Vos discussions sont synchronisées en temps réel et sans limite dans le cloud." 
-                          : "En plan Hobby gratuit, vos 5 discussions les plus récentes sont conservées automatiquement."}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-lg font-black text-blue-900 bg-white px-3 py-1 rounded-lg border border-blue-300 shadow-sm shrink-0 ml-2">
-                    {sessions.length} {isPro ? "session(s)" : "/ 5 max"}
-                  </span>
                 </div>
               </div>
             </>

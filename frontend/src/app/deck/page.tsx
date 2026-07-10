@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { AuthModal } from "@/components/AuthModal";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import { supabase } from "@/lib/supabase";
 
 interface Flashcard {
@@ -46,6 +47,8 @@ export default function DeckPage() {
   // --- Auth State ---
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
+  const isPro = user?.user_metadata?.plan === "pro" || user?.user_metadata?.is_pro === true;
 
   const syncDecksFromUser = (u: any) => {
     if (u && u.user_metadata?.student_decks && Array.isArray(u.user_metadata.student_decks)) {
@@ -287,7 +290,13 @@ export default function DeckPage() {
 
             <div className="flex items-center gap-3 flex-wrap">
               <button
-                onClick={() => requireAuth(() => setShowNewDeckModal(true))}
+                onClick={() => requireAuth(() => {
+                  if (!isPro && decks.length >= 2) {
+                    setShowUpgradeModal(true);
+                  } else {
+                    setShowNewDeckModal(true);
+                  }
+                })}
                 className="bg-white text-black hover:bg-black hover:text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
               >
                 <Plus size={16} />
@@ -461,7 +470,13 @@ export default function DeckPage() {
               </p>
               <div className="flex items-center gap-4 pt-2">
                 <button
-                  onClick={() => requireAuth(() => setShowNewDeckModal(true))}
+                  onClick={() => requireAuth(() => {
+                    if (!isPro && decks.length >= 2) {
+                      setShowUpgradeModal(true);
+                    } else {
+                      setShowNewDeckModal(true);
+                    }
+                  })}
                   className="bg-white text-black hover:bg-black hover:text-white font-extrabold px-6 py-3 rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
                 >
                   + Créer un Deck
@@ -584,6 +599,7 @@ export default function DeckPage() {
       </div>
 
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} user={user} />
     </main>
   );
 }

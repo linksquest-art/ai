@@ -146,7 +146,7 @@ export default function CalendarPage() {
       setShowAuthModal(true);
       return;
     }
-    if (!isPro && events.length >= 7) {
+    if (!isPro) {
       setShowUpgradeModal(true);
       return;
     }
@@ -288,7 +288,7 @@ export default function CalendarPage() {
                   setShowAuthModal(true);
                   return;
                 }
-                if (!isPro && events.length >= 7) {
+                if (!isPro) {
                   setShowUpgradeModal(true);
                 } else {
                   setShowModal(true);

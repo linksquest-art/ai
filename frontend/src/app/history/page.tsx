@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { AuthModal } from "@/components/AuthModal";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import { supabase } from "@/lib/supabase";
 
 interface TodoItem {
@@ -39,6 +40,8 @@ export default function StudentDashboardPage() {
   // --- Auth State ---
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
+  const isPro = user?.user_metadata?.plan === "pro" || user?.user_metadata?.is_pro === true;
 
   const syncStudentDataFromUser = (u: any) => {
     if (u) {
@@ -310,7 +313,13 @@ export default function StudentDashboardPage() {
                 </h2>
               </div>
               <button
-                onClick={() => requireAuth(() => setShowNewNoteModal(true))}
+                onClick={() => requireAuth(() => {
+                  if (!isPro && notes.length >= 3) {
+                    setShowUpgradeModal(true);
+                  } else {
+                    setShowNewNoteModal(true);
+                  }
+                })}
                 className="bg-black text-white hover:bg-[#FF5500] font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
               >
                 <Plus size={16} />
@@ -626,6 +635,7 @@ export default function StudentDashboardPage() {
       </div>
 
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} user={user} />
     </main>
   );
 }

@@ -8,9 +8,19 @@ interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
   user?: any;
+  badgeText?: string;
+  titleText?: string;
+  descText?: string;
 }
 
-export function UpgradeModal({ isOpen, onClose, user }: UpgradeModalProps) {
+export function UpgradeModal({
+  isOpen,
+  onClose,
+  user,
+  badgeText = "★ LIMITE DU PLAN HOBBY ATTEINTE ★",
+  titleText = "Passez en Mode Illimité avec Gama Pro !",
+  descText = "En Plan Hobby Gratuit, vous avez atteint votre quota d'utilisation sur cette fonctionnalité. Débloquez un accès 100% illimité à l'ensemble du Studio IA avec Gama Pro !"
+}: UpgradeModalProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -69,13 +79,13 @@ export function UpgradeModal({ isOpen, onClose, user }: UpgradeModalProps) {
           </div>
           <div>
             <span className="text-[11px] font-black uppercase tracking-widest bg-amber-100 text-amber-900 border border-amber-400 px-3 py-1 rounded-full mb-2 inline-block">
-              ★ Limite de 5 discussions atteinte ★
+              {badgeText}
             </span>
             <h2 className="text-2xl md:text-3xl font-black text-black tracking-tight">
-              Passez à l&apos;Historique Illimité !
+              {titleText}
             </h2>
             <p className="text-sm font-bold text-black/75 mt-2 max-w-sm mx-auto leading-relaxed">
-              En <span className="font-black">Plan Hobby Gratuit</span>, votre espace est limité à <span className="font-black text-[#FF5500]">5 conversations actives</span>. Supprimez une ancienne discussion dans le menu latéral ou débloquez l&apos;illimité avec <span className="font-black">Gama Pro</span> !
+              {descText}
             </p>
             <div className="mt-2 inline-flex items-center gap-2 bg-[#FF5500]/15 border border-[#FF5500] px-3 py-1 rounded-xl">
               <span className="text-xs font-black text-black">Offre Spéciale :</span>
@@ -141,7 +151,7 @@ export function UpgradeModal({ isOpen, onClose, user }: UpgradeModalProps) {
             onClick={onClose}
             className="w-full bg-black/5 hover:bg-black/10 text-black/70 font-extrabold py-2.5 px-4 rounded-xl text-xs transition-colors text-center cursor-pointer"
           >
-            Fermer & Supprimer un ancien chat
+            Fermer la fenêtre
           </button>
         </div>
 
