@@ -115,8 +115,8 @@ export async function POST(req: Request) {
       });
     }
 
-    // Quota de tokens : 700 tokens max pour gratuit, 2500 max pour Pro
-    const maxTokensLimit = isPro ? 2500 : 700;
+    // Quota de tokens : 2500 tokens max pour gratuit (nécessaire pour JSON complet / MindMap / Podcast), 4096 max pour Pro
+    const maxTokensLimit = isPro ? 4096 : 2500;
 
     console.log(`[API Call] User: ${userId} (${userPlan.toUpperCase()}) | Model: ${selectedModel} | MaxTokens: ${maxTokensLimit}`);
 

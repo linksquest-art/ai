@@ -20,7 +20,11 @@ import {
   Eye, 
   EyeOff, 
   CheckCircle2,
-  Sliders
+  Sliders,
+  PlusCircle,
+  Lightbulb,
+  HelpCircle,
+  RefreshCw
 } from "lucide-react";
 import { AuthModal } from "@/components/AuthModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
@@ -39,6 +43,13 @@ interface SavedLabItem {
 interface DialogueLine {
   speaker: "Professeur Alex" | "Étudiant Léo";
   text: string;
+}
+
+interface FlashQuizQuestion {
+  question: string;
+  options: string[];
+  correctIdx: number;
+  explanation: string;
 }
 
 export default function LabEtudiantPage() {
@@ -60,8 +71,14 @@ export default function LabEtudiantPage() {
   const [hideDefinitions, setHideDefinitions] = useState(false);
   const [mindMapData, setMindMapData] = useState<MindMapData | null>(null);
   
+  // Flash Quiz on Mind Map
+  const [flashQuiz, setFlashQuiz] = useState<FlashQuizQuestion[] | null>(null);
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
+  const [showQuizResults, setShowQuizResults] = useState(false);
+
   // Generation & Results State
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isAiEnriching, setIsAiEnriching] = useState(false);
   const [resultText, setResultText] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [savedItems, setSavedItems] = useState<SavedLabItem[]>([]);
@@ -270,32 +287,43 @@ ${sourceText}
 
   const parseOrGenerateFallbackMap = (jsonStr: string, title: string): MindMapData => {
     try {
-      const match = jsonStr.match(/\{[\s\S]*\}/);
+      // 1. Clean markdown code blocks if any
+      let clean = jsonStr.replace(/```json/gi, "").replace(/```/g, "").trim();
+      const match = clean.match(/\{[\s\S]*\}/);
       if (match) {
-        const parsed = JSON.parse(match[0]);
-        if (parsed.rootTitle && Array.isArray(parsed.branches)) {
-          return {
-            rootTitle: parsed.rootTitle || title,
-            subtitle: parsed.subtitle || "Carte Mentale d'Excellence",
-            branches: parsed.branches.map((b: any, idx: number) => ({
-              id: "b_" + idx,
-              title: b.title || `Branche ${idx + 1}`,
-              colorTheme: {} as any, // assigned dynamically inside MindMapCanvas
-              badge: b.badge || `${idx + 1}.`,
-              subtopics: Array.isArray(b.subtopics) ? b.subtopics.map((st: any, sidx: number) => ({
-                id: `st_${idx}_${sidx}`,
-                text: typeof st === "string" ? st : (st.text || `Concept ${sidx + 1}`),
-                definition: typeof st === "string" ? undefined : st.definition,
-                learned: false
-              })) : []
-            }))
-          };
+        let jsonPayload = match[0];
+        // Attempt parse, or auto-close if slightly truncated by token limits
+        try {
+          const parsed = JSON.parse(jsonPayload);
+          if (parsed.rootTitle && Array.isArray(parsed.branches)) {
+            return formatMindMapPayload(parsed, title);
+          }
+        } catch (parseErr) {
+          // Attempt auto-closing incomplete brackets
+          let closed = jsonPayload;
+          const openBraces = (closed.match(/\{/g) || []).length;
+          const closeBraces = (closed.match(/\}/g) || []).length;
+          const openBrackets = (closed.match(/\[/g) || []).length;
+          const closeBrackets = (closed.match(/\]/g) || []).length;
+          
+          for (let i = 0; i < openBrackets - closeBrackets; i++) closed += "]";
+          for (let i = 0; i < openBraces - closeBraces; i++) closed += "}";
+          
+          try {
+            const parsed = JSON.parse(closed);
+            if (parsed.rootTitle && Array.isArray(parsed.branches)) {
+              return formatMindMapPayload(parsed, title);
+            }
+          } catch (e2) {
+            console.warn("Auto-close fallback failed", e2);
+          }
         }
       }
     } catch (e) {
       console.warn("JSON parse fallback for mind map triggered", e);
     }
 
+    // 2. Line by line Markdown fallback if not JSON
     const lines = jsonStr.split("\n");
     const branches: any[] = [];
     let currentBranch: any = null;
@@ -329,7 +357,7 @@ ${sourceText}
 
     return {
       rootTitle: title || "Carte Mentale",
-      subtitle: "Générée par Gama Studio Pro",
+      subtitle: "Générée par Gama Studio Pro IA",
       branches: branches.length > 0 ? branches : [
         {
           id: "b_0",
@@ -342,46 +370,69 @@ ${sourceText}
     };
   };
 
-  const handleGenerateMindMap = async () => {
-    if (!mapSubject.trim()) return;
+  const formatMindMapPayload = (parsed: any, title: string): MindMapData => {
+    return {
+      rootTitle: parsed.rootTitle || title,
+      subtitle: parsed.subtitle || "Carte Mentale d'Excellence",
+      branches: (parsed.branches || []).map((b: any, idx: number) => ({
+        id: "b_" + idx,
+        title: b.title || `Branche ${idx + 1}`,
+        colorTheme: {} as any,
+        badge: b.badge || `${idx + 1}.`,
+        subtopics: Array.isArray(b.subtopics) ? b.subtopics.map((st: any, sidx: number) => ({
+          id: `st_${idx}_${sidx}`,
+          text: typeof st === "string" ? st : (st.text || `Concept ${sidx + 1}`),
+          definition: typeof st === "string" ? undefined : st.definition,
+          learned: false
+        })) : []
+      }))
+    };
+  };
+
+  const handleGenerateMindMap = async (customSubject?: string) => {
+    const subjectToUse = customSubject || mapSubject;
+    if (!subjectToUse.trim()) return;
+    if (customSubject) setMapSubject(customSubject);
+    
     setIsGenerating(true);
     setResultText(null);
     setMindMapData(null);
+    setFlashQuiz(null);
 
     const prompt = `Tu es un Expert Concepteur pédagogique de Cartes Mentales (Mind Maps) et Organisateur visuel de haut niveau.
 Ton objectif : Créer la structure JSON exacte et complète pour une CARTE MENTALE (Mind Map) sur le sujet / cours suivant :
-"${mapSubject}"
+"${subjectToUse}"
 
 Niveau de densité souhaité : "${mapDensity}".
 
-Tu dois répondre UNIQUEMENT par un objet JSON valide, sans aucun texte autour, structuré de la manière suivante :
+Tu dois répondre UNIQUEMENT par un objet JSON valide, sans aucun texte autour, ni codeblock markdown si possible, structuré de la manière suivante :
 {
-  "rootTitle": "Titre central de la Mind Map (ex: Le Droit Administratif)",
-  "subtitle": "Sous-titre explicatif court (ex: Principes, Actes et Contrôle)",
+  "rootTitle": "Titre central exact et percutant de la Mind Map (ex: Le Droit Constitutionnel de la Vᵉ République)",
+  "subtitle": "Sous-titre explicatif court et motivant (ex: 5 Principes Fondamentaux et Rôle des Institutions)",
   "branches": [
     {
-      "title": "Titre de la Branche Principale 1 (ex: Le Principe de Légalité)",
-      "badge": "1. Fondements",
+      "title": "Titre de la Branche Principale 1 (ex: Le Pouvoir Exécutif & Le Président)",
+      "badge": "1. Institutions",
       "subtopics": [
         {
-          "text": "Concept ou mot-clé essentiel (ex: Bloc de constitutionnalité)",
-          "definition": "Explication courte en 1 phrase ou astuce mnémotechnique à retenir"
+          "text": "Concept ou mot-clé essentiel (ex: Article 16 - Pouvoirs exceptionnels)",
+          "definition": "Astuce ou explication claire : Permet au Président de prendre des mesures de crise en cas de menace grave"
         },
         {
-          "text": "Autre concept clé relié à cette branche",
-          "definition": "Définition ou formule associée"
+          "text": "Autre concept clé relié à cette branche (ex: Dissolution de l'Assemblée - Art 12)",
+          "definition": "Le Président peut dissoudre l'Assemblée Nationale après consultation du Premier Ministre"
         }
       ]
     },
     {
       "title": "Titre de la Branche Principale 2",
-      "badge": "2. Actes",
+      "badge": "2. Législatif",
       "subtopics": [ ... ]
     }
   ]
 }
 
-Assure-toi d'inclure au moins 5 à 7 branches principales riches en concepts, avec des définitions claires et pédagogiques pour que l'étudiant révise tout le sujet visuellement.`;
+Assure-toi d'inclure obligatoirement 5 à 7 branches principales riches, avec des sous-concepts précis, des définitions claires, des formules ou des astuces mnémotechniques pour que l'étudiant révise tout le sujet visuellement et obtienne 20/20.`;
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -401,13 +452,13 @@ Assure-toi d'inclure au moins 5 à 7 branches principales riches en concepts, av
       const data = await res.json();
       const raw = data.content || "{}";
       setResultText(raw);
-      const parsedMap = parseOrGenerateFallbackMap(raw, mapSubject.trim());
+      const parsedMap = parseOrGenerateFallbackMap(raw, subjectToUse.trim());
       setMindMapData(parsedMap);
 
       saveToHistory({
         id: "mindmap_" + Date.now(),
         type: "mindmap",
-        title: parsedMap.rootTitle || mapSubject.slice(0, 40),
+        title: parsedMap.rootTitle || subjectToUse.slice(0, 40),
         subtitle: `${parsedMap.branches.length} branches • ${parsedMap.branches.reduce((acc, b) => acc + b.subtopics.length, 0)} concepts`,
         content: JSON.stringify(parsedMap),
         createdAt: Date.now()
@@ -416,6 +467,130 @@ Assure-toi d'inclure au moins 5 à 7 branches principales riches en concepts, av
       alert("Erreur lors de la création de la carte mentale : " + error.message);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  // AI Feature 1: Enrichir & Approfondir (+ de branches IA)
+  const handleAiEnrichMap = async () => {
+    if (!mindMapData) return;
+    setIsAiEnriching(true);
+
+    const prompt = `Voici une carte mentale existante au format JSON :
+${JSON.stringify(mindMapData)}
+
+Ta mission : ENRICHIR cette carte mentale en ajoutant 3 NOUVELLES BRANCHES PRINCIPALES inédites avec des concepts avancés, des exemples concrets ou des astuces d'examen qui ne sont pas encore présents.
+Réponds UNIQUEMENT avec l'objet JSON complet mis à jour contenant toutes les anciennes branches + les 3 nouvelles branches enrichies.`;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": session?.access_token ? `Bearer ${session.access_token}` : ""
+        },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: prompt }],
+          model: "deepseek/deepseek-chat"
+        })
+      });
+
+      if (!res.ok) throw new Error("Erreur d'enrichissement");
+      const data = await res.json();
+      const parsed = parseOrGenerateFallbackMap(data.content || "{}", mindMapData.rootTitle);
+      setMindMapData(parsed);
+    } catch (e: any) {
+      alert("Erreur lors de l'enrichissement IA : " + e.message);
+    } finally {
+      setIsAiEnriching(false);
+    }
+  };
+
+  // AI Feature 2: Astuces Mnémotechniques IA
+  const handleAiAddMemos = async () => {
+    if (!mindMapData) return;
+    setIsAiEnriching(true);
+
+    const prompt = `Voici une carte mentale au format JSON :
+${JSON.stringify(mindMapData)}
+
+Ta mission : Pour chaque sous-concept (subtopic) de chaque branche, ajoute dans la "definition" une ASTUCE MNÉMOTECHNIQUE drôle, courte et percutante (commençant par "💡 Mémo : ...") pour aider un étudiant à retenir le concept instantanément.
+Réponds UNIQUEMENT par le JSON complet mis à jour avec ces astuces mnémotechniques incluses.`;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": session?.access_token ? `Bearer ${session.access_token}` : ""
+        },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: prompt }],
+          model: "deepseek/deepseek-chat"
+        })
+      });
+
+      if (!res.ok) throw new Error("Erreur d'enrichissement mnémotechnique");
+      const data = await res.json();
+      const parsed = parseOrGenerateFallbackMap(data.content || "{}", mindMapData.rootTitle);
+      setMindMapData(parsed);
+    } catch (e: any) {
+      alert("Erreur lors de la génération des astuces mnémotechniques : " + e.message);
+    } finally {
+      setIsAiEnriching(false);
+    }
+  };
+
+  // AI Feature 3: Flash Quiz sur la carte mentale
+  const handleAiGenerateFlashQuiz = async () => {
+    if (!mindMapData) return;
+    setIsAiEnriching(true);
+    setFlashQuiz(null);
+    setSelectedAnswers({});
+    setShowQuizResults(false);
+
+    const prompt = `À partir de cette carte mentale :
+${JSON.stringify(mindMapData)}
+
+Génère un MINI-QUIZ FLASH INTELLECTUEL de 5 questions à choix multiples pour tester les connaissances de l'étudiant.
+Réponds UNIQUEMENT avec un tableau JSON valide au format exact suivant :
+[
+  {
+    "question": "Question claire et stimulante sur un concept de la carte...",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correctIdx": 1,
+    "explanation": "Explication courte expliquant pourquoi l'option B est la bonne réponse."
+  }
+]`;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": session?.access_token ? `Bearer ${session.access_token}` : ""
+        },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: prompt }],
+          model: "deepseek/deepseek-chat"
+        })
+      });
+
+      if (!res.ok) throw new Error("Erreur de quiz");
+      const data = await res.json();
+      const clean = (data.content || "").replace(/```json/gi, "").replace(/```/g, "").trim();
+      const match = clean.match(/\[[\s\S]*\]/);
+      if (match) {
+        setFlashQuiz(JSON.parse(match[0]));
+      } else {
+        alert("Impossible d'extraire le quiz JSON.");
+      }
+    } catch (e: any) {
+      alert("Erreur lors de la création du quiz : " + e.message);
+    } finally {
+      setIsAiEnriching(false);
     }
   };
 
@@ -463,7 +638,7 @@ Assure-toi d'inclure au moins 5 à 7 branches principales riches en concepts, av
               Podcasts Audio & Mind Map Creator
             </h1>
             <p className="text-xs font-bold text-black/60 mt-0.5">
-              Générez des shows audio à 2 voix style NotebookLM et créez des cartes mentales interactives et réalistes avec courbes SVG.
+              Générez des shows audio à 2 voix style NotebookLM et créez des cartes mentales enrichies par IA avec courbes SVG.
             </p>
           </div>
 
@@ -489,7 +664,7 @@ Assure-toi d'inclure au moins 5 à 7 branches principales riches en concepts, av
               }`}
             >
               <Network size={16} strokeWidth={2.5} />
-              <span>Mind Map Creator 🧠</span>
+              <span>Mind Map Creator IA 🧠</span>
             </button>
           </div>
         </header>
@@ -578,7 +753,7 @@ Assure-toi d'inclure au moins 5 à 7 branches principales riches en concepts, av
                     </div>
                     <div>
                       <h2 className="font-black text-lg text-black">Mind Map Creator IA</h2>
-                      <p className="text-xs font-bold text-black/50">Canevas interactif avec courbes SVG Bézier</p>
+                      <p className="text-xs font-bold text-black/50">Génération intelligente avec arborescence SVG</p>
                     </div>
                   </div>
 
@@ -590,8 +765,34 @@ Assure-toi d'inclure au moins 5 à 7 branches principales riches en concepts, av
                       value={mapSubject}
                       onChange={(e) => setMapSubject(e.target.value)}
                       placeholder="ex: Le Système Nerveux Central, La Révolution Industrielle ou Plan d'un partiel de droit des affaires..."
-                      className="w-full h-28 px-3.5 py-2.5 rounded-xl border-2 border-black font-bold text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 resize-none"
+                      className="w-full h-24 px-3.5 py-2.5 rounded-xl border-2 border-black font-bold text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 resize-none"
                     />
+
+                    {/* AI Magic Suggestion Chips */}
+                    <div className="mt-2.5 flex flex-col gap-1.5">
+                      <span className="text-[10px] font-black uppercase text-indigo-600 flex items-center gap-1">
+                        <Sparkles size={11} />
+                        <span>✨ Sujets Magiques en 1 Clic (Test IA) :</span>
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          "Droit Constitutionnel : La Vᵉ République & ses Institutions",
+                          "Neurobiologie : Le Système Nerveux & Synapses",
+                          "Économie : L'Offre, la Demande & l'Inflation",
+                          "Algorithmes : Arbres Binaires, Graphes & Tris"
+                        ].map((magicSubj, mIdx) => (
+                          <button
+                            key={mIdx}
+                            type="button"
+                            onClick={() => handleGenerateMindMap(magicSubj)}
+                            disabled={isGenerating}
+                            className="px-2.5 py-1 rounded-lg bg-[#FDFBF7] hover:bg-indigo-600 hover:text-white border border-black/30 hover:border-black font-extrabold text-[11px] text-black/80 transition-all text-left truncate max-w-full"
+                          >
+                            🚀 {magicSubj.split(" : ")[0]}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
 
                   <div>
@@ -612,7 +813,7 @@ Assure-toi d'inclure au moins 5 à 7 branches principales riches en concepts, av
 
                   <div>
                     <label className="block text-xs font-black uppercase tracking-wider text-black/70 mb-1.5">
-                      Densité de Concepts
+                      Densité & Profondeur Pédagogique
                     </label>
                     <select
                       value={mapDensity}
@@ -650,19 +851,19 @@ Assure-toi d'inclure au moins 5 à 7 branches principales riches en concepts, av
                   </div>
 
                   <button
-                    onClick={handleGenerateMindMap}
+                    onClick={() => handleGenerateMindMap()}
                     disabled={isGenerating || !mapSubject.trim()}
                     className="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-black/20 text-white font-black text-sm uppercase tracking-wider border-[3px] border-black shadow-[3px_3px_0px_0px_#000000] flex items-center justify-center gap-2.5 transition-all active:translate-x-0.5 active:translate-y-0.5 min-h-[48px] mt-1"
                   >
                     {isGenerating ? (
                       <>
                         <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Génération de la carte...</span>
+                        <span>Génération IA en cours...</span>
                       </>
                     ) : (
                       <>
-                        <Network size={18} strokeWidth={2.5} />
-                        <span>Générer la Mind Map 🧠</span>
+                        <Wand2 size={18} strokeWidth={2.5} />
+                        <span>Générer la Mind Map IA 🧠</span>
                       </>
                     )}
                   </button>
@@ -733,7 +934,7 @@ Assure-toi d'inclure au moins 5 à 7 branches principales riches en concepts, av
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-indigo-600 border border-black" />
                   <span className="font-black text-sm uppercase tracking-wider">
-                    {activeTab === "podcast" ? "Show Audio 2 Voix & Script" : "Canevas Mind Map Interactive"}
+                    {activeTab === "podcast" ? "Show Audio 2 Voix & Script" : "Canevas Mind Map & Super-Pouvoirs IA"}
                   </span>
                 </div>
 
@@ -784,17 +985,58 @@ Assure-toi d'inclure au moins 5 à 7 branches principales riches en concepts, av
                 </div>
               </div>
 
+              {/* AI Superpowers Floating Bar (If Mind Map generated) */}
+              {activeTab === "mindmap" && mindMapData && !isGenerating && (
+                <div className="px-6 py-3 bg-indigo-50 border-b-2 border-black/10 flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-black uppercase text-indigo-950 flex items-center gap-1.5 mr-2">
+                    <Sparkles size={14} className="text-indigo-600" />
+                    <span>Actions IA sur la carte :</span>
+                  </span>
+
+                  <button
+                    onClick={handleAiEnrichMap}
+                    disabled={isAiEnriching}
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-indigo-600 hover:text-white text-black font-black text-xs border-2 border-black shadow-[2px_2px_0px_0px_#000000] transition-all flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    <PlusCircle size={14} />
+                    <span>{isAiEnriching ? "IA en cours..." : "✨ IA : Approfondir (+3 branches)"}</span>
+                  </button>
+
+                  <button
+                    onClick={handleAiAddMemos}
+                    disabled={isAiEnriching}
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-amber-500 hover:text-black text-black font-black text-xs border-2 border-black shadow-[2px_2px_0px_0px_#000000] transition-all flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    <Lightbulb size={14} />
+                    <span>💡 IA : Ajouter Astuces Mnémotechniques</span>
+                  </button>
+
+                  <button
+                    onClick={handleAiGenerateFlashQuiz}
+                    disabled={isAiEnriching}
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-emerald-600 hover:text-white text-black font-black text-xs border-2 border-black shadow-[2px_2px_0px_0px_#000000] transition-all flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    <HelpCircle size={14} />
+                    <span>⚡ IA : Mini-Quiz Flash d'Auto-Évaluation</span>
+                  </button>
+                </div>
+              )}
+
               {/* Result Body Canvas */}
-              <div className="p-6 md:p-8 flex-1 overflow-y-auto max-h-[720px] font-normal text-sm leading-relaxed max-w-none">
-                {isGenerating ? (
-                  <div className="h-full flex flex-col items-center justify-center gap-4 py-24 text-center">
+              <div className="p-6 md:p-8 flex-1 overflow-y-auto max-h-[720px] font-normal text-sm leading-relaxed max-w-none flex flex-col">
+                {isGenerating || isAiEnriching ? (
+                  <div className="h-full flex flex-col items-center justify-center gap-4 py-24 text-center my-auto">
                     <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                     <div>
                       <p className="font-black text-lg">
-                        {activeTab === "podcast" ? "Écriture & Synthèse Audio en cours..." : "Génération de l'arborescence interactive..."}
+                        {isAiEnriching 
+                          ? "L'IA enrichit votre carte mentale avec des super-pouvoirs..."
+                          : activeTab === "podcast" ? "Écriture & Synthèse Audio en cours..." : "Génération de l'arborescence interactive..."}
                       </p>
                       <p className="text-xs font-bold text-black/50 max-w-sm mt-1">
-                        {activeTab === "podcast"
+                        {isAiEnriching
+                          ? "Ajout de branches expertes, d'astuces mnémotechniques et d'exemples d'examens."
+                          : activeTab === "podcast"
                           ? "Génération du dialogue interactif entre le Professeur Alex et l'Étudiant Léo."
                           : "Calcul des nœuds concepts, courbes SVG Bézier et encarts mnémotechniques."}
                       </p>
@@ -841,14 +1083,85 @@ Assure-toi d'inclure au moins 5 à 7 branches principales riches en concepts, av
                     })}
                   </div>
                 ) : activeTab === "mindmap" && mindMapData ? (
-                  <MindMapCanvas
-                    data={mindMapData}
-                    layoutMode={mapLayout}
-                    hideDefinitions={hideDefinitions}
-                    onToggleLearned={toggleSubtopicLearned}
-                    onToggleHideDefinitions={() => setHideDefinitions(!hideDefinitions)}
-                    colorPaletteName={selectedPaletteName}
-                  />
+                  <div className="flex flex-col gap-6 w-full">
+                    <MindMapCanvas
+                      data={mindMapData}
+                      layoutMode={mapLayout}
+                      hideDefinitions={hideDefinitions}
+                      onToggleLearned={toggleSubtopicLearned}
+                      onToggleHideDefinitions={() => setHideDefinitions(!hideDefinitions)}
+                      colorPaletteName={selectedPaletteName}
+                    />
+
+                    {/* Optional Flash Quiz Section if generated by AI */}
+                    {flashQuiz && flashQuiz.length > 0 && (
+                      <div className="mt-4 p-6 rounded-2xl bg-white border-[3px] border-black shadow-[6px_6px_0px_0px_#000000] flex flex-col gap-5">
+                        <div className="flex items-center justify-between border-b-2 border-black/10 pb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="p-2 bg-emerald-500/10 text-emerald-600 rounded-xl border border-black">
+                              <HelpCircle size={18} strokeWidth={2.5} />
+                            </div>
+                            <div>
+                              <h3 className="font-black text-lg text-black">Mini-Quiz Flash d'Examen (IA)</h3>
+                              <p className="text-xs font-bold text-black/50">Testez instantanément votre maîtrise de cette carte</p>
+                            </div>
+                          </div>
+                          {!showQuizResults && (
+                            <button
+                              onClick={() => setShowQuizResults(true)}
+                              disabled={Object.keys(selectedAnswers).length < flashQuiz.length}
+                              className="px-4 py-2 rounded-xl bg-black text-white hover:bg-emerald-600 disabled:opacity-40 font-black text-xs uppercase tracking-wider border-2 border-black shadow-[2px_2px_0px_0px_#000000] transition-all"
+                            >
+                              Corriger le Quiz ({Object.keys(selectedAnswers).length}/{flashQuiz.length})
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="space-y-6">
+                          {flashQuiz.map((q, qIdx) => {
+                            const userAnswer = selectedAnswers[qIdx];
+                            return (
+                              <div key={qIdx} className="p-4 rounded-xl bg-[#FDFBF7] border-2 border-black/20 flex flex-col gap-3">
+                                <h4 className="font-black text-sm text-black">{qIdx + 1}. {q.question}</h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  {q.options.map((opt, oIdx) => {
+                                    const isSelected = userAnswer === oIdx;
+                                    const isCorrect = q.correctIdx === oIdx;
+                                    let btnStyle = "bg-white border-black/30 hover:border-black text-black";
+                                    if (showQuizResults) {
+                                      if (isCorrect) btnStyle = "bg-emerald-600 border-black text-white font-black";
+                                      else if (isSelected && !isCorrect) btnStyle = "bg-red-500 border-black text-white font-black";
+                                    } else if (isSelected) {
+                                      btnStyle = "bg-indigo-600 border-black text-white font-black shadow-[2px_2px_0px_0px_#000000]";
+                                    }
+
+                                    return (
+                                      <button
+                                        key={oIdx}
+                                        type="button"
+                                        onClick={() => !showQuizResults && setSelectedAnswers(prev => ({ ...prev, [qIdx]: oIdx }))}
+                                        className={`p-3 rounded-xl border-2 text-left text-xs font-bold transition-all flex items-center justify-between ${btnStyle}`}
+                                      >
+                                        <span>{opt}</span>
+                                        {showQuizResults && isCorrect && <span className="text-[10px] uppercase bg-white/20 px-1.5 py-0.5 rounded">✓ Exact</span>}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                                {showQuizResults && (
+                                  <div className={`p-3 rounded-xl text-xs font-bold border-l-4 ${
+                                    userAnswer === q.correctIdx ? "bg-emerald-50 border-emerald-600 text-emerald-950" : "bg-amber-50 border-amber-600 text-amber-950"
+                                  }`}>
+                                    💡 <strong>Explication IA :</strong> {q.explanation}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <div className="h-full flex flex-col items-center justify-center gap-4 py-24 text-center text-black/40">
                     <div className="p-4 rounded-2xl bg-black/5 border-2 border-black/10">
@@ -859,7 +1172,7 @@ Assure-toi d'inclure au moins 5 à 7 branches principales riches en concepts, av
                         {activeTab === "podcast" ? "Aucun podcast généré pour l'instant" : "Aucune carte mentale générée pour l'instant"}
                       </p>
                       <p className="text-xs font-bold text-black/40 max-w-xs mt-1">
-                        Remplissez le formulaire à gauche et lancez la génération pour créer vos contenus.
+                        Utilisez les boutons magiques IA ou saisissez votre cours à gauche et lancez la génération.
                       </p>
                     </div>
                   </div>
