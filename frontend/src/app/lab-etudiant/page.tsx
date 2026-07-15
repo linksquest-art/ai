@@ -5,21 +5,28 @@ import { Sidebar } from "@/components/Sidebar";
 import { 
   Zap, 
   Headphones, 
-  GraduationCap, 
+  Network, 
   Play, 
   Pause, 
-  Volume2, 
   Check, 
   Copy, 
   Download, 
-  BookOpen, 
   Trash2, 
   Wand2, 
-  Search, 
-  ExternalLink,
-  Bookmark,
-  Sparkles,
-  MessageSquare
+  Bookmark, 
+  Sparkles, 
+  Share2, 
+  Layers, 
+  CheckCircle2, 
+  Circle, 
+  Eye, 
+  EyeOff, 
+  Palette, 
+  LayoutGrid, 
+  Maximize2,
+  FileCode,
+  Sliders,
+  ArrowRight
 } from "lucide-react";
 import { AuthModal } from "@/components/AuthModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
@@ -27,7 +34,7 @@ import { supabase } from "@/lib/supabase";
 
 interface SavedLabItem {
   id: string;
-  type: "podcast" | "memoire";
+  type: "podcast" | "mindmap";
   title: string;
   subtitle: string;
   content: string;
@@ -39,8 +46,51 @@ interface DialogueLine {
   text: string;
 }
 
+interface Subtopic {
+  id: string;
+  text: string;
+  definition?: string;
+  learned: boolean;
+}
+
+interface MindMapBranch {
+  id: string;
+  title: string;
+  colorClass: string;
+  badge: string;
+  subtopics: Subtopic[];
+}
+
+interface MindMapData {
+  rootTitle: string;
+  subtitle: string;
+  branches: MindMapBranch[];
+}
+
+const COLOR_PALETTES = [
+  {
+    name: "Néon Universitaire",
+    classes: [
+      { border: "border-emerald-500", bg: "bg-emerald-50", text: "text-emerald-950", badge: "bg-emerald-600 text-white", pill: "bg-emerald-100/80 border-emerald-400 text-emerald-900" },
+      { border: "border-indigo-500", bg: "bg-indigo-50", text: "text-indigo-950", badge: "bg-indigo-600 text-white", pill: "bg-indigo-100/80 border-indigo-400 text-indigo-900" },
+      { border: "border-amber-500", bg: "bg-amber-50", text: "text-amber-950", badge: "bg-amber-600 text-white", pill: "bg-amber-100/80 border-amber-400 text-amber-900" },
+      { border: "border-rose-500", bg: "bg-rose-50", text: "text-rose-950", badge: "bg-rose-600 text-white", pill: "bg-rose-100/80 border-rose-400 text-rose-900" },
+      { border: "border-cyan-500", bg: "bg-cyan-50", text: "text-cyan-950", badge: "bg-cyan-600 text-white", pill: "bg-cyan-100/80 border-cyan-400 text-cyan-900" },
+    ]
+  },
+  {
+    name: "Minimaliste Encre",
+    classes: [
+      { border: "border-black", bg: "bg-white", text: "text-black", badge: "bg-black text-white", pill: "bg-black/5 border-black/30 text-black" },
+      { border: "border-slate-700", bg: "bg-slate-50", text: "text-slate-900", badge: "bg-slate-800 text-white", pill: "bg-slate-200/80 border-slate-500 text-slate-900" },
+      { border: "border-zinc-800", bg: "bg-zinc-50", text: "text-zinc-900", badge: "bg-[#FF5500] text-white", pill: "bg-orange-50 border-[#FF5500] text-black" },
+      { border: "border-neutral-700", bg: "bg-neutral-100", text: "text-neutral-900", badge: "bg-neutral-700 text-white", pill: "bg-white border-neutral-400 text-neutral-900" },
+    ]
+  }
+];
+
 export default function LabEtudiantPage() {
-  const [activeTab, setActiveTab] = useState<"podcast" | "memoire">("podcast");
+  const [activeTab, setActiveTab] = useState<"podcast" | "mindmap">("podcast");
   
   // Podcast State
   const [podcastTitle, setPodcastTitle] = useState("");
@@ -50,10 +100,13 @@ export default function LabEtudiantPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentLineIndex, setCurrentLineIndex] = useState<number | null>(null);
   
-  // Memoire & Biblio State
-  const [thesisTopic, setThesisTopic] = useState("");
-  const [discipline, setDiscipline] = useState("Droit & Sciences Politiques");
-  const [citationStyle, setCitationStyle] = useState("Norme APA 7th (International / Universitaire)");
+  // Mind Map State
+  const [mapSubject, setMapSubject] = useState("");
+  const [mapLayout, setMapLayout] = useState<"tree" | "bento" | "columns">("tree");
+  const [mapDensity, setMapDensity] = useState("Carte Exhaustive & Détaillée (6-8 branches + définitions clés)");
+  const [selectedPaletteIdx, setSelectedPaletteIdx] = useState(0);
+  const [hideDefinitions, setHideDefinitions] = useState(false);
+  const [mindMapData, setMindMapData] = useState<MindMapData | null>(null);
   
   // Generation & Results State
   const [isGenerating, setIsGenerating] = useState(false);
@@ -110,12 +163,12 @@ export default function LabEtudiantPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = (text: string, title: string) => {
-    const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+  const handleDownload = (text: string, title: string, ext = "md") => {
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${title.replace(/[^a-zA-Z0-9_-]/g, "_") || "Lab_Gama_Studio"}.md`;
+    link.download = `${title.replace(/[^a-zA-Z0-9_-]/g, "_") || "Gama_Studio"}.${ext}`;
     link.click();
   };
 
@@ -263,22 +316,129 @@ ${sourceText}
     }
   };
 
-  const handleGenerateMemoire = async () => {
-    if (!thesisTopic.trim()) return;
+  const parseOrGenerateFallbackMap = (jsonStr: string, title: string): MindMapData => {
+    try {
+      const match = jsonStr.match(/\{[\s\S]*\}/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        if (parsed.rootTitle && Array.isArray(parsed.branches)) {
+          const palette = COLOR_PALETTES[selectedPaletteIdx].classes;
+          return {
+            rootTitle: parsed.rootTitle || title,
+            subtitle: parsed.subtitle || "Carte Mentale d'Excellence",
+            branches: parsed.branches.map((b: any, idx: number) => {
+              const theme = palette[idx % palette.length];
+              return {
+                id: "b_" + idx,
+                title: b.title || `Branche ${idx + 1}`,
+                colorClass: theme.border + " " + theme.bg + " " + theme.text,
+                badge: b.badge || `${idx + 1}.`,
+                subtopics: Array.isArray(b.subtopics) ? b.subtopics.map((st: any, sidx: number) => ({
+                  id: `st_${idx}_${sidx}`,
+                  text: typeof st === "string" ? st : (st.text || `Concept ${sidx + 1}`),
+                  definition: typeof st === "string" ? undefined : st.definition,
+                  learned: false
+                })) : []
+              };
+            })
+          };
+        }
+      }
+    } catch (e) {
+      console.warn("JSON parse fallback for mind map triggered", e);
+    }
+
+    // Fallback if AI returned markdown
+    const lines = jsonStr.split("\n");
+    const branches: MindMapBranch[] = [];
+    const palette = COLOR_PALETTES[selectedPaletteIdx].classes;
+    let currentBranch: MindMapBranch | null = null;
+
+    for (const line of lines) {
+      if (line.startsWith("## ") || line.startsWith("### ")) {
+        if (currentBranch) branches.push(currentBranch);
+        const idx = branches.length;
+        const theme = palette[idx % palette.length];
+        currentBranch = {
+          id: "b_" + idx,
+          title: line.replace(/^#+\s*/, "").replace(/\*\*/g, ""),
+          colorClass: theme.border + " " + theme.bg + " " + theme.text,
+          badge: `${idx + 1}.`,
+          subtopics: []
+        };
+      } else if (line.trim().startsWith("- ") || line.trim().startsWith("* ")) {
+        if (!currentBranch) {
+          const idx = branches.length;
+          const theme = palette[idx % palette.length];
+          currentBranch = { id: "b_0", title: "Concepts Fondamentaux", colorClass: theme.border + " " + theme.bg + " " + theme.text, badge: "1.", subtopics: [] };
+        }
+        const clean = line.replace(/^[\s-*]+\s*/, "").replace(/\*\*/g, "").trim();
+        const parts = clean.split(":");
+        currentBranch.subtopics.push({
+          id: `st_${branches.length}_${currentBranch.subtopics.length}`,
+          text: parts[0].trim(),
+          definition: parts[1] ? parts.slice(1).join(":").trim() : undefined,
+          learned: false
+        });
+      }
+    }
+    if (currentBranch) branches.push(currentBranch);
+
+    return {
+      rootTitle: title || "Carte Mentale",
+      subtitle: "Générée par Gama Studio Pro",
+      branches: branches.length > 0 ? branches : [
+        {
+          id: "b_0",
+          title: "Introduction & Problématique",
+          colorClass: palette[0].border + " " + palette[0].bg + " " + palette[0].text,
+          badge: "1.",
+          subtopics: [{ id: "st_0_0", text: "Concept clé 1", definition: "Définition importante", learned: false }]
+        }
+      ]
+    };
+  };
+
+  const handleGenerateMindMap = async () => {
+    if (!mapSubject.trim()) return;
     setIsGenerating(true);
     setResultText(null);
+    setMindMapData(null);
 
-    const prompt = `Tu es Directeur de Thèse et Membre de Jury de Master / Doctorat en ${discipline}.
-Ton objectif : Concevoir le PLAN ACADÉMIQUE MILLIMÉTRÉ et la BIBLIOGRAPHIE SCIENTIFIQUE DE RÉFÉRENCE (Norme : ${citationStyle}) pour ce sujet de mémoire / TFE :
-"${thesisTopic}"
+    const prompt = `Tu es un Expert Concepteur pédagogique de Cartes Mentales (Mind Maps) et Organisateur visuel de haut niveau.
+Ton objectif : Créer la structure JSON exacte et complète pour une CARTE MENTALE (Mind Map) sur le sujet / cours suivant :
+"${mapSubject}"
 
-Structure obligatoire du document :
-1. **📌 PROBLÉMATIQUE & HYPOTHÈSES DE RECHERCHE** (Formulation académique irréprochable du sujet).
-2. **🏗️ PLAN DÉTAILLÉ EN TROIS PARTIES (ou deux parties de type I/II - A/B)** (Titres académiques rigoureux avec sous-parties détaillées).
-3. **📚 BIBLIOGRAPHIE & SOURCES SCIENTIFIQUES RECOMMANDEES (Scholar & ArXiv)** (Sélectionnez 6 à 8 articles scientifiques majeurs, ouvrages de référence et revues académiques, formatés exactement selon ${citationStyle}, avec les mots-clés exacts pour les retrouver sur Google Scholar et ArXiv).
-4. **💡 CONSEILS DE SOUTENANCE & PIÈGES À ÉVITER** (Ce que le jury va scruter).
+Niveau de densité souhaité : "${mapDensity}".
 
-Sois d'une rigueur universitaire absolue, structuré et immédiatement exploitable par un étudiant de Master / Doctorat.`;
+Tu dois répondre UNIQUEMENT par un objet JSON valide, sans aucun texte autour, structuré de la manière suivante :
+{
+  "rootTitle": "Titre central de la Mind Map (ex: Le Droit Administratif)",
+  "subtitle": "Sous-titre explicatif court (ex: Principes, Actes et Contrôle)",
+  "branches": [
+    {
+      "title": "Titre de la Branche Principale 1 (ex: Le Principe de Légalité)",
+      "badge": "1. Fondements",
+      "subtopics": [
+        {
+          "text": "Concept ou mot-clé essentiel (ex: Bloc de constitutionnalité)",
+          "definition": "Explication courte en 1 phrase ou astuce mnémotechnique à retenir"
+        },
+        {
+          "text": "Autre concept clé relié à cette branche",
+          "definition": "Définition ou formule associée"
+        }
+      ]
+    },
+    {
+      "title": "Titre de la Branche Principale 2",
+      "badge": "2. Actes",
+      "subtopics": [ ... ]
+    }
+  ]
+}
+
+Assure-toi d'inclure au moins 5 à 7 branches principales riches en concepts, avec des définitions claires et pédagogiques pour que l'étudiant révise tout le sujet visuellement.`;
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -296,23 +456,55 @@ Sois d'une rigueur universitaire absolue, structuré et immédiatement exploitab
 
       if (!res.ok) throw new Error("Erreur de génération");
       const data = await res.json();
-      const generated = data.content || "Erreur lors de la génération du mémoire.";
-      setResultText(generated);
+      const raw = data.content || "{}";
+      setResultText(raw);
+      const parsedMap = parseOrGenerateFallbackMap(raw, mapSubject.trim());
+      setMindMapData(parsedMap);
 
       saveToHistory({
-        id: "memoire_" + Date.now(),
-        type: "memoire",
-        title: thesisTopic.slice(0, 50) + (thesisTopic.length > 50 ? "..." : ""),
-        subtitle: `${discipline} • ${citationStyle.split(" (")[0]}`,
-        content: generated,
+        id: "mindmap_" + Date.now(),
+        type: "mindmap",
+        title: parsedMap.rootTitle || mapSubject.slice(0, 40),
+        subtitle: `${parsedMap.branches.length} branches • ${parsedMap.branches.reduce((acc, b) => acc + b.subtopics.length, 0)} concepts`,
+        content: JSON.stringify(parsedMap),
         createdAt: Date.now()
       });
     } catch (error: any) {
-      alert("Erreur lors de la génération du mémoire : " + error.message);
+      alert("Erreur lors de la création de la carte mentale : " + error.message);
     } finally {
       setIsGenerating(false);
     }
   };
+
+  const toggleSubtopicLearned = (branchId: string, subtopicId: string) => {
+    if (!mindMapData) return;
+    setMindMapData({
+      ...mindMapData,
+      branches: mindMapData.branches.map(b => {
+        if (b.id !== branchId) return b;
+        return {
+          ...b,
+          subtopics: b.subtopics.map(st => st.id === subtopicId ? { ...st, learned: !st.learned } : st)
+        };
+      })
+    });
+  };
+
+  const generateMermaidSyntax = (): string => {
+    if (!mindMapData) return "";
+    let syntax = `mindmap\n  root((${mindMapData.rootTitle}))\n`;
+    for (const b of mindMapData.branches) {
+      syntax += `    ["${b.badge} ${b.title}"]\n`;
+      for (const st of b.subtopics) {
+        syntax += `      (${st.text})\n`;
+      }
+    }
+    return syntax;
+  };
+
+  // Calculate stats
+  const totalConcepts = mindMapData ? mindMapData.branches.reduce((acc, b) => acc + b.subtopics.length, 0) : 0;
+  const learnedConcepts = mindMapData ? mindMapData.branches.reduce((acc, b) => acc + b.subtopics.filter(st => st.learned).length, 0) : 0;
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#FFFBF5] text-black">
@@ -325,21 +517,21 @@ Sois d'une rigueur universitaire absolue, structuré et immédiatement exploitab
         <header className="px-6 md:px-10 py-6 border-b-[3px] border-black bg-white flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
           <div>
             <div className="inline-flex items-center gap-2 bg-indigo-500/10 text-indigo-600 border-2 border-black px-3 py-1 rounded-full font-black text-xs uppercase tracking-widest mb-2 shadow-[2px_2px_0px_0px_#000000]">
-              <Zap size={14} />
-              <span>Studio d'Innovation & Recherche IA</span>
+              <Network size={14} />
+              <span>Studio de Synthèse Visuelle & Audio IA</span>
             </div>
             <h1 className="text-3xl font-black text-black tracking-tight">
-              Podcasts Audio & Mémoires IA
+              Podcasts Audio & Mind Map Creator
             </h1>
             <p className="text-xs font-bold text-black/60 mt-0.5">
-              Générez des shows audio à 2 voix style NotebookLM pour réviser et pilotez vos thèses avec bibliographie ArXiv/Scholar.
+              Générez des shows audio à 2 voix style NotebookLM et créez des cartes mentales interactives et réalistes pour tout retenir.
             </p>
           </div>
 
           {/* Mode Tabs */}
           <div className="flex items-center gap-2 bg-black/5 p-1.5 rounded-2xl border-2 border-black">
             <button
-              onClick={() => { setActiveTab("podcast"); setResultText(null); handleStopAudio(); }}
+              onClick={() => { setActiveTab("podcast"); handleStopAudio(); }}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all min-h-[44px] ${
                 activeTab === "podcast"
                   ? "bg-indigo-600 text-white shadow-[2px_2px_0px_0px_#000000]"
@@ -350,15 +542,15 @@ Sois d'une rigueur universitaire absolue, structuré et immédiatement exploitab
               <span>Podcast Audio 2 Voix</span>
             </button>
             <button
-              onClick={() => { setActiveTab("memoire"); setResultText(null); handleStopAudio(); }}
+              onClick={() => { setActiveTab("mindmap"); handleStopAudio(); }}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all min-h-[44px] ${
-                activeTab === "memoire"
+                activeTab === "mindmap"
                   ? "bg-indigo-600 text-white shadow-[2px_2px_0px_0px_#000000]"
                   : "text-black/70 hover:text-black hover:bg-black/5"
               }`}
             >
-              <GraduationCap size={16} strokeWidth={2.5} />
-              <span>Mémoires & Biblio ArXiv</span>
+              <Network size={16} strokeWidth={2.5} />
+              <span>Mind Map Creator 🧠</span>
             </button>
           </div>
         </header>
@@ -443,74 +635,94 @@ Sois d'une rigueur universitaire absolue, structuré et immédiatement exploitab
                 <>
                   <div className="flex items-center gap-2.5 border-b-2 border-black/10 pb-3">
                     <div className="p-2 bg-indigo-500/10 text-indigo-600 rounded-xl border border-black">
-                      <GraduationCap size={20} strokeWidth={2.5} />
+                      <Network size={20} strokeWidth={2.5} />
                     </div>
                     <div>
-                      <h2 className="font-black text-lg text-black">Assistant Mémoire & Biblio</h2>
-                      <p className="text-xs font-bold text-black/50">Thèses, TFE & recherches ArXiv/Scholar</p>
+                      <h2 className="font-black text-lg text-black">Mind Map Creator IA</h2>
+                      <p className="text-xs font-bold text-black/50">Carte mentale interactive & réaliste</p>
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-xs font-black uppercase tracking-wider text-black/70 mb-1.5">
-                      Sujet du Mémoire / de la Thèse
+                      Sujet, Leçon ou Plan à Mapper
                     </label>
                     <textarea
-                      value={thesisTopic}
-                      onChange={(e) => setThesisTopic(e.target.value)}
-                      placeholder="ex: L'impact de l'IA générative sur le droit d'auteur européen ou La transition écologique dans l'industrie..."
-                      className="w-full h-28 px-3.5 py-2.5 rounded-xl border-2 border-black font-bold text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 resize-none"
+                      value={mapSubject}
+                      onChange={(e) => setMapSubject(e.target.value)}
+                      placeholder="ex: Le Système Nerveux Central, La Révolution Industrielle ou Plan d'un partiel de droit des affaires..."
+                      className="w-full h-32 px-3.5 py-2.5 rounded-xl border-2 border-black font-bold text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 resize-none"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-black uppercase tracking-wider text-black/70 mb-1.5">
-                      Discipline Universitaire
+                      Structure & Disposition
                     </label>
                     <select
-                      value={discipline}
-                      onChange={(e) => setDiscipline(e.target.value)}
+                      value={mapLayout}
+                      onChange={(e) => setMapLayout(e.target.value as any)}
                       className="w-full px-3.5 py-2.5 rounded-xl border-2 border-black font-bold text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 min-h-[44px]"
                     >
-                      <option value="Droit & Sciences Politiques">Droit & Sciences Politiques</option>
-                      <option value="Médecine & Sciences de la Santé">Médecine & Sciences de la Santé</option>
-                      <option value="Informatique, Intelligence Artificielle & Ingénierie">Informatique, Intelligence Artificielle & Ingénierie</option>
-                      <option value="Économie, Management & Finance">Économie, Management & Finance</option>
-                      <option value="Sociologie, Psychologie & Sciences Humaines">Sociologie, Psychologie & Sciences Humaines</option>
-                      <option value="Lettres, Histoire & Philosophie">Lettres, Histoire & Philosophie</option>
+                      <option value="tree">Arborescence Visuelle (Branches & Nœuds connectés)</option>
+                      <option value="bento">Grille Bento (Cartes Concepts hiérarchisées)</option>
+                      <option value="columns">Colonnes Parallèles (Idéal chronologie ou comparatif)</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-xs font-black uppercase tracking-wider text-black/70 mb-1.5">
-                      Norme & Format de Citation
+                      Densité de Concepts
                     </label>
                     <select
-                      value={citationStyle}
-                      onChange={(e) => setCitationStyle(e.target.value)}
+                      value={mapDensity}
+                      onChange={(e) => setMapDensity(e.target.value)}
                       className="w-full px-3.5 py-2.5 rounded-xl border-2 border-black font-bold text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 min-h-[44px]"
                     >
-                      <option value="Norme APA 7th (International / Universitaire)">Norme APA 7th (International / Universitaire)</option>
-                      <option value="Norme Harvard (Auteur-Date)">Norme Harvard (Auteur-Date)</option>
-                      <option value="Norme IEEE (Sciences & Ingénierie)">Norme IEEE (Sciences & Ingénierie)</option>
-                      <option value="Notes de bas de page & Bibliographie à la française">Notes de bas de page & Bibliographie à la française</option>
+                      <option value="Carte Exhaustive & Détaillée (6-8 branches + définitions clés)">Carte Exhaustive & Détaillée (6-8 branches + définitions clés)</option>
+                      <option value="Synthèse Flash (4-5 branches clés pour vision d'ensemble)">Synthèse Flash (4-5 branches clés pour vision d'ensemble)</option>
+                      <option value="Focus Mémorisation & Astuces mnémotechniques">Focus Mémorisation & Astuces mnémotechniques</option>
                     </select>
                   </div>
 
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-black/70 mb-1.5 flex items-center gap-1.5">
+                      <Palette size={14} className="text-indigo-600" />
+                      <span>Thème de Couleurs</span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {COLOR_PALETTES.map((pal, idx) => (
+                        <button
+                          key={pal.name}
+                          type="button"
+                          onClick={() => setSelectedPaletteIdx(idx)}
+                          className={`px-3 py-2 rounded-xl font-black text-xs border-2 flex items-center justify-between transition-all ${
+                            selectedPaletteIdx === idx
+                              ? "border-black bg-indigo-50 shadow-[2px_2px_0px_0px_#000000]"
+                              : "border-black/20 bg-white hover:border-black/50"
+                          }`}
+                        >
+                          <span>{pal.name}</span>
+                          {selectedPaletteIdx === idx && <CheckCircle2 size={14} className="text-indigo-600 shrink-0" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <button
-                    onClick={handleGenerateMemoire}
-                    disabled={isGenerating || !thesisTopic.trim()}
-                    className="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-black/20 text-white font-black text-sm uppercase tracking-wider border-[3px] border-black shadow-[3px_3px_0px_0px_#000000] flex items-center justify-center gap-2.5 transition-all active:translate-x-0.5 active:translate-y-0.5 min-h-[48px]"
+                    onClick={handleGenerateMindMap}
+                    disabled={isGenerating || !mapSubject.trim()}
+                    className="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-black/20 text-white font-black text-sm uppercase tracking-wider border-[3px] border-black shadow-[3px_3px_0px_0px_#000000] flex items-center justify-center gap-2.5 transition-all active:translate-x-0.5 active:translate-y-0.5 min-h-[48px] mt-1"
                   >
                     {isGenerating ? (
                       <>
                         <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Recherche académique...</span>
+                        <span>Création de la carte...</span>
                       </>
                     ) : (
                       <>
-                        <GraduationCap size={18} strokeWidth={2.5} />
-                        <span>Générer Plan & Biblio ArXiv 📚</span>
+                        <Network size={18} strokeWidth={2.5} />
+                        <span>Générer la Mind Map 🧠</span>
                       </>
                     )}
                   </button>
@@ -524,7 +736,7 @@ Sois d'une rigueur universitaire absolue, structuré et immédiatement exploitab
                 <div className="flex items-center justify-between border-b-2 border-black/10 pb-2">
                   <span className="font-black text-xs uppercase tracking-wider text-black/70 flex items-center gap-1.5">
                     <Bookmark size={14} className="text-indigo-600" />
-                    <span>Podcasts & Mémoires sauvegardés</span>
+                    <span>Podcasts & Mind Maps sauvegardés</span>
                   </span>
                   <span className="text-[10px] font-extrabold bg-black/10 px-2 py-0.5 rounded-full">{savedItems.length}</span>
                 </div>
@@ -533,15 +745,27 @@ Sois d'une rigueur universitaire absolue, structuré et immédiatement exploitab
                     <div
                       key={item.id}
                       onClick={() => {
-                        setResultText(item.content);
                         if (item.type === "podcast") {
+                          setActiveTab("podcast");
+                          setResultText(item.content);
                           setDialogueLines(parseDialogue(item.content));
+                        } else {
+                          setActiveTab("mindmap");
+                          try {
+                            const parsed = JSON.parse(item.content);
+                            setMindMapData(parsed);
+                          } catch (e) {
+                            console.error(e);
+                          }
                         }
                       }}
                       className="p-3 rounded-xl border-2 border-black/10 hover:border-black bg-[#FFFBF5] hover:bg-white transition-all cursor-pointer flex items-center justify-between group"
                     >
                       <div className="flex flex-col min-w-0 pr-2">
-                        <span className="font-black text-xs truncate text-black">{item.title}</span>
+                        <span className="font-black text-xs truncate text-black flex items-center gap-1.5">
+                          {item.type === "podcast" ? <Headphones size={13} className="text-indigo-600 shrink-0" /> : <Network size={13} className="text-indigo-600 shrink-0" />}
+                          <span className="truncate">{item.title}</span>
+                        </span>
                         <span className="text-[10px] font-bold text-black/50 truncate">{item.subtitle}</span>
                       </div>
                       <button
@@ -563,13 +787,13 @@ Sois d'une rigueur universitaire absolue, structuré et immédiatement exploitab
 
           {/* Right Column: Result Display (7 Cols) */}
           <div className="lg:col-span-7 flex flex-col gap-6">
-            <div className="bg-white rounded-2xl border-[3px] border-black shadow-[5px_5px_0px_0px_#000000] min-h-[500px] flex flex-col">
-              {/* Result Header & Audio Bar */}
+            <div className="bg-white rounded-2xl border-[3px] border-black shadow-[5px_5px_0px_0px_#000000] min-h-[580px] flex flex-col">
+              {/* Result Header Bar */}
               <div className="px-6 py-4 border-b-[3px] border-black bg-[#FFFBF5] rounded-t-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-indigo-600 border border-black" />
                   <span className="font-black text-sm uppercase tracking-wider">
-                    {activeTab === "podcast" ? "Show Audio 2 Voix & Script" : "Plan de Mémoire & Bibliographie"}
+                    {activeTab === "podcast" ? "Show Audio 2 Voix & Script" : "Carte Mentale Interactive"}
                   </span>
                 </div>
 
@@ -597,40 +821,69 @@ Sois d'une rigueur universitaire absolue, structuré et immédiatement exploitab
                     </button>
                   )}
 
-                  {resultText && (
+                  {activeTab === "mindmap" && mindMapData && (
                     <>
                       <button
-                        onClick={() => handleCopy(resultText)}
-                        className="px-3 py-1.5 rounded-lg border-2 border-black bg-white hover:bg-black hover:text-white font-black text-xs flex items-center gap-1.5 transition-colors shadow-[2px_2px_0px_0px_#000000] min-h-[36px]"
+                        onClick={() => setHideDefinitions(!hideDefinitions)}
+                        className={`px-3 py-1.5 rounded-lg border-2 border-black font-black text-xs flex items-center gap-1.5 transition-colors shadow-[2px_2px_0px_0px_#000000] min-h-[36px] ${
+                          hideDefinitions ? "bg-amber-100 text-amber-900 border-amber-500" : "bg-white hover:bg-black hover:text-white"
+                        }`}
+                        title="Masquer les explications pour vous tester en mode Flashcard"
                       >
-                        {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
-                        <span>{copied ? "Copié !" : "Copier"}</span>
+                        {hideDefinitions ? <EyeOff size={14} /> : <Eye size={14} />}
+                        <span>{hideDefinitions ? "Mode Mémo Actif" : "Définitions visibles"}</span>
                       </button>
+
                       <button
-                        onClick={() => handleDownload(resultText, activeTab === "podcast" ? podcastTitle : thesisTopic)}
+                        onClick={() => handleCopy(generateMermaidSyntax())}
+                        className="px-3 py-1.5 rounded-lg border-2 border-black bg-white hover:bg-black hover:text-white font-black text-xs flex items-center gap-1.5 transition-colors shadow-[2px_2px_0px_0px_#000000] min-h-[36px]"
+                        title="Copier au format Mermaid Mindmap pour Notion ou Obsidian"
+                      >
+                        {copied ? <Check size={14} className="text-emerald-500" /> : <FileCode size={14} />}
+                        <span>{copied ? "Copié !" : "Mermaid Syntax"}</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleDownload(generateMermaidSyntax(), mindMapData.rootTitle, "mmd")}
                         className="px-3 py-1.5 rounded-lg border-2 border-black bg-white hover:bg-primary hover:text-white font-black text-xs flex items-center gap-1.5 transition-colors shadow-[2px_2px_0px_0px_#000000] min-h-[36px]"
                       >
                         <Download size={14} />
-                        <span>PDF / Markdown</span>
+                        <span>Export</span>
                       </button>
                     </>
                   )}
                 </div>
               </div>
 
-              {/* Result Body */}
-              <div className="p-6 md:p-8 flex-1 overflow-y-auto max-h-[650px] font-normal text-sm leading-relaxed max-w-none">
+              {/* Progress & Stats Bar for Mind Map */}
+              {activeTab === "mindmap" && mindMapData && (
+                <div className="px-6 py-2.5 bg-indigo-50/70 border-b-2 border-black/10 flex items-center justify-between gap-4 flex-wrap text-xs font-bold">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={15} className="text-indigo-600" />
+                    <span>Progression de révision :</span>
+                    <span className="font-black px-2 py-0.5 rounded-full bg-white border border-black/20 text-indigo-950">
+                      {learnedConcepts} / {totalConcepts} concepts validés ({totalConcepts ? Math.round((learnedConcepts / totalConcepts) * 100) : 0}%)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[11px] text-black/60">💡 Astuce : Cliquez sur ✓ sur un nœud quand vous l'avez retenu !</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Result Body Canvas */}
+              <div className="p-6 md:p-8 flex-1 overflow-y-auto max-h-[700px] font-normal text-sm leading-relaxed max-w-none bg-[radial-gradient(#00000010_1px,transparent_1px)] [background-size:16px_16px]">
                 {isGenerating ? (
-                  <div className="h-full flex flex-col items-center justify-center gap-4 py-20 text-center">
+                  <div className="h-full flex flex-col items-center justify-center gap-4 py-24 text-center">
                     <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                     <div>
                       <p className="font-black text-lg">
-                        {activeTab === "podcast" ? "Écriture & Synthèse Audio en cours..." : "Recherche bibliographique en cours..."}
+                        {activeTab === "podcast" ? "Écriture & Synthèse Audio en cours..." : "Création de la Mind Map en cours..."}
                       </p>
                       <p className="text-xs font-bold text-black/50 max-w-sm mt-1">
                         {activeTab === "podcast"
                           ? "Génération du dialogue interactif entre le Professeur Alex et l'Étudiant Léo."
-                          : "Recherche des meilleures références académiques et structuration du plan détaillé."}
+                          : "Organisation logique en arborescence, nœuds concepts et encarts mnémotechniques."}
                       </p>
                     </div>
                   </div>
@@ -674,21 +927,104 @@ Sois d'une rigueur universitaire absolue, structuré et immédiatement exploitab
                       );
                     })}
                   </div>
-                ) : resultText ? (
-                  <div className="whitespace-pre-wrap font-sans text-black/90 space-y-4">
-                    {resultText}
+                ) : activeTab === "mindmap" && mindMapData ? (
+                  <div className="flex flex-col items-center gap-8 py-2">
+                    {/* Root Central Node */}
+                    <div className="px-8 py-5 rounded-3xl bg-black text-white border-4 border-black shadow-[6px_6px_0px_0px_#FF5500] text-center max-w-2xl relative group transform transition-transform hover:scale-[1.02]">
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#FF5500] text-white font-black text-[10px] px-3 py-0.5 rounded-full uppercase tracking-widest border-2 border-black flex items-center gap-1">
+                        <Sparkles size={11} />
+                        <span>Nœud Central</span>
+                      </div>
+                      <h2 className="text-2xl font-black tracking-tight mt-1">{mindMapData.rootTitle}</h2>
+                      <p className="text-xs font-bold text-white/70 mt-1">{mindMapData.subtitle}</p>
+                    </div>
+
+                    {/* Connector visual line */}
+                    <div className="w-1 h-8 bg-black/30 rounded-full -my-4" />
+
+                    {/* Branches Display according to chosen layout */}
+                    <div className={`w-full grid gap-6 ${
+                      mapLayout === "columns"
+                        ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                        : mapLayout === "bento"
+                        ? "grid-cols-1 sm:grid-cols-2"
+                        : "grid-cols-1"
+                    }`}>
+                      {mindMapData.branches.map((branch, bIdx) => (
+                        <div
+                          key={branch.id || bIdx}
+                          className={`p-5 rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_#000000] flex flex-col gap-3 transition-all ${
+                            mapLayout === "tree" ? "bg-white hover:border-indigo-600" : "bg-white"
+                          }`}
+                        >
+                          {/* Branch Header */}
+                          <div className="flex items-center justify-between gap-3 border-b-2 border-black/10 pb-2.5">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="font-black text-xs px-2.5 py-1 rounded-lg bg-indigo-600 text-white border border-black shrink-0 shadow-[1px_1px_0px_0px_#000000]">
+                                {branch.badge || `${bIdx + 1}.`}
+                              </span>
+                              <h3 className="font-black text-base text-black truncate">{branch.title}</h3>
+                            </div>
+                            <span className="text-[10px] font-extrabold bg-black/5 px-2 py-0.5 rounded-md text-black/60 shrink-0">
+                              {branch.subtopics.length} concepts
+                            </span>
+                          </div>
+
+                          {/* Subtopics Nodes */}
+                          <div className={`grid gap-2.5 ${mapLayout === "tree" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
+                            {branch.subtopics.map((st, stIdx) => (
+                              <div
+                                key={st.id || stIdx}
+                                onClick={() => toggleSubtopicLearned(branch.id, st.id)}
+                                className={`p-3 rounded-xl border-2 transition-all cursor-pointer flex items-start justify-between gap-3 ${
+                                  st.learned
+                                    ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-[2px_2px_0px_0px_#059669]"
+                                    : "bg-black/[0.02] border-black/20 hover:border-black hover:bg-white shadow-[2px_2px_0px_0px_#000000]"
+                                }`}
+                              >
+                                <div className="flex flex-col gap-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-black text-xs text-black/90">{st.text}</span>
+                                    {st.learned && <span className="text-[9px] font-black uppercase text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">Retenu ✓</span>}
+                                  </div>
+                                  {!hideDefinitions && st.definition && (
+                                    <p className="text-xs font-medium text-black/70 leading-snug">
+                                      {st.definition}
+                                    </p>
+                                  )}
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleSubtopicLearned(branch.id, st.id);
+                                  }}
+                                  className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-colors ${
+                                    st.learned ? "bg-emerald-600 border-black text-white" : "bg-white border-black/30 hover:border-black text-transparent hover:text-black/20"
+                                  }`}
+                                  title="Cocher comme maîtrisé"
+                                >
+                                  <Check size={13} strokeWidth={3} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : (
                   <div className="h-full flex flex-col items-center justify-center gap-4 py-24 text-center text-black/40">
                     <div className="p-4 rounded-2xl bg-black/5 border-2 border-black/10">
-                      {activeTab === "podcast" ? <Headphones size={40} /> : <GraduationCap size={40} />}
+                      {activeTab === "podcast" ? <Headphones size={40} /> : <Network size={40} />}
                     </div>
                     <div>
                       <p className="font-black text-base text-black/60">
-                        {activeTab === "podcast" ? "Aucun podcast généré pour l'instant" : "Aucun mémoire généré pour l'instant"}
+                        {activeTab === "podcast" ? "Aucun podcast généré pour l'instant" : "Aucune carte mentale générée pour l'instant"}
                       </p>
                       <p className="text-xs font-bold text-black/40 max-w-xs mt-1">
-                        Remplissez le formulaire à gauche et lancez la génération pour créer vos contenus.
+                        Remplissez le formulaire à gauche et cliquez sur générer pour obtenir une carte visuelle interactive.
                       </p>
                     </div>
                   </div>

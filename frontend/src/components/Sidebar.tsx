@@ -146,7 +146,7 @@ export function Sidebar({
     { name: "Quiz & QCM IA", href: "/quiz", icon: CheckSquare },
     { name: "Résumés & YouTube", href: "/summary", icon: FileText },
     { name: "Fiches & Annales IA", href: "/revision-pro", icon: Sparkles },
-    { name: "Podcasts & Mémoires", href: "/lab-etudiant", icon: Zap },
+    { name: "Podcasts & Mind Maps", href: "/lab-etudiant", icon: Zap },
     { name: "Espaces & Skills", href: "/spaces", icon: Folder },
     { name: "Découvrir", href: "/discover", icon: Compass },
     { name: "Calendrier", href: "/calendar", icon: Calendar },
