@@ -30,11 +30,14 @@ import {
   Trash2,
   Download,
   BookOpen,
-  RefreshCw
+  RefreshCw,
+  Crown,
+  Lock
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { FlashcardModal } from "@/components/FlashcardModal";
 import { AuthModal } from "./AuthModal";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 const STUDENT_PROMPT_IDEAS = [
   { label: "🎓 Plan Dissertation Philosophie", query: "Propose un plan de dissertation universitaire détaillé en 3 parties et 3 sous-parties sur le sujet : 'L'État est-il l'ennemi de la liberté ?'" },
@@ -179,6 +182,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [currentSuggestions, setCurrentSuggestions] = useState<typeof STUDENT_PROMPT_IDEAS>([]);
 
   const shuffleSuggestions = () => {
@@ -299,13 +303,13 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
 
   // OpenAI & OpenRouter Paid Models
   const availableModels = [
-    { name: "Best ★", id: "deepseek/deepseek-chat", desc: "Modèle d'excellence", icon: Sparkles, color: "text-amber-500" },
-    { name: "GPT-4o Mini (OpenAI)", id: "gpt-4o-mini", desc: "Rapide & économique (Gratuit)", icon: Zap, color: "text-emerald-500" },
-    { name: "GPT-5 (OpenAI)", id: "gpt-4o", desc: "Intelligence maximale", icon: Sparkles, color: "text-purple-500" },
-    { name: "Gemini 2.5 Pro (Google)", id: "google/gemini-2.5-pro", desc: "Raisonnement & analyse logique approfondie", icon: Globe, color: "text-blue-500" },
-    { name: "Claude 3.5 Sonnet (Anthropic)", id: "anthropic/claude-3-5-haiku", desc: "Analyse avancée & Créativité", icon: Cpu, color: "text-indigo-500" },
-    { name: "Nemotron 3 Ultra (NVIDIA)", id: "nvidia/nemotron-3-ultra-550b-a55b", desc: "Puissance 550B paramètres", icon: Zap, color: "text-emerald-600" },
-    { name: "Grok 3 (xAI)", id: "x-ai/grok-2-1212", desc: "Expert Maths & Actualité", icon: Zap, color: "text-[#FF5500]" },
+    { name: "Best ★", id: "deepseek/deepseek-chat", desc: "Modèle d'excellence", icon: Sparkles, color: "text-amber-500", isFree: true },
+    { name: "GPT-4o Mini (OpenAI)", id: "gpt-4o-mini", desc: "Rapide & économique (Gratuit)", icon: Zap, color: "text-emerald-500", isFree: true },
+    { name: "GPT-5 (OpenAI)", id: "gpt-4o", desc: "Intelligence maximale", icon: Sparkles, color: "text-purple-500", isProOnly: true },
+    { name: "Gemini 2.5 Pro (Google)", id: "google/gemini-2.5-pro", desc: "Raisonnement & analyse logique approfondie", icon: Globe, color: "text-blue-500", isProOnly: true },
+    { name: "Claude 3.5 Sonnet (Anthropic)", id: "anthropic/claude-3-5-haiku", desc: "Analyse avancée & Créativité", icon: Cpu, color: "text-indigo-500", isProOnly: true },
+    { name: "Nemotron 3 Ultra (NVIDIA)", id: "nvidia/nemotron-3-ultra-550b-a55b", desc: "Puissance 550B paramètres", icon: Zap, color: "text-emerald-600", isProOnly: true },
+    { name: "Grok 3 (xAI)", id: "x-ai/grok-2-1212", desc: "Expert Maths & Actualité", icon: Zap, color: "text-[#FF5500]", isProOnly: true },
   ];
 
   const availableSearchModes = [
@@ -944,29 +948,53 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                       {availableModels.map((item) => {
                         const Icon = item.icon;
                         const isSelected = model === item.name;
+                        const isProLocked = item.isProOnly && !isPro;
                         return (
                           <button
                             key={item.name}
                             type="button"
                             onMouseDown={(e) => {
                               e.preventDefault();
-                              setModel(item.name);
-                              closeAllMenus();
+                              if (isProLocked) {
+                                closeAllMenus();
+                                setShowUpgradeModal(true);
+                              } else {
+                                setModel(item.name);
+                                closeAllMenus();
+                              }
                             }}
-                            className={`flex items-start gap-3 w-full px-3 py-2.5 rounded-xl transition-colors text-left ${
-                              isSelected ? "bg-black text-white" : "hover:bg-black/5 text-black"
+                            className={`flex items-center justify-between gap-3 w-full px-3 py-2.5 rounded-xl transition-all text-left ${
+                              isSelected
+                                ? "bg-black text-white"
+                                : isProLocked
+                                ? "hover:bg-amber-50/70 text-black/85 border border-transparent hover:border-amber-300/80 cursor-pointer"
+                                : "hover:bg-black/5 text-black"
                             }`}
                           >
-                            <Icon size={16} className={`${item.color} shrink-0 mt-0.5`} />
-                            <div className="flex flex-col">
-                              <span className="font-black text-xs flex items-center gap-1.5">
-                                <span className="notranslate" translate="no">{item.name}</span>
-                                {isSelected && <Check size={12} className="text-primary" />}
-                              </span>
-                              <span className={`text-[10px] font-bold ${isSelected ? "text-white/70" : "text-black/50"}`}>
-                                {item.desc}
-                              </span>
+                            <div className="flex items-start gap-3 min-w-0">
+                              <Icon size={16} className={`${item.color} shrink-0 mt-0.5`} />
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-black text-xs flex items-center gap-1.5 truncate">
+                                  <span className="notranslate" translate="no">{item.name}</span>
+                                  {isSelected && <Check size={12} className="text-primary shrink-0" />}
+                                </span>
+                                <span className={`text-[10px] font-bold truncate ${isSelected ? "text-white/70" : "text-black/50"}`}>
+                                  {item.desc}
+                                </span>
+                              </div>
                             </div>
+
+                            {isProLocked && (
+                              <span className="ml-auto bg-gradient-to-r from-amber-500 to-[#FF5500] text-white font-black text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider shadow-[1px_1px_0px_0px_#000000] flex items-center gap-1 border border-black shrink-0">
+                                <Crown size={10} />
+                                <span>PRO</span>
+                              </span>
+                            )}
+                            {item.isFree && !isPro && (
+                              <span className="ml-auto text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded uppercase shrink-0">
+                                Gratuit
+                              </span>
+                            )}
                           </button>
                         );
                       })}
@@ -1299,29 +1327,53 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                         {availableModels.map((item) => {
                           const Icon = item.icon;
                           const isSelected = model === item.name;
+                          const isProLocked = item.isProOnly && !isPro;
                           return (
                             <button
                               key={item.name}
                               type="button"
                               onMouseDown={(e) => {
                                 e.preventDefault();
-                                setModel(item.name);
-                                closeAllMenus();
+                                if (isProLocked) {
+                                  closeAllMenus();
+                                  setShowUpgradeModal(true);
+                                } else {
+                                  setModel(item.name);
+                                  closeAllMenus();
+                                }
                               }}
-                              className={`flex items-start gap-3 w-full px-3 py-2 rounded-xl transition-colors text-left min-h-[44px] ${
-                                isSelected ? "bg-black text-white" : "hover:bg-black/5 text-black"
+                              className={`flex items-center justify-between gap-3 w-full px-3 py-2 rounded-xl transition-all text-left min-h-[44px] ${
+                                isSelected
+                                  ? "bg-black text-white"
+                                  : isProLocked
+                                  ? "hover:bg-amber-50/70 text-black/85 border border-transparent hover:border-amber-300/80 cursor-pointer"
+                                  : "hover:bg-black/5 text-black"
                               }`}
                             >
-                              <Icon size={15} className={`${item.color} shrink-0 mt-0.5`} />
-                              <div className="flex flex-col">
-                                <span className="font-black text-xs flex items-center gap-1.5">
-                                  <span className="notranslate" translate="no">{item.name}</span>
-                                  {isSelected && <Check size={12} className="text-primary" />}
-                                </span>
-                                <span className={`text-[10px] font-bold ${isSelected ? "text-white/70" : "text-black/50"}`}>
-                                  {item.desc}
-                                </span>
+                              <div className="flex items-start gap-3 min-w-0">
+                                <Icon size={15} className={`${item.color} shrink-0 mt-0.5`} />
+                                <div className="flex flex-col min-w-0">
+                                  <span className="font-black text-xs flex items-center gap-1.5 truncate">
+                                    <span className="notranslate" translate="no">{item.name}</span>
+                                    {isSelected && <Check size={12} className="text-primary shrink-0" />}
+                                  </span>
+                                  <span className={`text-[10px] font-bold truncate ${isSelected ? "text-white/70" : "text-black/50"}`}>
+                                    {item.desc}
+                                  </span>
+                                </div>
                               </div>
+
+                              {isProLocked && (
+                                <span className="ml-auto bg-gradient-to-r from-amber-500 to-[#FF5500] text-white font-black text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider shadow-[1px_1px_0px_0px_#000000] flex items-center gap-1 border border-black shrink-0">
+                                  <Crown size={10} />
+                                  <span>PRO</span>
+                                </span>
+                              )}
+                              {item.isFree && !isPro && (
+                                <span className="ml-auto text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded uppercase shrink-0">
+                                  Gratuit
+                                </span>
+                              )}
                             </button>
                           );
                         })}
@@ -1377,6 +1429,7 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
 
       {renderSkillModal()}
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} user={user} />
     </div>
   );
 }
