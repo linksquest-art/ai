@@ -25,6 +25,7 @@ import {
 import { AuthModal } from "@/components/AuthModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { supabase } from "@/lib/supabase";
+import { FicheMasterRenderer } from "@/components/FicheMasterRenderer";
 
 interface SavedItem {
   id: string;
@@ -219,14 +220,16 @@ Sois d'une rigueur académique absolue, clair, pédagogique et immédiatement ut
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#FFFBF5] text-black">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#FFFBF5] text-black print:overflow-visible print:h-auto print:block print:bg-white">
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} user={user} />
-      <Sidebar />
+      <div className="print:hidden">
+        <Sidebar />
+      </div>
 
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto">
+      <main className="flex-1 flex flex-col h-screen overflow-y-auto print:overflow-visible print:h-auto print:block">
         {/* Header */}
-        <header className="px-6 md:px-10 py-6 border-b-[3px] border-black bg-white flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
+        <header className="px-6 md:px-10 py-6 border-b-[3px] border-black bg-white flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 print:hidden">
           <div>
             <div className="inline-flex items-center gap-2 bg-[#FF5500]/10 text-[#FF5500] border-2 border-black px-3 py-1 rounded-full font-black text-xs uppercase tracking-widest mb-2 shadow-[2px_2px_0px_0px_#000000]">
               <Sparkles size={14} />
@@ -268,9 +271,9 @@ Sois d'une rigueur académique absolue, clair, pédagogique et immédiatement ut
         </header>
 
         {/* Content Body */}
-        <div className="flex-1 p-6 md:p-10 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="flex-1 p-6 md:p-10 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start print:p-0 print:block print:max-w-none">
           {/* Left Column: Form (5 Cols) */}
-          <div className="lg:col-span-5 flex flex-col gap-6">
+          <div className="lg:col-span-5 flex flex-col gap-6 print:hidden">
             <div className="bg-white p-6 rounded-2xl border-[3px] border-black shadow-[5px_5px_0px_0px_#000000] flex flex-col gap-4">
               {activeTab === "fiche" ? (
                 <>
@@ -476,10 +479,10 @@ Sois d'une rigueur académique absolue, clair, pédagogique et immédiatement ut
           </div>
 
           {/* Right Column: Result Display (7 Cols) */}
-          <div className="lg:col-span-7 flex flex-col gap-6">
-            <div className="bg-white rounded-2xl border-[3px] border-black shadow-[5px_5px_0px_0px_#000000] min-h-[500px] flex flex-col">
+          <div className="lg:col-span-7 flex flex-col gap-6 print:w-full print:block">
+            <div className="bg-white rounded-2xl border-[3px] border-black shadow-[5px_5px_0px_0px_#000000] min-h-[500px] flex flex-col print:border-0 print:shadow-none print:min-h-0">
               {/* Result Header */}
-              <div className="px-6 py-4 border-b-[3px] border-black bg-[#FFFBF5] rounded-t-xl flex items-center justify-between gap-3 flex-wrap">
+              <div className="px-6 py-4 border-b-[3px] border-black bg-[#FFFBF5] rounded-t-xl flex items-center justify-between gap-3 flex-wrap print:hidden">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-emerald-500 border border-black" />
                   <span className="font-black text-sm uppercase tracking-wider">
@@ -501,14 +504,14 @@ Sois d'une rigueur académique absolue, clair, pédagogique et immédiatement ut
                       className="px-3 py-1.5 rounded-lg border-2 border-black bg-white hover:bg-primary hover:text-white font-black text-xs flex items-center gap-1.5 transition-colors shadow-[2px_2px_0px_0px_#000000] min-h-[36px]"
                     >
                       <Download size={14} />
-                      <span>PDF / Markdown</span>
+                      <span>PDF / Markdown Brut</span>
                     </button>
                   </div>
                 )}
               </div>
 
               {/* Result Body */}
-              <div className="p-6 md:p-8 flex-1 overflow-y-auto max-h-[650px] font-normal text-sm leading-relaxed prose prose-sm max-w-none">
+              <div className="p-6 md:p-8 flex-1 overflow-y-auto max-h-[650px] font-normal text-sm leading-relaxed prose prose-sm max-w-none print:max-h-none print:overflow-visible print:p-0">
                 {isGenerating ? (
                   <div className="h-full flex flex-col items-center justify-center gap-4 py-20 text-center">
                     <div className="w-12 h-12 border-4 border-[#FF5500] border-t-transparent rounded-full animate-spin" />
@@ -520,9 +523,20 @@ Sois d'une rigueur académique absolue, clair, pédagogique et immédiatement ut
                     </div>
                   </div>
                 ) : resultText ? (
-                  <div className="whitespace-pre-wrap font-sans text-black/90 space-y-4">
-                    {resultText}
-                  </div>
+                  activeTab === "fiche" ? (
+                    <FicheMasterRenderer
+                      rawContent={resultText}
+                      courseTitle={courseTitle}
+                      level={ficheLevel}
+                      styleName={ficheStyle}
+                      onCopy={() => handleCopy(resultText)}
+                      copied={copied}
+                    />
+                  ) : (
+                    <div className="whitespace-pre-wrap font-sans text-black/90 space-y-4">
+                      {resultText}
+                    </div>
+                  )
                 ) : (
                   <div className="h-full flex flex-col items-center justify-center gap-4 py-24 text-center text-black/40">
                     <div className="p-4 rounded-2xl bg-black/5 border-2 border-black/10">
