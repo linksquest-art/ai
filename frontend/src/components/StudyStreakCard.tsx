@@ -129,27 +129,27 @@ export function StudyStreakCard({ onIncrement }: { onIncrement?: () => void }) {
   const progressPercent = Math.min(100, Math.round((streak.completedThisWeek.length / streak.weeklyGoal) * 100));
 
   return (
-    <div className="bg-gradient-to-br from-[#FFFBF5] via-white to-[#FFF5EB] border-[3px] border-black rounded-3xl p-5 md:p-6 shadow-[6px_6px_0px_0px_#FF5500] flex flex-col gap-5 text-black">
+    <div className="bg-gradient-to-br from-[#FFFBF5] via-white to-[#FFF5EB] dark:from-[#1A1A1D] dark:via-[#151516] dark:to-[#1A1A1D] border-[3px] border-black dark:border-white/20 rounded-3xl p-5 md:p-6 shadow-[6px_6px_0px_0px_#FF5500] flex flex-col gap-5 text-black dark:text-white transition-colors">
       {/* Top Header */}
-      <div className="flex items-center justify-between border-b-2 border-black/10 pb-4">
+      <div className="flex items-center justify-between border-b-2 border-black/10 dark:border-white/10 pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-[#FF5500] text-white border-2 border-black shadow-[3px_3px_0px_0px_#000000] flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-[#FF5500] text-white border-2 border-black dark:border-white/30 shadow-[3px_3px_0px_0px_#000000] dark:shadow-[3px_3px_0px_0px_#FF5500] flex items-center justify-center">
             <Flame size={26} className="fill-white animate-bounce" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-black text-black uppercase tracking-tight">Streak de Révision</h3>
-              <span className="bg-[#FF5500] text-white font-black text-xs px-2.5 py-0.5 rounded-full border border-black shadow-sm">
+              <h3 className="text-lg font-black text-black dark:text-white uppercase tracking-tight">Streak de Révision</h3>
+              <span className="bg-[#FF5500] text-white font-black text-xs px-2.5 py-0.5 rounded-full border border-black dark:border-white/30 shadow-sm">
                 🔥 {streak.currentStreak} Jours
               </span>
             </div>
-            <p className="text-xs font-bold text-black/60">
+            <p className="text-xs font-bold text-black/60 dark:text-neutral-400">
               Régularité & Gamification — Chaque quiz ou devoir valide votre journée
             </p>
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border-2 border-black/20 text-xs font-black text-black">
+        <div className="hidden sm:flex items-center gap-1.5 bg-white dark:bg-[#252528] px-3 py-1.5 rounded-xl border-2 border-black/20 dark:border-white/20 text-xs font-black text-black dark:text-white">
           <Trophy size={15} className="text-amber-500" />
           <span>Objectif Hebdo : {streak.completedThisWeek.length} / {streak.weeklyGoal} jours</span>
         </div>
@@ -167,10 +167,10 @@ export function StudyStreakCard({ onIncrement }: { onIncrement?: () => void }) {
               key={day}
               className={`relative flex flex-col items-center justify-center py-2.5 px-1 rounded-xl border-2 transition-all ${
                 isDone
-                  ? "bg-[#FF5500] text-white border-black shadow-[2px_2px_0px_0px_#000000] scale-105"
+                  ? "bg-[#FF5500] text-white border-black dark:border-white/30 shadow-[2px_2px_0px_0px_#000000] dark:shadow-[2px_2px_0px_0px_#FF5500] scale-105"
                   : isToday
-                  ? "bg-amber-100 text-black border-black/50"
-                  : "bg-[#FAFAFA] text-black/40 border-black/15"
+                  ? "bg-amber-100 dark:bg-amber-950/60 text-black dark:text-amber-200 border-black/50 dark:border-amber-500/50"
+                  : "bg-[#FAFAFA] dark:bg-[#222225] text-black/40 dark:text-neutral-400 border-black/15 dark:border-white/10"
               }`}
             >
               <span className="text-[10px] font-black uppercase mb-1 flex items-center gap-1">
@@ -179,7 +179,7 @@ export function StudyStreakCard({ onIncrement }: { onIncrement?: () => void }) {
               {isDone ? (
                 <Flame size={16} className="fill-white" />
               ) : (
-                <div className="w-4 h-4 rounded-full border-2 border-black/20" />
+                <div className="w-4 h-4 rounded-full border-2 border-black/20 dark:border-white/20" />
               )}
             </div>
           );
@@ -188,14 +188,14 @@ export function StudyStreakCard({ onIncrement }: { onIncrement?: () => void }) {
 
       {/* Weekly Goal Progress Bar */}
       <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between text-xs font-extrabold text-black/80">
+        <div className="flex items-center justify-between text-xs font-extrabold text-black/80 dark:text-neutral-300">
           <span className="flex items-center gap-1.5">
             <Target size={14} className="text-[#FF5500]" />
             <span>Objectif de révision hebdomadaire</span>
           </span>
           <span>{progressPercent}% complété</span>
         </div>
-        <div className="w-full bg-black/10 h-3 rounded-full overflow-hidden border-2 border-black">
+        <div className="w-full bg-black/10 dark:bg-white/10 h-3 rounded-full overflow-hidden border-2 border-black dark:border-white/20">
           <div
             className="bg-gradient-to-r from-amber-500 via-[#FF5500] to-red-500 h-full rounded-full transition-all duration-500"
             style={{ width: `${progressPercent}%` }}

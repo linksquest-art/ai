@@ -184,7 +184,7 @@ export default function HomeworkPage() {
   };
 
   return (
-    <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black">
+    <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black dark:bg-[#111113] dark:text-white transition-colors">
       <FlashcardModal
         isOpen={showFlashcardsModal}
         onClose={() => {
@@ -205,22 +205,22 @@ export default function HomeworkPage() {
       />
       <Sidebar sessions={sessions} />
       
-      <div className="flex-1 flex flex-col h-screen overflow-y-auto">
+      <div className="flex-1 flex flex-col h-screen overflow-y-auto bg-[#FFFFFF] dark:bg-[#161618] transition-colors">
         {/* Top Header */}
-        <header className="w-full flex items-center justify-between px-6 md:px-8 py-5 border-b-2 border-black/10 bg-[#FFFFFF] sticky top-0 z-10">
+        <header className="w-full flex items-center justify-between px-6 md:px-8 py-5 border-b-2 border-black/10 dark:border-white/10 bg-[#FFFFFF] dark:bg-[#1A1A1D] sticky top-0 z-10 transition-colors">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-blue-500/15 border-2 border-blue-500 flex items-center justify-center text-blue-600 shadow-[3px_3px_0px_0px_#000000]">
+            <div className="w-12 h-12 rounded-2xl bg-blue-500/15 border-2 border-blue-500 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-[3px_3px_0px_0px_#000000] dark:shadow-[3px_3px_0px_0px_#FF5500]">
               <GraduationCap size={26} strokeWidth={2.5} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-black uppercase tracking-tight">Devoirs IA & Académie Pro</h1>
-              <p className="text-xs font-bold text-black/50">Outils spécialisés pour étudiants : mathématiques, dissertation, sciences et mémorisation</p>
+              <h1 className="text-2xl font-black text-black dark:text-white uppercase tracking-tight">Devoirs IA & Académie Pro</h1>
+              <p className="text-xs font-bold text-black/50 dark:text-neutral-400">Outils spécialisés pour étudiants : mathématiques, dissertation, sciences et mémorisation</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-black/5 px-3 py-1.5 rounded-xl border border-black/10">
-            <Sparkles size={16} className="text-primary animate-pulse" />
-            <span className="text-xs font-extrabold text-black/80">Méthode Pédagogique Pas-à-Pas</span>
+          <div className="flex items-center gap-2 bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-xl border border-black/10 dark:border-white/10">
+            <Sparkles size={16} className="text-[#FF5500] animate-pulse" />
+            <span className="text-xs font-extrabold text-black/80 dark:text-neutral-200">Méthode Pédagogique Pas-à-Pas</span>
           </div>
         </header>
 

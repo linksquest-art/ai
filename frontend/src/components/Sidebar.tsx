@@ -157,13 +157,14 @@ export function Sidebar({
 
   return (
     <>
-      <aside className="w-[260px] bg-[#FFFFFF] border-r-[3px] border-black flex flex-col h-screen shrink-0 p-3 select-none justify-between z-20 shadow-[2px_0px_0px_0px_rgba(0,0,0,0.05)]">
+      <aside className="w-[260px] bg-[#FFFFFF] dark:bg-[#111113] border-r-[3px] border-black dark:border-white/15 flex flex-col h-screen shrink-0 p-3 select-none justify-between z-20 shadow-[2px_0px_0px_0px_rgba(0,0,0,0.05)] transition-colors">
         <div className="flex flex-col gap-4 overflow-hidden flex-1 min-h-0">
           {/* Top Header Logo */}
           <div className="flex items-center justify-between px-2 pt-1 shrink-0">
             <Link href="/" onClick={handleNewChatClick} className="flex items-center gap-3 group text-left">
-              <img src="/7.png" alt="Gama Studio Logo" className="w-8 h-8 object-contain group-hover:scale-110 transition-transform" />
-              <span className="font-black text-xl tracking-tight text-black group-hover:text-primary transition-colors">
+              <img src="/7.png" alt="Gama Studio Logo" className="w-8 h-8 object-contain group-hover:scale-110 transition-transform dark:hidden" />
+              <img src="/logo-dark.png" alt="Gama Studio Logo Dark" className="w-10 h-10 object-contain group-hover:scale-110 transition-transform hidden dark:block" />
+              <span className="font-black text-xl tracking-tight text-black dark:text-white group-hover:text-[#FF5500] transition-colors">
                 Gama Studio
               </span>
             </Link>
@@ -173,14 +174,14 @@ export function Sidebar({
           <Link
             href="/"
             onClick={handleNewChatClick}
-            className="ink-btn bg-[#FFFFFF] hover:bg-primary hover:text-white text-black font-extrabold py-2.5 px-3 rounded-xl flex items-center gap-2.5 w-full text-sm shrink-0 border-[2.5px] border-black shadow-[3px_3px_0px_0px_#000000]"
+            className="ink-btn bg-[#FFFFFF] dark:bg-[#1C1C1F] hover:bg-[#FF5500] dark:hover:bg-[#FF5500] hover:text-white text-black dark:text-white font-extrabold py-2.5 px-3 rounded-xl flex items-center gap-2.5 w-full text-sm shrink-0 border-[2.5px] border-black dark:border-white/20 shadow-[3px_3px_0px_0px_#000000] dark:shadow-[3px_3px_0px_0px_#FF5500] transition-all"
           >
             <Plus size={18} strokeWidth={3} />
             <span>Nouveau Chat</span>
           </Link>
 
           {/* Primary Navigation */}
-          <nav className="flex flex-col gap-1 text-xs md:text-sm font-bold text-black/80 pt-1 overflow-y-auto flex-1 min-h-0 pr-1">
+          <nav className="flex flex-col gap-1 text-xs md:text-sm font-bold text-black/80 dark:text-neutral-300 pt-1 overflow-y-auto flex-1 min-h-0 pr-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -190,11 +191,11 @@ export function Sidebar({
                   href={item.href}
                   className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all border-2 shrink-0 ${
                     isActive
-                      ? "bg-black text-white border-black shadow-[2px_2px_0px_0px_#FF5500]"
-                      : "border-transparent text-black hover:bg-black/5 hover:border-black/20"
+                      ? "bg-black dark:bg-[#FF5500] text-white border-black dark:border-[#FF5500] shadow-[2px_2px_0px_0px_#FF5500] dark:shadow-[2px_2px_0px_0px_#000000]"
+                      : "border-transparent text-black dark:text-neutral-300 hover:bg-black/5 dark:hover:bg-white/10 hover:border-black/20 dark:hover:border-white/10"
                   }`}
                 >
-                  <Icon size={17} className={isActive ? "text-primary" : "text-black/70"} />
+                  <Icon size={17} className={isActive ? "text-[#FF5500] dark:text-white" : "text-black/70 dark:text-neutral-400"} />
                   <span>{item.name}</span>
                 </Link>
               );
@@ -203,7 +204,7 @@ export function Sidebar({
         </div>
 
         {/* UI/UX PRO MAX - Minimalist Bottom Account Rectangle */}
-        <div className="pt-3 border-t-2 border-black/10 flex flex-col gap-2 shrink-0">
+        <div className="pt-3 border-t-2 border-black/10 dark:border-white/10 flex flex-col gap-2 shrink-0">
           {user && !isPro && (
             <button
               onClick={async () => {
@@ -220,7 +221,7 @@ export function Sidebar({
                   alert("Erreur de paiement : " + e.message);
                 }
               }}
-              className="w-full bg-gradient-to-r from-[#FF5500] to-[#FF8800] hover:from-black hover:to-black text-white font-black py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs border-2 border-black shadow-[2px_2px_0px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer animate-pulse"
+              className="w-full bg-gradient-to-r from-[#FF5500] to-[#FF8800] hover:from-black hover:to-black text-white font-black py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs border-2 border-black dark:border-white/20 shadow-[2px_2px_0px_0px_#000000] dark:shadow-[2px_2px_0px_0px_#FF5500] hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer animate-pulse"
               title="Passer à Gama Pro"
             >
               <span>👑 Passer à Pro — 9€/mois</span>
@@ -229,7 +230,7 @@ export function Sidebar({
           {user ? (
             <Link 
               href="/account"
-              className="bg-white p-2.5 rounded-xl border-2 border-black flex items-center justify-between shadow-[3px_3px_0px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_#000000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer group"
+              className="bg-white dark:bg-[#1C1C1F] p-2.5 rounded-xl border-2 border-black dark:border-white/20 flex items-center justify-between shadow-[3px_3px_0px_0px_#000000] dark:shadow-[3px_3px_0px_0px_#FF5500] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_#000000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer group"
               title="Mon Compte, Quotas & Paramètres"
             >
               <div className="flex items-center gap-2.5 overflow-hidden">
@@ -237,23 +238,23 @@ export function Sidebar({
                   {isPro ? <img src="/Arrowai.png" alt="Pro" className="w-full h-full object-cover" /> : (user.email?.[0].toUpperCase() || "U")}
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-black text-black truncate group-hover:text-primary transition-colors">
+                  <span className="text-xs font-black text-black dark:text-white truncate group-hover:text-[#FF5500] transition-colors">
                     {user.email?.split('@')[0]}
                   </span>
-                  <span className={`text-[10px] font-extrabold flex items-center gap-1 ${isPro ? "text-amber-700" : "text-emerald-700"}`}>
+                  <span className={`text-[10px] font-extrabold flex items-center gap-1 ${isPro ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400"}`}>
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
                     <span>{isPro ? "Gama Pro ★" : "Hobby (Gratuit)"}</span>
                   </span>
                 </div>
               </div>
-              <div className="p-1.5 rounded-lg bg-black/5 group-hover:bg-black group-hover:text-white text-black/70 transition-colors shrink-0 flex items-center justify-center">
+              <div className="p-1.5 rounded-lg bg-black/5 dark:bg-white/10 group-hover:bg-black dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black text-black/70 dark:text-neutral-300 transition-colors shrink-0 flex items-center justify-center">
                 <Settings size={16} className="group-hover:rotate-45 transition-transform duration-300" />
               </div>
             </Link>
           ) : (
             <button
               onClick={() => setShowAuthModal(true)}
-              className="w-full bg-[#FF4500] hover:bg-[#E03E00] text-white font-black py-2.5 px-3 rounded-xl flex items-center justify-between gap-2 text-sm border-2 border-black shadow-[3px_3px_0px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_#000000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer animate-pulse group"
+              className="w-full bg-[#FF4500] hover:bg-[#E03E00] text-white font-black py-2.5 px-3 rounded-xl flex items-center justify-between gap-2 text-sm border-2 border-black dark:border-white/20 shadow-[3px_3px_0px_0px_#000000] dark:shadow-[3px_3px_0px_0px_#FF5500] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_#000000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer animate-pulse group"
               title="Se connecter pour accéder à votre espace et à vos quotas"
             >
               <div className="flex items-center gap-2">
@@ -267,14 +268,14 @@ export function Sidebar({
           )}
 
           {/* Subtle Operational Status + Theme Toggle */}
-          <div className="flex items-center justify-between px-1 pt-0.5 text-[10px] font-black uppercase text-black/50 select-none">
+          <div className="flex items-center justify-between px-1 pt-0.5 text-[10px] font-black uppercase text-black/50 dark:text-neutral-400 select-none">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
               <span>IA Opérationnelle</span>
             </span>
             <button
               onClick={toggleTheme}
-              className="flex items-center gap-1 bg-black/5 hover:bg-[#FF5500] hover:text-white px-2 py-0.5 rounded-md border border-black/20 transition-all cursor-pointer"
+              className="flex items-center gap-1 bg-black/5 dark:bg-white/10 hover:bg-[#FF5500] dark:hover:bg-[#FF5500] hover:text-white dark:hover:text-white px-2 py-0.5 rounded-md border border-black/20 dark:border-white/20 text-black dark:text-white transition-all cursor-pointer"
               title="Basculer Mode Clair / Sombre"
             >
               {theme === "dark" ? <Sun size={12} className="text-amber-400" /> : <Moon size={12} className="text-[#FF5500]" />}

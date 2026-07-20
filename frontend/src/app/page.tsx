@@ -353,12 +353,12 @@ function HomeContent() {
   const activeSession = sessions.find(s => s.id === activeSessionId) || null;
 
   return (
-    <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black relative">
+    <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black dark:bg-[#111113] dark:text-white relative transition-colors">
       {/* Mobile Top Bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white border-b-[3px] border-black px-4 flex items-center justify-between z-30 shadow-sm notranslate" translate="no">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-[#111113] border-b-[3px] border-black dark:border-white/15 px-4 flex items-center justify-between z-30 shadow-sm notranslate transition-colors" translate="no">
         <button 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 -ml-2 text-black hover:bg-black/5 rounded-xl transition-colors flex items-center gap-2 font-black"
+          className="p-2 -ml-2 text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition-colors flex items-center gap-2 font-black cursor-pointer"
           title="Menu"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -366,13 +366,14 @@ function HomeContent() {
           </svg>
           <span className="text-sm font-extrabold">Menu</span>
         </button>
-        <div className="flex items-center gap-2 font-black text-lg">
-          <img src="/7.png" alt="Logo" className="w-7 h-7 object-contain" />
+        <div className="flex items-center gap-2 font-black text-lg text-black dark:text-white">
+          <img src="/7.png" alt="Logo" className="w-7 h-7 object-contain dark:hidden" />
+          <img src="/logo-dark.png" alt="Logo Dark" className="w-8 h-8 object-contain hidden dark:block" />
           <span>Gama Studio</span>
         </div>
         <button 
           onClick={handleNewChat}
-          className="p-2 -mr-2 text-black hover:bg-black/5 rounded-xl transition-colors font-black flex items-center gap-1"
+          className="p-2 -mr-2 text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition-colors font-black flex items-center gap-1 cursor-pointer"
           title="Nouvelle discussion"
         >
           <svg className="w-6 h-6 text-[#FF5500]" fill="none" stroke="currentColor" viewBox="0 0 24 24">

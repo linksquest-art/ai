@@ -282,22 +282,22 @@ export default function StudentDashboardPage() {
   };
 
   return (
-    <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black">
+    <main className="flex h-screen w-screen overflow-hidden bg-[#FFFFFF] text-black dark:bg-[#111113] dark:text-white transition-colors">
       <Sidebar />
 
-      <div className="flex-1 flex flex-col h-screen overflow-y-auto bg-[#FFFBF5]">
+      <div className="flex-1 flex flex-col h-screen overflow-y-auto bg-[#FFFBF5] dark:bg-[#161618] transition-colors">
         <div className="p-4 md:p-8 flex flex-col max-w-7xl mx-auto gap-8 w-full">
           {/* Top Header Banner */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-[3px] border-black pb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-[3px] border-black dark:border-white/10 pb-6">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center shadow-[4px_4px_0px_0px_#FF5500]">
+              <div className="w-12 h-12 rounded-2xl bg-black dark:bg-[#FF5500] text-white flex items-center justify-center shadow-[4px_4px_0px_0px_#FF5500] dark:shadow-[4px_4px_0px_0px_#000000]">
                 <LayoutDashboard size={26} />
               </div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">
+                <h1 className="text-2xl md:text-3xl font-black text-black dark:text-white uppercase tracking-tight">
                   Bureau & Dashboard Étudiant
                 </h1>
-                <p className="text-xs md:text-sm font-bold text-black/60">
+                <p className="text-xs md:text-sm font-bold text-black/60 dark:text-neutral-400">
                   Votre espace d'hyper-concentration : Cahier de Post-its, Chrono Pomodoro et Tâches du jour.
                 </p>
               </div>
@@ -305,11 +305,11 @@ export default function StudentDashboardPage() {
           </div>
 
           {/* TOP SECTION: Cahier de Brouillon & Post-its (EN HAUT) */}
-          <div className="bg-[#FFFDF9] border-4 border-black rounded-3xl p-6 md:p-8 shadow-[8px_8px_0px_0px_#000000]">
-            <div className="flex items-center justify-between border-b-2 border-black/10 pb-4 mb-6">
+          <div className="bg-[#FFFDF9] dark:bg-[#1A1A1D] border-4 border-black dark:border-white/20 rounded-3xl p-6 md:p-8 shadow-[8px_8px_0px_0px_#000000] dark:shadow-[8px_8px_0px_0px_#FF5500] transition-colors">
+            <div className="flex items-center justify-between border-b-2 border-black/10 dark:border-white/10 pb-4 mb-6">
               <div className="flex items-center gap-2.5">
                 <StickyNote size={22} className="text-[#FF5500]" />
-                <h2 className="text-lg md:text-xl font-black uppercase tracking-tight">
+                <h2 className="text-lg md:text-xl font-black uppercase tracking-tight text-black dark:text-white">
                   Cahier de Brouillon & Post-its
                 </h2>
               </div>
@@ -321,7 +321,7 @@ export default function StudentDashboardPage() {
                     setShowNewNoteModal(true);
                   }
                 })}
-                className="bg-black text-white hover:bg-[#FF5500] font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
+                className="bg-black dark:bg-white text-white dark:text-black hover:bg-[#FF5500] dark:hover:bg-[#FF5500] dark:hover:text-white font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 border-2 border-black dark:border-white/30 shadow-[3px_3px_0px_0px_#000000] dark:shadow-[3px_3px_0px_0px_#FF5500] transition-all cursor-pointer"
               >
                 <Plus size={16} />
                 <span>Nouveau Post-it</span>
@@ -335,7 +335,7 @@ export default function StudentDashboardPage() {
                     key={note.id}
                     className={`${getPostItClass(
                       note.color
-                    )} ${note.rotation} border-3 border-black rounded-2xl p-5 shadow-[6px_6px_0px_0px_#000000] flex flex-col justify-between min-h-[160px] transition-transform hover:scale-102 relative`}
+                    )} ${note.rotation} border-3 border-black rounded-2xl p-5 shadow-[6px_6px_0px_0px_#000000] flex flex-col justify-between min-h-[160px] transition-transform hover:scale-102 relative text-black`}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
@@ -362,15 +362,15 @@ export default function StudentDashboardPage() {
                 ))}
               </div>
             ) : (
-              <div className="bg-white border-2 border-dashed border-black/30 rounded-2xl p-8 text-center flex flex-col items-center justify-center gap-3">
-                <StickyNote size={36} className="text-black/30" />
-                <h3 className="text-sm font-black uppercase text-black/70">Aucun Post-it pour le moment</h3>
-                <p className="text-xs font-bold text-black/50 max-w-sm">
+              <div className="bg-white dark:bg-[#202024] border-2 border-dashed border-black/30 dark:border-white/20 rounded-2xl p-8 text-center flex flex-col items-center justify-center gap-3 transition-colors">
+                <StickyNote size={36} className="text-black/30 dark:text-white/30" />
+                <h3 className="text-sm font-black uppercase text-black/70 dark:text-neutral-200">Aucun Post-it pour le moment</h3>
+                <p className="text-xs font-bold text-black/50 dark:text-neutral-400 max-w-sm">
                   Collez un post-it pour noter vos formules importantes, dates d'examens ou idées éclair.
                 </p>
                 <button
                   onClick={() => requireAuth(() => setShowNewNoteModal(true))}
-                  className="mt-2 bg-[#FF5500] text-white hover:bg-black font-extrabold px-4 py-2 rounded-xl text-xs border-2 border-black shadow-[2px_2px_0px_0px_#000000] transition-all cursor-pointer"
+                  className="mt-2 bg-[#FF5500] text-white hover:bg-black font-extrabold px-4 py-2 rounded-xl text-xs border-2 border-black dark:border-white/30 shadow-[2px_2px_0px_0px_#000000] dark:shadow-[2px_2px_0px_0px_#FF5500] transition-all cursor-pointer"
                 >
                   + Ajouter un Post-it
                 </button>
@@ -381,11 +381,11 @@ export default function StudentDashboardPage() {
           {/* BOTTOM SECTION: Grid - Pomodoro Focus Timer & Interactive To-Do List (EN BAS) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* LEFT: Pomodoro Focus Timer Card */}
-            <div className="lg:col-span-5 bg-white border-3 border-black rounded-3xl p-6 flex flex-col justify-between shadow-[6px_6px_0px_0px_#000000]">
-              <div className="flex items-center justify-between border-b-2 border-black/10 pb-3">
+            <div className="lg:col-span-5 bg-white dark:bg-[#1A1A1D] border-3 border-black dark:border-white/20 rounded-3xl p-6 flex flex-col justify-between shadow-[6px_6px_0px_0px_#000000] dark:shadow-[6px_6px_0px_0px_#FF5500] transition-colors">
+              <div className="flex items-center justify-between border-b-2 border-black/10 dark:border-white/10 pb-3">
                 <div className="flex items-center gap-2">
                   <Clock size={18} className="text-[#FF5500]" />
-                  <span className="font-black text-sm uppercase tracking-wide">Minuteur Focus Pomodoro</span>
+                  <span className="font-black text-sm uppercase tracking-wide text-black dark:text-white">Minuteur Focus Pomodoro</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <button
@@ -397,10 +397,10 @@ export default function StudentDashboardPage() {
                       localStorage.setItem("gama_pomo_mode", "focus");
                       localStorage.setItem("gama_pomo_paused_time", (25 * 60).toString());
                     }}
-                    className={`px-3 py-1 rounded-full text-xs font-black border border-black cursor-pointer ${
+                    className={`px-3 py-1 rounded-full text-xs font-black border border-black dark:border-white/30 cursor-pointer ${
                       timerMode === "focus"
-                        ? "bg-[#FF5500] text-white shadow-[2px_2px_0px_0px_#000000]"
-                        : "bg-white text-black"
+                        ? "bg-[#FF5500] text-white shadow-[2px_2px_0px_0px_#000000] dark:shadow-[2px_2px_0px_0px_#FF5500]"
+                        : "bg-white dark:bg-[#252528] text-black dark:text-white"
                     }`}
                   >
                     Focus 25'
@@ -414,10 +414,10 @@ export default function StudentDashboardPage() {
                       localStorage.setItem("gama_pomo_mode", "break");
                       localStorage.setItem("gama_pomo_paused_time", (5 * 60).toString());
                     }}
-                    className={`px-3 py-1 rounded-full text-xs font-black border border-black cursor-pointer ${
+                    className={`px-3 py-1 rounded-full text-xs font-black border border-black dark:border-white/30 cursor-pointer ${
                       timerMode === "break"
-                        ? "bg-[#10B981] text-white shadow-[2px_2px_0px_0px_#000000]"
-                        : "bg-white text-black"
+                        ? "bg-[#10B981] text-white shadow-[2px_2px_0px_0px_#000000] dark:shadow-[2px_2px_0px_0px_#FF5500]"
+                        : "bg-white dark:bg-[#252528] text-black dark:text-white"
                     }`}
                   >
                     Pause 5'
@@ -427,10 +427,10 @@ export default function StudentDashboardPage() {
 
               {/* Big Timer Display */}
               <div className="my-8 flex flex-col items-center justify-center">
-                <span className="text-6xl md:text-7xl font-black tracking-tighter text-black">
+                <span className="text-6xl md:text-7xl font-black tracking-tighter text-black dark:text-white">
                   {formatTime(timeLeft)}
                 </span>
-                <span className="text-xs font-extrabold uppercase tracking-widest text-black/50 mt-2">
+                <span className="text-xs font-extrabold uppercase tracking-widest text-black/50 dark:text-neutral-400 mt-2">
                   {timerMode === "focus" ? "🔥 Session de concentration" : "☕ Pause récupération"}
                 </span>
               </div>
@@ -451,8 +451,8 @@ export default function StudentDashboardPage() {
                       localStorage.setItem("gama_pomo_paused_time", timeLeft.toString());
                     }
                   })}
-                  className={`px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_#000000] cursor-pointer transition-all ${
-                    isRunning ? "bg-black text-white" : "bg-[#FF5500] text-white hover:bg-black"
+                  className={`px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 border-2 border-black dark:border-white/30 shadow-[3px_3px_0px_0px_#000000] dark:shadow-[3px_3px_0px_0px_#FF5500] cursor-pointer transition-all ${
+                    isRunning ? "bg-black dark:bg-white text-white dark:text-black" : "bg-[#FF5500] text-white hover:bg-black dark:hover:bg-white dark:hover:text-black"
                   }`}
                 >
                   {isRunning ? <Pause size={18} /> : <Play size={18} />}
@@ -466,7 +466,7 @@ export default function StudentDashboardPage() {
                     localStorage.setItem("gama_pomo_is_running", "false");
                     localStorage.setItem("gama_pomo_paused_time", defaultSecs.toString());
                   }}
-                  className="p-3 bg-white border-2 border-black rounded-2xl hover:bg-black hover:text-white shadow-[3px_3px_0px_0px_#000000] cursor-pointer transition-all"
+                  className="p-3 bg-white dark:bg-[#252528] border-2 border-black dark:border-white/30 rounded-2xl hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black shadow-[3px_3px_0px_0px_#000000] dark:shadow-[3px_3px_0px_0px_#FF5500] text-black dark:text-white cursor-pointer transition-all"
                   title="Réinitialiser"
                 >
                   <RotateCcw size={18} />
@@ -475,14 +475,14 @@ export default function StudentDashboardPage() {
             </div>
 
             {/* RIGHT: Interactive To-Do List */}
-            <div className="lg:col-span-7 bg-white border-3 border-black rounded-3xl p-6 flex flex-col justify-between shadow-[6px_6px_0px_0px_#000000]">
+            <div className="lg:col-span-7 bg-white dark:bg-[#1A1A1D] border-3 border-black dark:border-white/20 rounded-3xl p-6 flex flex-col justify-between shadow-[6px_6px_0px_0px_#000000] dark:shadow-[6px_6px_0px_0px_#FF5500] transition-colors">
               <div>
-                <div className="flex items-center justify-between border-b-2 border-black/10 pb-3 mb-4">
+                <div className="flex items-center justify-between border-b-2 border-black/10 dark:border-white/10 pb-3 mb-4">
                   <div className="flex items-center gap-2">
                     <CheckSquare size={18} className="text-[#FF5500]" />
-                    <span className="font-black text-sm uppercase tracking-wide">Devoirs & Objectifs du Jour</span>
+                    <span className="font-black text-sm uppercase tracking-wide text-black dark:text-white">Devoirs & Objectifs du Jour</span>
                   </div>
-                  <span className="text-xs font-black bg-black/5 px-2.5 py-1 rounded-full">
+                  <span className="text-xs font-black bg-black/5 dark:bg-white/10 px-2.5 py-1 rounded-full text-black dark:text-white">
                     {todos.filter((t) => t.completed).length} / {todos.length}
                   </span>
                 </div>
@@ -494,18 +494,18 @@ export default function StudentDashboardPage() {
                     value={newTodoText}
                     onChange={(e) => setNewTodoText(e.target.value)}
                     placeholder="Ajouter un devoir ou objectif à faire..."
-                    className="flex-1 p-3 bg-[#FAFAFA] border-2 border-black rounded-xl font-bold text-sm outline-none focus:bg-white transition-all"
+                    className="flex-1 p-3 bg-[#FAFAFA] dark:bg-[#222225] border-2 border-black dark:border-white/20 rounded-xl font-bold text-sm text-black dark:text-white outline-none focus:bg-white dark:focus:bg-[#2A2A2D] transition-all"
                   />
                   <input
                     type="text"
                     value={newTodoSubject}
                     onChange={(e) => setNewTodoSubject(e.target.value)}
                     placeholder="Matière"
-                    className="w-24 md:w-32 p-3 bg-[#FAFAFA] border-2 border-black rounded-xl font-bold text-xs outline-none focus:bg-white transition-all"
+                    className="w-24 md:w-32 p-3 bg-[#FAFAFA] dark:bg-[#222225] border-2 border-black dark:border-white/20 rounded-xl font-bold text-xs text-black dark:text-white outline-none focus:bg-white dark:focus:bg-[#2A2A2D] transition-all"
                   />
                   <button
                     type="submit"
-                    className="bg-black text-white hover:bg-[#FF5500] font-extrabold px-4 py-3 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000000] cursor-pointer transition-all"
+                    className="bg-black dark:bg-white text-white dark:text-black hover:bg-[#FF5500] dark:hover:bg-[#FF5500] dark:hover:text-white font-extrabold px-4 py-3 rounded-xl border-2 border-black dark:border-white/30 shadow-[2px_2px_0px_0px_#000000] dark:shadow-[2px_2px_0px_0px_#FF5500] cursor-pointer transition-all"
                   >
                     <Plus size={18} />
                   </button>
@@ -514,7 +514,7 @@ export default function StudentDashboardPage() {
                 {/* Todos List */}
                 <div className="flex flex-col gap-2.5 max-h-[240px] overflow-y-auto pr-1">
                   {todos.length === 0 ? (
-                    <div className="py-8 text-center text-black/50 font-bold text-xs">
+                    <div className="py-8 text-center text-black/50 dark:text-neutral-400 font-bold text-xs">
                       Aucune tâche dans votre liste. Ajoutez votre premier objectif !
                     </div>
                   ) : (
@@ -522,16 +522,16 @@ export default function StudentDashboardPage() {
                       <div
                         key={todo.id}
                         onClick={() => handleToggleTodo(todo.id)}
-                        className={`flex items-center justify-between p-3.5 rounded-2xl border-2 border-black cursor-pointer transition-all ${
+                        className={`flex items-center justify-between p-3.5 rounded-2xl border-2 border-black dark:border-white/20 cursor-pointer transition-all ${
                           todo.completed
-                            ? "bg-[#FAFAFA] text-black/40 line-through border-black/30"
-                            : "bg-white hover:bg-[#FFFBF5] shadow-[2px_2px_0px_0px_#000000]"
+                            ? "bg-[#FAFAFA] dark:bg-[#222225] text-black/40 dark:text-neutral-500 line-through border-black/30 dark:border-white/10"
+                            : "bg-white dark:bg-[#252528] text-black dark:text-white hover:bg-[#FFFBF5] dark:hover:bg-[#2A2A2E] shadow-[2px_2px_0px_0px_#000000] dark:shadow-[2px_2px_0px_0px_#FF5500]"
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-5 h-5 rounded-lg border-2 border-black flex items-center justify-center ${
-                              todo.completed ? "bg-[#FF5500] text-white border-[#FF5500]" : "bg-white"
+                            className={`w-5 h-5 rounded-lg border-2 border-black dark:border-white/30 flex items-center justify-center ${
+                              todo.completed ? "bg-[#FF5500] text-white border-[#FF5500]" : "bg-white dark:bg-[#1A1A1D]"
                             }`}
                           >
                             {todo.completed && <span className="text-xs font-black">✓</span>}
@@ -539,7 +539,7 @@ export default function StudentDashboardPage() {
                           <span className="font-extrabold text-sm">{todo.text}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-black uppercase tracking-wider bg-black/10 px-2.5 py-0.5 rounded-md">
+                          <span className="text-[10px] font-black uppercase tracking-wider bg-black/10 dark:bg-white/10 px-2.5 py-0.5 rounded-md text-black dark:text-neutral-300">
                             {todo.subject}
                           </span>
                           <button
@@ -547,7 +547,7 @@ export default function StudentDashboardPage() {
                               e.stopPropagation();
                               handleDeleteTodo(todo.id);
                             }}
-                            className="text-black/30 hover:text-red-500 p-1"
+                            className="text-black/30 dark:text-white/30 hover:text-red-500 dark:hover:text-red-400 p-1"
                           >
                             <Trash2 size={15} />
                           </button>

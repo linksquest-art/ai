@@ -726,7 +726,12 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
               <img 
                 src={isGenerating ? "/Arrowai.png" : "/generated-image__1_-removebg-preview.png"} 
                 alt="Gama Studio AI Mascot" 
-                className={`w-48 h-48 md:w-56 md:h-56 object-contain transition-all ${isGenerating ? 'animate-spin' : 'hover:scale-105 filter drop-shadow-[0_10px_15px_rgba(255,85,0,0.2)]'}`} 
+                className={`w-48 h-48 md:w-56 md:h-56 object-contain transition-all dark:hidden ${isGenerating ? 'animate-spin' : 'hover:scale-105 filter drop-shadow-[0_10px_15px_rgba(255,85,0,0.2)]'}`} 
+              />
+              <img 
+                src={isGenerating ? "/star-dark.png" : "/generated-image__1_-removebg-preview.png"} 
+                alt="Gama Studio AI Mascot Dark" 
+                className={`w-48 h-48 md:w-56 md:h-56 object-contain transition-all hidden dark:block ${isGenerating ? 'animate-spin' : 'hover:scale-105 filter drop-shadow-[0_10px_15px_rgba(255,85,0,0.2)]'}`} 
               />
               <div className="flex items-center gap-2.5 mt-2 mb-4">
                 {isPro ? (
@@ -1104,28 +1109,28 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                       />
                       <div className="flex-1 flex flex-col gap-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-black uppercase text-black/80 tracking-wider">
+                          <span className="text-xs font-black uppercase text-black/80 dark:text-neutral-300 tracking-wider">
                             Gama Studio AI • {activeSession.modelName || model}
                           </span>
                         </div>
                         
                         {(!user && index >= 3) ? (
                           <div className="relative overflow-hidden rounded-2xl pt-0.5">
-                            <div className="text-lg font-medium text-black/90 leading-relaxed whitespace-pre-wrap select-none max-h-[160px] overflow-hidden opacity-85">
+                            <div className="text-lg font-medium text-black/90 dark:text-neutral-100 leading-relaxed whitespace-pre-wrap select-none max-h-[160px] overflow-hidden opacity-85">
                               {(typeof msg.content === "string" ? msg.content : String(msg.content)).substring(0, 320) + "..."}
                             </div>
-                            <div className="relative mt-[-50px] pt-16 pb-4 px-4 bg-gradient-to-b from-transparent via-white/95 to-white flex flex-col items-center justify-center text-center">
-                              <div className="bg-black text-white p-4 rounded-2xl shadow-[4px_4px_0px_0px_#FF5500] max-w-sm w-full flex flex-col items-center gap-2.5 border-2 border-black">
+                            <div className="relative mt-[-50px] pt-16 pb-4 px-4 bg-gradient-to-b from-transparent via-white/95 to-white dark:via-[#111113]/95 dark:to-[#111113] flex flex-col items-center justify-center text-center">
+                              <div className="bg-black dark:bg-white text-white dark:text-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#FF5500] max-w-sm w-full flex flex-col items-center gap-2.5 border-2 border-black dark:border-white/30">
                                 <div className="text-xs font-black uppercase tracking-wider text-[#FF5500]">
                                   🔐 Réponse complète prête
                                 </div>
-                                <p className="text-xs text-white/80 leading-tight">
+                                <p className="text-xs text-white/80 dark:text-black/80 leading-tight">
                                   Connectez-vous pour lire la suite de cette réponse et continuer votre discussion avec le modèle Best ★.
                                 </p>
                                 <button
                                   type="button"
                                   onClick={() => setShowAuthModal(true)}
-                                  className="w-full py-2 rounded-xl bg-white text-black hover:bg-[#FF5500] hover:text-white font-black text-xs transition-all cursor-pointer shadow-[2px_2px_0px_0px_#FF5500]"
+                                  className="w-full py-2 rounded-xl bg-white dark:bg-black text-black dark:text-white hover:bg-[#FF5500] dark:hover:bg-[#FF5500] hover:text-white font-black text-xs transition-all cursor-pointer shadow-[2px_2px_0px_0px_#FF5500]"
                                 >
                                   Se connecter / Voir la suite
                                 </button>
@@ -1133,13 +1138,13 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
                             </div>
                           </div>
                         ) : (
-                          <div className="text-lg font-medium text-black/90 leading-relaxed whitespace-pre-wrap pt-0.5">
+                          <div className="text-lg font-medium text-black/90 dark:text-neutral-100 leading-relaxed whitespace-pre-wrap pt-0.5">
                             {typeof msg.content === "string" ? msg.content : (Array.isArray(msg.content) ? msg.content.map((p: any) => p.text || "").join("") : String(msg.content))}
                           </div>
                         )}
 
                         <div className="flex flex-wrap items-center gap-2 pt-2">
-                          <button onClick={() => alert("Copié dans le presse-papier !")} className="text-xs font-bold text-black/60 hover:text-black flex items-center gap-1 transition-colors bg-black/5 px-2.5 py-1 rounded-lg cursor-pointer">
+                          <button onClick={() => alert("Copié dans le presse-papier !")} className="text-xs font-bold text-black/60 dark:text-neutral-400 hover:text-black dark:hover:text-white flex items-center gap-1 transition-colors bg-black/5 dark:bg-white/10 px-2.5 py-1 rounded-lg cursor-pointer">
                             📋 Copier
                           </button>
                         </div>
@@ -1152,12 +1157,13 @@ export function MainContent({ activeSession, onSendMessage, isGenerating, isInco
               {/* Thinking Animation */}
               {isGenerating && (
                 <div className="flex items-center gap-4 py-4 px-2 animate-pulse">
-                  <img src="/Arrowai.png" alt="Thinking Gama Studio AI" className="w-8 h-8 object-contain animate-spin shrink-0" />
+                  <img src="/Arrowai.png" alt="Thinking Gama Studio AI" className="w-8 h-8 object-contain animate-spin shrink-0 dark:hidden" />
+                  <img src="/star-dark.png" alt="Thinking Gama Studio AI Dark Star" className="w-8 h-8 object-contain animate-spin shrink-0 hidden dark:block" />
                   <div className="flex flex-col">
-                    <span className="text-sm font-black text-black uppercase tracking-wide">
+                    <span className="text-sm font-black text-black dark:text-white uppercase tracking-wide">
                       L'IA réfléchit en direct... ({activeSession.modelName || model})
                     </span>
-                    <span className="text-xs font-semibold text-black/50">Synthèse et formulation dans le fil de discussion...</span>
+                    <span className="text-xs font-semibold text-black/50 dark:text-neutral-400">Synthèse et formulation dans le fil de discussion...</span>
                   </div>
                 </div>
               )}
