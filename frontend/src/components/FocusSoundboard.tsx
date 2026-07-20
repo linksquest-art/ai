@@ -25,134 +25,134 @@ interface FocusSoundboardProps {
 
 export type SoundType = "rain" | "cafe" | "fire" | "lofi";
 
-export function FocusSoundboard({ isPro, onRequirePro }: FocusSoundboardProps) {
-  const [activeSound, setActiveSound] = useState<SoundType | null>(null);
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [volume, setVolume] = useState<number>(65);
+// -- GLOBAL AUDIO STATE FOR PERSISTENCE ACROSS PAGE NAVIGATION --
+let g_audio: HTMLAudioElement | null = null;
+let g_lofiIndex: number = 1;
+let g_isTransitioning: boolean = false;
+let g_activeSound: SoundType | null = null;
+let g_volume: number = 65;
+let g_isPlaying: boolean = false;
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const lofiIndexRef = useRef<number>(1);
-  const isTransitioningRef = useRef<boolean>(false);
-  const activeSoundRef = useRef<SoundType | null>(null);
-  const volumeRef = useRef<number>(65);
+const stopAudio = () => {
+  if (g_audio) {
+    g_audio.pause();
+    g_audio.removeAttribute("src");
+    g_audio.load();
+    g_audio = null;
+  }
+  g_isTransitioning = false;
+};
 
-  useEffect(() => {
-    activeSoundRef.current = activeSound;
-    volumeRef.current = volume;
-  }, [activeSound, volume]);
+const fadeAudio = (audio: HTMLAudioElement, targetVolume: number, duration: number, callback?: () => void) => {
+  const steps = 20;
+  const stepTime = duration / steps;
+  const startVolume = audio.volume;
+  const volumeStep = (targetVolume - startVolume) / steps;
+  let currentStep = 0;
 
-  const stopAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.removeAttribute("src");
-      audioRef.current.load();
-      audioRef.current = null;
-    }
-    isTransitioningRef.current = false;
-  };
-
-  const fadeAudio = (audio: HTMLAudioElement, targetVolume: number, duration: number, callback?: () => void) => {
-    const steps = 20;
-    const stepTime = duration / steps;
-    const startVolume = audio.volume;
-    const volumeStep = (targetVolume - startVolume) / steps;
-    let currentStep = 0;
-
-    const interval = setInterval(() => {
-      currentStep++;
-      let nextVol = startVolume + (volumeStep * currentStep);
-      if (nextVol > 1) nextVol = 1;
-      if (nextVol < 0) nextVol = 0;
-      
-      try { audio.volume = nextVol; } catch(e) {}
-
-      if (currentStep >= steps) {
-        clearInterval(interval);
-        try { audio.volume = targetVolume; } catch(e) {}
-        if (callback) callback();
-      }
-    }, stepTime);
-  };
-
-  const setupLofiTrack = (index: number) => {
-    const audio = new Audio(`/ambiance/l_${index}.mp3`);
-    audio.volume = isTransitioningRef.current ? 0 : (volumeRef.current / 100);
-    audioRef.current = audio;
+  const interval = setInterval(() => {
+    currentStep++;
+    let nextVol = startVolume + (volumeStep * currentStep);
+    if (nextVol > 1) nextVol = 1;
+    if (nextVol < 0) nextVol = 0;
     
-    if (isTransitioningRef.current) {
-      fadeAudio(audio, volumeRef.current / 100, 3500, () => {
-        isTransitioningRef.current = false;
-      });
-    }
+    try { audio.volume = nextVol; } catch(e) {}
 
-    audio.addEventListener("timeupdate", function timeUpdateHandler() {
-      if (activeSoundRef.current !== "lofi") {
-         audio.removeEventListener("timeupdate", timeUpdateHandler);
-         return;
-      }
-      if (isTransitioningRef.current) return;
-      
-      if (audio.duration && audio.currentTime >= audio.duration - 4) {
-        isTransitioningRef.current = true;
-        
-        // Fade out current
-        fadeAudio(audio, 0, 3500, () => {
-          audio.pause();
-          audio.removeEventListener("timeupdate", timeUpdateHandler);
-        });
-        
-        // Start next track sequentially with fade in
-        lofiIndexRef.current = (lofiIndexRef.current % 5) + 1;
-        setupLofiTrack(lofiIndexRef.current);
-      }
+    if (currentStep >= steps) {
+      clearInterval(interval);
+      try { audio.volume = targetVolume; } catch(e) {}
+      if (callback) callback();
+    }
+  }, stepTime);
+};
+
+const setupLofiTrack = () => {
+  const audio = new Audio(`/ambiance/l_${g_lofiIndex}.mp3`);
+  audio.setAttribute('data-soundtype', 'lofi');
+  audio.volume = g_isTransitioning ? 0 : (g_volume / 100);
+  g_audio = audio;
+  
+  if (g_isTransitioning) {
+    fadeAudio(audio, g_volume / 100, 3500, () => {
+      g_isTransitioning = false;
     });
+  }
 
+  audio.addEventListener("timeupdate", function timeUpdateHandler() {
+    if (g_activeSound !== "lofi") {
+       audio.removeEventListener("timeupdate", timeUpdateHandler);
+       return;
+    }
+    if (g_isTransitioning) return;
+    
+    if (audio.duration && audio.currentTime >= audio.duration - 4) {
+      g_isTransitioning = true;
+      fadeAudio(audio, 0, 3500, () => {
+        audio.pause();
+        audio.removeEventListener("timeupdate", timeUpdateHandler);
+      });
+      g_lofiIndex = (g_lofiIndex % 5) + 1;
+      setupLofiTrack();
+    }
+  });
+
+  audio.play().catch(e => console.error(e));
+};
+
+const startAudio = (sound: SoundType, volPercent: number) => {
+  stopAudio();
+  const targetVol = volPercent / 100;
+
+  if (sound === "lofi") {
+    g_isTransitioning = false;
+    setupLofiTrack();
+  } else {
+    let url = "";
+    if (sound === "rain") url = "/ambiance/a_1.wav";
+    if (sound === "fire") url = "/ambiance/a_2.wav";
+    if (sound === "cafe") url = "/ambiance/a_3.wav";
+    
+    const audio = new Audio(url);
+    audio.setAttribute('data-soundtype', sound);
+    audio.volume = targetVol;
+    audio.loop = true;
     audio.play().catch(e => console.error(e));
-  };
+    g_audio = audio;
+  }
+};
 
-  const handleSkipLofi = (direction: 'next' | 'prev') => {
-    if (!audioRef.current || activeSound !== "lofi") return;
-    
-    // Stop current track cleanly
-    audioRef.current.pause();
-    isTransitioningRef.current = false;
-    
-    if (direction === 'next') {
-      lofiIndexRef.current = (lofiIndexRef.current % 5) + 1;
-    } else {
-      lofiIndexRef.current = lofiIndexRef.current === 1 ? 5 : lofiIndexRef.current - 1;
-    }
-    setupLofiTrack(lofiIndexRef.current);
-  };
+const handleGlobalSkipLofi = (direction: 'next' | 'prev') => {
+  if (!g_audio || g_activeSound !== "lofi") return;
+  g_audio.pause();
+  g_isTransitioning = false;
+  if (direction === 'next') {
+    g_lofiIndex = (g_lofiIndex % 5) + 1;
+  } else {
+    g_lofiIndex = g_lofiIndex === 1 ? 5 : g_lofiIndex - 1;
+  }
+  setupLofiTrack();
+};
 
-  const startAudio = (sound: SoundType, volPercent: number) => {
-    stopAudio();
-    const targetVol = volPercent / 100;
-
-    if (sound === "lofi") {
-      isTransitioningRef.current = false;
-      setupLofiTrack(lofiIndexRef.current);
-    } else {
-      let url = "";
-      if (sound === "rain") url = "/ambiance/a_1.wav";
-      if (sound === "fire") url = "/ambiance/a_2.wav";
-      if (sound === "cafe") url = "/ambiance/a_3.wav";
-      
-      const audio = new Audio(url);
-      audio.volume = targetVol;
-      audio.loop = true;
-      audio.play().catch(e => console.error(e));
-      audioRef.current = audio;
-    }
-  };
+export function FocusSoundboard({ isPro, onRequirePro }: FocusSoundboardProps) {
+  const [activeSound, setActiveSound] = useState<SoundType | null>(g_activeSound);
+  const [isPlaying, setIsPlaying] = useState<boolean>(g_isPlaying);
+  const [volume, setVolume] = useState<number>(g_volume);
 
   useEffect(() => {
+    g_activeSound = activeSound;
+    g_isPlaying = isPlaying;
+    g_volume = volume;
+
     if (isPlaying && activeSound) {
-      startAudio(activeSound, volume);
+      if (!g_audio || g_audio.getAttribute('data-soundtype') !== activeSound || g_audio.paused) {
+        startAudio(activeSound, volume);
+      }
     } else {
-      stopAudio();
+      if (g_audio) {
+        stopAudio();
+      }
     }
-    return () => stopAudio();
+    // No cleanup: allows audio to persist when navigating away!
   }, [isPlaying, activeSound]);
 
   useEffect(() => {
@@ -250,14 +250,14 @@ export function FocusSoundboard({ isPro, onRequirePro }: FocusSoundboardProps) {
         {isPlaying && activeSound === "lofi" ? (
           <div className="flex items-center gap-1.5">
             <button
-              onClick={() => handleSkipLofi('prev')}
+              onClick={() => handleGlobalSkipLofi('prev')}
               className="p-1.5 rounded-lg bg-black/5 dark:bg-white/10 hover:bg-[#FF5500] hover:text-white dark:hover:bg-[#FF5500] dark:hover:text-white border border-black/20 dark:border-white/20 transition-colors cursor-pointer text-black dark:text-white"
               title="Musique précédente"
             >
               <SkipBack size={15} />
             </button>
             <button
-              onClick={() => handleSkipLofi('next')}
+              onClick={() => handleGlobalSkipLofi('next')}
               className="p-1.5 rounded-lg bg-black/5 dark:bg-white/10 hover:bg-[#FF5500] hover:text-white dark:hover:bg-[#FF5500] dark:hover:text-white border border-black/20 dark:border-white/20 transition-colors cursor-pointer text-black dark:text-white"
               title="Musique suivante"
             >
