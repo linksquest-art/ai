@@ -28,148 +28,104 @@ export function FocusSoundboard({ isPro, onRequirePro }: FocusSoundboardProps) {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(65);
 
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const gainNodeRef = useRef<GainNode | null>(null);
-  const sourceNodeRef = useRef<AudioNode | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const lofiIndexRef = useRef<number>(1);
+  const isTransitioningRef = useRef<boolean>(false);
+  const activeSoundRef = useRef<SoundType | null>(null);
+  const volumeRef = useRef<number>(65);
 
-  // Stop current audio synthesis
+  useEffect(() => {
+    activeSoundRef.current = activeSound;
+    volumeRef.current = volume;
+  }, [activeSound, volume]);
+
   const stopAudio = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.removeAttribute("src");
+      audioRef.current.load();
+      audioRef.current = null;
     }
-    if (sourceNodeRef.current) {
-      try {
-        sourceNodeRef.current.disconnect();
-      } catch (e) {}
-      sourceNodeRef.current = null;
-    }
+    isTransitioningRef.current = false;
   };
 
-  // Start sound synthesis via Web Audio API
+  const fadeAudio = (audio: HTMLAudioElement, targetVolume: number, duration: number, callback?: () => void) => {
+    const steps = 20;
+    const stepTime = duration / steps;
+    const startVolume = audio.volume;
+    const volumeStep = (targetVolume - startVolume) / steps;
+    let currentStep = 0;
+
+    const interval = setInterval(() => {
+      currentStep++;
+      let nextVol = startVolume + (volumeStep * currentStep);
+      if (nextVol > 1) nextVol = 1;
+      if (nextVol < 0) nextVol = 0;
+      
+      try { audio.volume = nextVol; } catch(e) {}
+
+      if (currentStep >= steps) {
+        clearInterval(interval);
+        try { audio.volume = targetVolume; } catch(e) {}
+        if (callback) callback();
+      }
+    }, stepTime);
+  };
+
+  const setupLofiTrack = (index: number) => {
+    const audio = new Audio(`/ambiance/l_${index}.mp3`);
+    audio.volume = isTransitioningRef.current ? 0 : (volumeRef.current / 100);
+    audioRef.current = audio;
+    
+    if (isTransitioningRef.current) {
+      fadeAudio(audio, volumeRef.current / 100, 3500, () => {
+        isTransitioningRef.current = false;
+      });
+    }
+
+    audio.addEventListener("timeupdate", function timeUpdateHandler() {
+      if (activeSoundRef.current !== "lofi") {
+         audio.removeEventListener("timeupdate", timeUpdateHandler);
+         return;
+      }
+      if (isTransitioningRef.current) return;
+      
+      if (audio.duration && audio.currentTime >= audio.duration - 4) {
+        isTransitioningRef.current = true;
+        
+        // Fade out current
+        fadeAudio(audio, 0, 3500, () => {
+          audio.pause();
+          audio.removeEventListener("timeupdate", timeUpdateHandler);
+        });
+        
+        // Start next track sequentially with fade in
+        lofiIndexRef.current = (lofiIndexRef.current % 5) + 1;
+        setupLofiTrack(lofiIndexRef.current);
+      }
+    });
+
+    audio.play().catch(e => console.error(e));
+  };
+
   const startAudio = (sound: SoundType, volPercent: number) => {
     stopAudio();
+    const targetVol = volPercent / 100;
 
-    if (!audioCtxRef.current) {
-      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtxClass) return;
-      audioCtxRef.current = new AudioCtxClass();
-    }
-    const ctx = audioCtxRef.current;
-    if (ctx.state === "suspended") {
-      ctx.resume();
-    }
-
-    if (!gainNodeRef.current) {
-      gainNodeRef.current = ctx.createGain();
-      gainNodeRef.current.connect(ctx.destination);
-    }
-
-    const gain = gainNodeRef.current;
-    gain.gain.setValueAtTime((volPercent / 100) * 0.35, ctx.currentTime);
-
-    if (sound === "rain") {
-      // Pink/Brown noise buffer for realistic rain on window
-      const bufferSize = ctx.sampleRate * 2;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const output = buffer.getChannelData(0);
-      let lastOut = 0.0;
-      for (let i = 0; i < bufferSize; i++) {
-        const white = Math.random() * 2 - 1;
-        output[i] = (lastOut + 0.02 * white) / 1.02;
-        lastOut = output[i];
-        output[i] *= 1.8;
-      }
-      const whiteNoise = ctx.createBufferSource();
-      whiteNoise.buffer = buffer;
-      whiteNoise.loop = true;
-
-      const filter = ctx.createBiquadFilter();
-      filter.type = "lowpass";
-      filter.frequency.value = 800;
-
-      whiteNoise.connect(filter);
-      filter.connect(gain);
-      whiteNoise.start();
-      sourceNodeRef.current = whiteNoise;
-    } else if (sound === "fire") {
-      // Warm brown noise crackle
-      const bufferSize = ctx.sampleRate * 2;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const output = buffer.getChannelData(0);
-      let lastOut = 0.0;
-      for (let i = 0; i < bufferSize; i++) {
-        const white = Math.random() * 2 - 1;
-        output[i] = (lastOut + 0.025 * white) / 1.025;
-        lastOut = output[i];
-        // Occasional crackle pop
-        if (Math.random() < 0.0008) {
-          output[i] += (Math.random() * 2 - 1) * 3.5;
-        }
-      }
-      const fireSource = ctx.createBufferSource();
-      fireSource.buffer = buffer;
-      fireSource.loop = true;
-
-      const filter = ctx.createBiquadFilter();
-      filter.type = "bandpass";
-      filter.frequency.value = 550;
-
-      fireSource.connect(filter);
-      filter.connect(gain);
-      fireSource.start();
-      sourceNodeRef.current = fireSource;
-    } else if (sound === "cafe") {
-      // Gentle warm cafe murmur
-      const bufferSize = ctx.sampleRate * 2;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const output = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        output[i] = (Math.random() * 2 - 1) * 0.15;
-      }
-      const cafeSource = ctx.createBufferSource();
-      cafeSource.buffer = buffer;
-      cafeSource.loop = true;
-
-      const filter = ctx.createBiquadFilter();
-      filter.type = "lowpass";
-      filter.frequency.value = 400;
-
-      cafeSource.connect(filter);
-      filter.connect(gain);
-      cafeSource.start();
-      sourceNodeRef.current = cafeSource;
-    } else if (sound === "lofi") {
-      // Chill relaxing Lofi harmonic chord loops
-      const playLofiChord = () => {
-        if (!audioCtxRef.current || !gainNodeRef.current) return;
-        const c = audioCtxRef.current;
-        const chords = [
-          [261.63, 329.63, 392.00, 493.88], // Cmaj7
-          [220.00, 261.63, 329.63, 392.00], // Am7
-          [174.61, 220.00, 261.63, 329.63], // Fmaj7
-          [196.00, 246.94, 293.66, 349.23], // G7
-        ];
-        const chosen = chords[Math.floor(Math.random() * chords.length)];
-        chosen.forEach((freq) => {
-          const osc = c.createOscillator();
-          const noteGain = c.createGain();
-          osc.type = "triangle";
-          osc.frequency.setValueAtTime(freq, c.currentTime);
-
-          noteGain.gain.setValueAtTime(0.001, c.currentTime);
-          noteGain.gain.exponentialRampToValueAtTime(0.08, c.currentTime + 0.3);
-          noteGain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 3.8);
-
-          osc.connect(noteGain);
-          noteGain.connect(gainNodeRef.current!);
-          osc.start();
-          osc.stop(c.currentTime + 4.0);
-        });
-      };
-      playLofiChord();
-      intervalRef.current = setInterval(playLofiChord, 3500);
+    if (sound === "lofi") {
+      isTransitioningRef.current = false;
+      setupLofiTrack(lofiIndexRef.current);
+    } else {
+      let url = "";
+      if (sound === "rain") url = "/ambiance/a_1.wav";
+      if (sound === "fire") url = "/ambiance/a_2.wav";
+      if (sound === "cafe") url = "/ambiance/a_3.wav";
+      
+      const audio = new Audio(url);
+      audio.volume = targetVol;
+      audio.loop = true;
+      audio.play().catch(e => console.error(e));
+      audioRef.current = audio;
     }
   };
 
@@ -183,8 +139,8 @@ export function FocusSoundboard({ isPro, onRequirePro }: FocusSoundboardProps) {
   }, [isPlaying, activeSound]);
 
   useEffect(() => {
-    if (gainNodeRef.current && audioCtxRef.current) {
-      gainNodeRef.current.gain.setValueAtTime((volume / 100) * 0.35, audioCtxRef.current.currentTime);
+    if (audioRef.current && !isTransitioningRef.current) {
+      audioRef.current.volume = volume / 100;
     }
   }, [volume]);
 
