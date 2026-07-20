@@ -156,8 +156,9 @@ export function FocusSoundboard({ isPro, onRequirePro }: FocusSoundboardProps) {
   }, [isPlaying, activeSound]);
 
   useEffect(() => {
-    if (audioRef.current && !isTransitioningRef.current) {
-      audioRef.current.volume = volume / 100;
+    g_volume = volume;
+    if (g_audio && !g_isTransitioning) {
+      g_audio.volume = volume / 100;
     }
   }, [volume]);
 
