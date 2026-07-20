@@ -13,7 +13,9 @@ import {
   Pause, 
   Lock, 
   Crown,
-  Sparkles
+  Sparkles,
+  SkipBack,
+  SkipForward
 } from "lucide-react";
 
 interface FocusSoundboardProps {
@@ -106,6 +108,21 @@ export function FocusSoundboard({ isPro, onRequirePro }: FocusSoundboardProps) {
     });
 
     audio.play().catch(e => console.error(e));
+  };
+
+  const handleSkipLofi = (direction: 'next' | 'prev') => {
+    if (!audioRef.current || activeSound !== "lofi") return;
+    
+    // Stop current track cleanly
+    audioRef.current.pause();
+    isTransitioningRef.current = false;
+    
+    if (direction === 'next') {
+      lofiIndexRef.current = (lofiIndexRef.current % 5) + 1;
+    } else {
+      lofiIndexRef.current = lofiIndexRef.current === 1 ? 5 : lofiIndexRef.current - 1;
+    }
+    setupLofiTrack(lofiIndexRef.current);
   };
 
   const startAudio = (sound: SoundType, volPercent: number) => {
@@ -229,15 +246,32 @@ export function FocusSoundboard({ isPro, onRequirePro }: FocusSoundboardProps) {
           </div>
         </div>
 
-        {/* Visualizer bars when playing */}
-        {isPlaying && activeSound && (
+        {/* Lofi Controls or Visualizer bars */}
+        {isPlaying && activeSound === "lofi" ? (
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => handleSkipLofi('prev')}
+              className="p-1.5 rounded-lg bg-black/5 dark:bg-white/10 hover:bg-[#FF5500] hover:text-white dark:hover:bg-[#FF5500] dark:hover:text-white border border-black/20 dark:border-white/20 transition-colors cursor-pointer text-black dark:text-white"
+              title="Musique précédente"
+            >
+              <SkipBack size={15} />
+            </button>
+            <button
+              onClick={() => handleSkipLofi('next')}
+              className="p-1.5 rounded-lg bg-black/5 dark:bg-white/10 hover:bg-[#FF5500] hover:text-white dark:hover:bg-[#FF5500] dark:hover:text-white border border-black/20 dark:border-white/20 transition-colors cursor-pointer text-black dark:text-white"
+              title="Musique suivante"
+            >
+              <SkipForward size={15} />
+            </button>
+          </div>
+        ) : isPlaying && activeSound ? (
           <div className="flex items-end gap-1 h-5 px-3 py-1 bg-black/5 dark:bg-white/10 rounded-lg border border-black/20 dark:border-white/20">
             <span className="w-1.5 bg-[#FF5500] rounded-full animate-pulse h-3"></span>
             <span className="w-1.5 bg-[#FF5500] rounded-full animate-pulse h-4 delay-75"></span>
             <span className="w-1.5 bg-[#FF5500] rounded-full animate-pulse h-2 delay-150"></span>
             <span className="w-1.5 bg-[#FF5500] rounded-full animate-pulse h-4 delay-200"></span>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Grid of 4 Ambiance Cards */}
