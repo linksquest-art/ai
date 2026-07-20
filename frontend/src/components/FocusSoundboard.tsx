@@ -250,24 +250,24 @@ export function FocusSoundboard({ isPro, onRequirePro }: FocusSoundboardProps) {
   ];
 
   return (
-    <div className="bg-[#FFFDF9] border-3 border-black rounded-3xl p-6 shadow-[6px_6px_0px_0px_#000000] flex flex-col justify-between">
+    <div className="bg-[#FFFDF9] dark:bg-[#1A1A1D] border-3 border-black dark:border-white/20 rounded-3xl p-6 shadow-[6px_6px_0px_0px_#000000] dark:shadow-[6px_6px_0px_0px_#FF5500] flex flex-col justify-between transition-colors">
       {/* Header */}
-      <div className="flex items-center justify-between border-b-2 border-black/10 pb-3.5 mb-5">
+      <div className="flex items-center justify-between border-b-2 border-black/10 dark:border-white/10 pb-3.5 mb-5 transition-colors">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-black text-white shadow-[2px_2px_0px_0px_#FF5500]">
+          <div className="p-2 rounded-xl bg-black text-white shadow-[2px_2px_0px_0px_#FF5500] dark:bg-white dark:text-black">
             <Headphones size={18} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-black text-sm md:text-base uppercase tracking-tight text-black">
+              <h3 className="font-black text-sm md:text-base uppercase tracking-tight text-black dark:text-white">
                 Ambiance Sonore & Lofi Focus
               </h3>
-              <span className="bg-black text-[#FF5500] text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 border border-black">
+              <span className="bg-black text-[#FF5500] dark:bg-white dark:text-[#FF5500] text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 border border-black dark:border-white">
                 <Crown size={11} />
                 <span>Exclusif PRO</span>
               </span>
             </div>
-            <p className="text-xs font-bold text-black/60">
+            <p className="text-xs font-bold text-black/60 dark:text-neutral-400">
               Soundboard intégré pour s&apos;isoler pendant le Pomodoro
             </p>
           </div>
@@ -275,7 +275,7 @@ export function FocusSoundboard({ isPro, onRequirePro }: FocusSoundboardProps) {
 
         {/* Visualizer bars when playing */}
         {isPlaying && activeSound && (
-          <div className="flex items-end gap-1 h-5 px-3 py-1 bg-black/5 rounded-lg border border-black/20">
+          <div className="flex items-end gap-1 h-5 px-3 py-1 bg-black/5 dark:bg-white/10 rounded-lg border border-black/20 dark:border-white/20">
             <span className="w-1.5 bg-[#FF5500] rounded-full animate-pulse h-3"></span>
             <span className="w-1.5 bg-[#FF5500] rounded-full animate-pulse h-4 delay-75"></span>
             <span className="w-1.5 bg-[#FF5500] rounded-full animate-pulse h-2 delay-150"></span>
@@ -294,14 +294,14 @@ export function FocusSoundboard({ isPro, onRequirePro }: FocusSoundboardProps) {
             <button
               key={sound.id}
               onClick={() => handleSelectSound(sound.id)}
-              className={`relative border-2 border-black rounded-2xl p-4 text-left transition-all cursor-pointer flex flex-col justify-between min-h-[95px] ${
+              className={`relative border-2 border-black dark:border-white/20 rounded-2xl p-4 text-left transition-all cursor-pointer flex flex-col justify-between min-h-[95px] ${
                 isActive
-                  ? "bg-black text-white shadow-[3px_3px_0px_0px_#FF5500] -translate-y-0.5"
-                  : "bg-white text-black hover:bg-[#FAFAFA] shadow-[3px_3px_0px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_#000000]"
+                  ? "bg-black dark:bg-white text-white dark:text-black shadow-[3px_3px_0px_0px_#FF5500] -translate-y-0.5"
+                  : "bg-white dark:bg-[#252528] text-black dark:text-white hover:bg-[#FAFAFA] dark:hover:bg-[#2A2A2E] shadow-[3px_3px_0px_0px_#000000] dark:shadow-[3px_3px_0px_0px_#FF5500] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_#000000] dark:hover:shadow-[1px_1px_0px_0px_#FF5500]"
               }`}
             >
               {!isPro && (
-                <span className="absolute top-2.5 right-2.5 text-amber-600 bg-amber-50 p-1 rounded-full border border-amber-300">
+                <span className="absolute top-2.5 right-2.5 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 p-1 rounded-full border border-amber-300 dark:border-amber-700">
                   <Lock size={12} />
                 </span>
               )}
@@ -317,7 +317,7 @@ export function FocusSoundboard({ isPro, onRequirePro }: FocusSoundboardProps) {
                 <div className="font-black text-xs md:text-sm leading-tight flex items-center gap-1.5">
                   <span>{sound.label}</span>
                 </div>
-                <div className={`text-[10px] font-bold truncate mt-0.5 ${isActive ? "text-white/70" : "text-black/50"}`}>
+                <div className={`text-[10px] font-bold truncate mt-0.5 ${isActive ? "text-white/70 dark:text-black/60" : "text-black/50 dark:text-neutral-400"}`}>
                   {sound.desc}
                 </div>
               </div>
@@ -327,21 +327,21 @@ export function FocusSoundboard({ isPro, onRequirePro }: FocusSoundboardProps) {
       </div>
 
       {/* Audio Controls Bar (Play/Pause & Volume) */}
-      <div className="bg-white border-2 border-black rounded-2xl p-3.5 shadow-[3px_3px_0px_0px_#000000] flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="bg-white dark:bg-[#252528] border-2 border-black dark:border-white/20 rounded-2xl p-3.5 shadow-[3px_3px_0px_0px_#000000] dark:shadow-[3px_3px_0px_0px_#FF5500] flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors">
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
           <button
             onClick={handleTogglePlay}
-            className={`px-4 py-2 rounded-xl font-black text-xs flex items-center gap-2 border-2 border-black shadow-[2px_2px_0px_0px_#000000] cursor-pointer transition-all ${
+            className={`px-4 py-2 rounded-xl font-black text-xs flex items-center gap-2 border-2 border-black dark:border-white/20 shadow-[2px_2px_0px_0px_#000000] dark:shadow-[2px_2px_0px_0px_#FF5500] cursor-pointer transition-all ${
               isPlaying
-                ? "bg-[#FF5500] text-white hover:bg-black"
-                : "bg-black text-white hover:bg-[#FF5500]"
+                ? "bg-[#FF5500] text-white hover:bg-black dark:hover:bg-white dark:hover:text-black"
+                : "bg-black dark:bg-white text-white dark:text-black hover:bg-[#FF5500] dark:hover:bg-[#FF5500] dark:hover:text-white"
             }`}
           >
             {isPlaying ? <Pause size={14} /> : <Play size={14} />}
             <span>{isPlaying ? "En cours" : "Lancer l'ambiance"}</span>
           </button>
 
-          <span className="text-xs font-black text-black/70">
+          <span className="text-xs font-black text-black/70 dark:text-neutral-400">
             {activeSound
               ? soundsList.find((s) => s.id === activeSound)?.label
               : "Aucune ambiance sélectionnée"}
@@ -352,7 +352,7 @@ export function FocusSoundboard({ isPro, onRequirePro }: FocusSoundboardProps) {
         <div className="flex items-center gap-2.5 w-full sm:w-48">
           <button
             onClick={() => setVolume(volume === 0 ? 65 : 0)}
-            className="text-black/60 hover:text-black cursor-pointer"
+            className="text-black/60 dark:text-neutral-400 hover:text-black dark:hover:text-white cursor-pointer transition-colors"
             title={volume === 0 ? "Activer le son" : "Muet"}
           >
             {volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
@@ -363,9 +363,9 @@ export function FocusSoundboard({ isPro, onRequirePro }: FocusSoundboardProps) {
             max="100"
             value={volume}
             onChange={(e) => setVolume(Number(e.target.value))}
-            className="w-full h-2 bg-black/10 rounded-lg appearance-none cursor-pointer accent-[#FF5500]"
+            className="w-full h-2 bg-black/10 dark:bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#FF5500]"
           />
-          <span className="text-[11px] font-black w-8 text-right text-black/70">
+          <span className="text-[11px] font-black w-8 text-right text-black/70 dark:text-neutral-400">
             {volume}%
           </span>
         </div>
