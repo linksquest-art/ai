@@ -29,7 +29,7 @@ export type SoundType = "rain" | "cafe" | "fire" | "lofi";
 let g_audio: HTMLAudioElement | null = null;
 let g_lofiIndex: number = 1;
 let g_isTransitioning: boolean = false;
-let g_activeSound: SoundType | null = null;
+let g_activeSound: SoundType | null = "lofi";
 let g_volume: number = 65;
 let g_isPlaying: boolean = false;
 
