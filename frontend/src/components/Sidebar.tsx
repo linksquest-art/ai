@@ -66,8 +66,10 @@ export function Sidebar({
     const savedTheme = localStorage.getItem("gama_theme") as "light" | "dark" | null;
     if (savedTheme === "dark") {
       setTheme("dark");
+      document.documentElement.classList.add("dark");
     } else {
       setTheme("light");
+      document.documentElement.classList.remove("dark");
     }
   }, []);
 
