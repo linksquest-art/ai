@@ -270,14 +270,14 @@ export default function StudentDashboardPage() {
   const getPostItClass = (color: PostItNote["color"]) => {
     switch (color) {
       case "pink":
-        return "bg-[#FFD1E8]";
+        return "bg-[#FFD1E8] text-[#3D0A23] !text-[#3D0A23]";
       case "mint":
-        return "bg-[#D1FFE4]";
+        return "bg-[#D1FFE4] text-[#04331C] !text-[#04331C]";
       case "orange":
-        return "bg-[#FFE1C2]";
+        return "bg-[#FFE1C2] text-[#3D1A02] !text-[#3D1A02]";
       case "yellow":
       default:
-        return "bg-[#FFF4B8]";
+        return "bg-[#FFF4B8] text-[#2C2302] !text-[#2C2302]";
     }
   };
 
@@ -333,28 +333,28 @@ export default function StudentDashboardPage() {
                 {notes.map((note) => (
                   <div
                     key={note.id}
-                    className={`${getPostItClass(
+                    className={`postit-card ${getPostItClass(
                       note.color
-                    )} ${note.rotation} border-3 border-black rounded-2xl p-5 shadow-[6px_6px_0px_0px_#000000] flex flex-col justify-between min-h-[160px] transition-transform hover:scale-102 relative text-black`}
+                    )} ${note.rotation} border-3 border-black rounded-2xl p-5 shadow-[6px_6px_0px_0px_#000000] flex flex-col justify-between min-h-[160px] transition-transform hover:scale-102 relative`}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-black text-sm uppercase tracking-wide text-black">
+                        <span className="font-black text-sm uppercase tracking-wide opacity-95">
                           {note.title}
                         </span>
                         <button
                           onClick={() => handleDeleteNote(note.id)}
-                          className="text-black/40 hover:text-red-600 cursor-pointer"
+                          className="opacity-40 hover:opacity-100 hover:text-red-600 transition-opacity cursor-pointer"
                           title="Détacher ce post-it"
                         >
                           <Trash2 size={15} />
                         </button>
                       </div>
-                      <p className="text-xs font-bold leading-relaxed text-black/80 whitespace-pre-wrap">
+                      <p className="text-xs font-bold leading-relaxed opacity-85 whitespace-pre-wrap">
                         {note.content}
                       </p>
                     </div>
-                    <div className="mt-4 pt-2 border-t border-black/15 flex items-center justify-between text-[10px] font-black uppercase text-black/50">
+                    <div className="mt-4 pt-2 border-t border-black/15 flex items-center justify-between text-[10px] font-black uppercase opacity-60">
                       <span>Note Bureau</span>
                       <span>📌 PING</span>
                     </div>
